@@ -62,10 +62,25 @@ function initGradeScaleTab() {
 
         return `
             <tr>
-                <td><span class="badge ${badgeColor} rounded-pill fs-6" style="min-width: 50px;">${item.grade}</span></td>
-                <td>${item.min.toFixed(1)} - ${item.max.toFixed(1)}</td>
-                <td class="fw-bold">${item.gpa.toFixed(1)}</td>
-                <td>${rank}</td>
+                <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm ${badgeColor}" 
+                             style="width: 40px; height: 40px; font-size: 1.1rem;">
+                            ${item.grade}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex flex-column">
+                        <span class="fw-medium text-dark">${item.min.toFixed(1)} - ${item.max.toFixed(1)}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="fw-bold text-primary fs-5">${item.gpa.toFixed(1)}</span>
+                </td>
+                <td class="pe-4 text-end">
+                    <span class="badge bg-light text-dark border fw-normal px-3 py-2 rounded-pill">${rank}</span>
+                </td>
             </tr>
         `;
     }).join('');
@@ -629,37 +644,49 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0) {
     }
 
     html = `
-        <div class="card border-0 ${bgClass} mb-4 w-100">
-            <div class="card-body p-4">
-                <h6 class="card-subtitle mb-2 text-muted text-uppercase">GPA Trung bình cần đạt cho ${creditsToEarn} tín chỉ tới</h6>
-                <div class="display-1 fw-bold ${textClass} my-3">${requiredGPA.toFixed(2)}</div>
-                <div class="d-flex align-items-center justify-content-center gap-2 ${textClass}">
-                    <i class="bi ${icon} fs-4"></i>
-                    <span class="fw-medium">${message}</span>
-                </div>
-                
-                ${(requiredGPA > 4.0 && deficitPoints > 0) ? `
-                <div class="alert alert-light mt-4 border-0 shadow-sm text-start">
-                    <h6 class="alert-heading fw-bold text-dark"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>Gợi ý cải thiện:</h6>
-                    <p class="mb-2 small text-muted">Để đạt mục tiêu, ngoài việc đạt 4.0 cho ${creditsToEarn} tín chỉ sắp tới, bạn cần học cải thiện thêm:</p>
-                    <ul class="list-group list-group-flush bg-transparent">
-                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom-0">
-                            <span>Nếu cải thiện môn điểm <span class="badge bg-danger">F (0.0)</span></span>
-                            <span class="fw-bold text-dark">~${Math.ceil(deficitPoints / 4.0)} tín chỉ</span>
+        <div class="text-center mb-4 w-100">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle ${bgClass.replace('-subtle', '')} text-white shadow-sm mb-3" style="width: 60px; height: 60px;">
+                <i class="bi ${icon} fs-2"></i>
+            </div>
+            <h6 class="text-uppercase text-secondary fw-bold small letter-spacing-1 mb-2">GPA Trung bình cần đạt</h6>
+            <div class="display-1 fw-bold ${textClass} mb-2" style="letter-spacing: -2px;">${requiredGPA.toFixed(2)}</div>
+            <p class="text-muted fw-medium mb-0">cho <span class="fw-bold text-dark">${creditsToEarn}</span> tín chỉ tiếp theo</p>
+            <div class="mt-3">
+                <span class="badge rounded-pill ${bgClass} ${textClass} px-3 py-2 border border-${textClass.replace('text-', '')}-subtle">
+                    ${message}
+                </span>
+            </div>
+            
+            ${(requiredGPA > 4.0 && deficitPoints > 0) ? `
+            <div class="alert alert-light mt-4 border-0 shadow-sm text-start">
+                <h6 class="alert-heading fw-bold text-dark"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>Gợi ý cải thiện:</h6>
+                <p class="mb-2 small text-muted">Để đạt mục tiêu, ngoài việc đạt 4.0 cho ${creditsToEarn} tín chỉ sắp tới, bạn cần học cải thiện thêm:</p>
+                <ul class="list-group list-group-flush bg-transparent">
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom border-light-subtle">
+                            <div class="d-flex align-items-center text-nowrap">
+                                <span class="text-secondary small me-2">Cải thiện môn</span>
+                                <span class="badge bg-danger rounded-pill">F (0.0)</span>
+                            </div>
+                            <span class="fw-bold text-dark text-nowrap">~${Math.ceil(deficitPoints / 4.0)} tín chỉ</span>
+                        </li>
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom border-light-subtle">
+                            <div class="d-flex align-items-center text-nowrap">
+                                <span class="text-secondary small me-2">Cải thiện môn</span>
+                                <span class="badge bg-warning text-dark rounded-pill">D (1.0)</span>
+                            </div>
+                            <span class="fw-bold text-dark text-nowrap">~${Math.ceil(deficitPoints / 3.0)} tín chỉ</span>
                         </li>
                         <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom-0">
-                            <span>Nếu cải thiện môn điểm <span class="badge bg-warning text-dark">D (1.0)</span></span>
-                            <span class="fw-bold text-dark">~${Math.ceil(deficitPoints / 3.0)} tín chỉ</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom-0">
-                            <span>Nếu cải thiện môn điểm <span class="badge bg-info text-dark">C (2.0)</span></span>
-                            <span class="fw-bold text-dark">~${Math.ceil(deficitPoints / 2.0)} tín chỉ</span>
+                            <div class="d-flex align-items-center text-nowrap">
+                                <span class="text-secondary small me-2">Cải thiện môn</span>
+                                <span class="badge bg-info text-dark rounded-pill">C (2.0)</span>
+                            </div>
+                            <span class="fw-bold text-dark text-nowrap">~${Math.ceil(deficitPoints / 2.0)} tín chỉ</span>
                         </li>
                     </ul>
                     <p class="mb-0 mt-2 small text-muted fst-italic">*Giả định bạn đạt 4.0 ở các môn học lại này.</p>
                 </div>
                 ` : ''}
-            </div>
         </div>
     `;
 
@@ -925,30 +952,26 @@ function calculateAndRenderCourseGrade() {
             requiredFinal = 0;
             if (grade.gpa === 0) {
                 message = `<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Rớt</span>`;
-                statusClass = 'list-group-item-danger';
+                statusClass = 'bg-danger-subtle border-danger-subtle';
                 progressColor = 'bg-danger';
             } else {
                 message = `<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Đã đạt!</span>`;
-                statusClass = 'list-group-item-success'; // Light green background
+                statusClass = 'bg-success-subtle border-success-subtle'; // Light green background
                 progressColor = 'bg-success';
             }
             progressPercent = 100;
         } else if (requiredFinal > 10) {
             // Impossible
-            message = `<span class="text-muted small">Không thể đạt (Cần > 10)</span>`;
-            statusClass = 'list-group-item-light opacity-75'; // Grayed out
+            message = `<span class="text-muted small">Không thể đạt (>10)</span>`;
+            statusClass = 'bg-light opacity-75 border-light'; // Grayed out
             progressColor = 'bg-secondary';
             progressPercent = 0;
         } else {
             // Possible
-            message = `Cần thi: <strong class="fs-5">${requiredFinal.toFixed(2)}</strong>`;
-            statusClass = '';
+            message = `<span class="text-muted small me-2">Cần thi:</span><strong class="fs-4 text-dark">${requiredFinal.toFixed(2)}</strong>`;
+            statusClass = 'bg-white border-light-subtle shadow-sm';
             
             // Color logic based on difficulty (Required Score)
-            // < 5: Easy (Green)
-            // 5 - 7: Medium (Blue/Info)
-            // 7 - 8.5: Hard (Warning/Orange)
-            // > 8.5: Very Hard (Red)
             if (requiredFinal < 5) {
                 progressColor = 'bg-success';
             } else if (requiredFinal < 7) {
@@ -959,31 +982,35 @@ function calculateAndRenderCourseGrade() {
                 progressColor = 'bg-danger';
             }
             
-            // Progress bar visualization:
-            // Let's show the required score as a percentage of 10.
-            // e.g. Need 5/10 -> 50% filled.
             progressPercent = (requiredFinal / 10) * 100;
         }
 
         return `
-            <div class="list-group-item ${statusClass}">
+            <div class="p-3 rounded-3 border ${statusClass}">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
-                        <span class="badge ${badgeColor} rounded-pill me-3" style="width: 45px; font-size: 1rem;">${grade.grade}</span>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm ${badgeColor} me-3" 
+                             style="width: 45px; height: 45px; font-size: 1.2rem;">
+                            ${grade.grade}
+                        </div>
                         <div class="d-flex flex-column">
-                            <span class="fw-medium">GPA: ${grade.gpa}</span>
+                            <span class="fw-bold text-dark">GPA ${grade.gpa}</span>
                             <span class="small text-muted">Thang điểm: ${grade.min} - ${grade.max}</span>
                         </div>
                     </div>
-                    <div class="text-end">
+                    <div class="text-end d-flex align-items-center">
                         ${message}
                     </div>
                 </div>
                 ${requiredFinal <= 10 && requiredFinal > 0 ? `
-                <div class="progress" style="height: 8px; background-color: #e9ecef;">
-                    <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${progressPercent}%" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-1">
+                <div class="mt-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted" style="font-size: 0.7rem;">Độ khó</small>
+                        <small class="text-muted" style="font-size: 0.7rem;">10</small>
+                    </div>
+                    <div class="progress" style="height: 6px; background-color: #e9ecef; border-radius: 3px;">
+                        <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${progressPercent}%" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
                 </div>
                 ` : ''}
             </div>
