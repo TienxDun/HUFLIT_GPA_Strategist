@@ -955,8 +955,6 @@ function calculateAndRenderCourseGrade() {
                     <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${progressPercent}%" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
                 <div class="d-flex justify-content-between mt-1">
-                    <small class="text-muted" style="font-size: 0.7rem;">0</small>
-                    <small class="text-muted" style="font-size: 0.7rem;">10</small>
                 </div>
                 ` : ''}
             </div>
