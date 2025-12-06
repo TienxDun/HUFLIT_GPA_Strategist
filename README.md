@@ -8,12 +8,13 @@
 
 ### 1. 🎯 Lộ Trình GPA (Target GPA)
 Tính toán điểm trung bình cần đạt cho các tín chỉ trong tương lai để đạt được GPA mục tiêu.
-- **Logic "Đòn bẩy"**: Hỗ trợ tính toán trường hợp **Học cải thiện (Retake)**, tự động thay thế điểm cũ bằng điểm mới trong công thức tính, giúp sinh viên thấy rõ tác động của việc học lại.
+- **Logic "Đòn bẩy"**: Hỗ trợ tính toán trường hợp **Học cải thiện (Retake)**, tự động thay thế điểm cũ bằng điểm mới trong công thức tính.
+- **Xử lý điểm F**: Tự động nhận diện môn rớt (F) để tính toán chính xác số tín chỉ cần tích lũy thêm mà không làm sai lệch GPA hiện tại.
 - **Dự báo khả thi**: Phân tích mục tiêu có khả thi hay không (có vượt quá 4.0 hay không) và đưa ra gợi ý phân bổ điểm số (cần bao nhiêu điểm A, B+...).
 
 ### 2. 🧮 Tính GPA Thủ Công (Manual Calc)
 Công cụ tính điểm chi tiết theo từng học kỳ, hoạt động như một file Excel thu nhỏ.
-- **Quản lý học kỳ**: Thêm/Xóa học kỳ và môn học linh hoạt.
+- **Quản lý học kỳ**: Thêm/Xóa học kỳ và môn học linh hoạt. Hiển thị **tổng số tín chỉ** của từng học kỳ ngay lập tức khi nhập liệu.
 - **Xử lý Học lại**: Tự động trừ tín chỉ và điểm số của môn cũ khỏi tổng tích lũy khi chọn chế độ "Học lại".
 - **Lưu trữ tự động**: Dữ liệu được lưu vào trình duyệt (LocalStorage), không bị mất khi tải lại trang.
 - **Xếp loại tự động**: Hiển thị xếp loại (Xuất sắc, Giỏi, Khá...) theo quy chế tín chỉ.
@@ -22,10 +23,15 @@ Công cụ tính điểm chi tiết theo từng học kỳ, hoạt động như 
 Giúp sinh viên biết chính xác cần thi cuối kỳ bao nhiêu điểm để đạt mục tiêu môn học.
 - **Tùy chọn tỷ lệ**: Hỗ trợ các tỷ lệ điểm quá trình/cuối kỳ phổ biến (30/70, 40/60, 50/50).
 - **Trực quan hóa**: Hiển thị thanh tiến độ (Progress Bar) và màu sắc cảnh báo độ khó (Xanh: Dễ, Đỏ: Khó).
+- **Cảnh báo Rớt**: Hiển thị trạng thái "Rớt" rõ ràng nếu điểm tổng kết dưới 4.0.
 
 ### 4. 📊 Tra Cứu Thang Điểm
 Bảng tra cứu thang điểm tín chỉ chính thức của HUFLIT.
 - Quy đổi từ Điểm chữ (A, B, C...) sang Thang điểm 10 và Thang điểm 4.0.
+
+### 5. 📱 Giao Diện Mobile-First
+- **Bottom Navigation**: Thanh điều hướng dưới cùng cho thiết bị di động, mang lại trải nghiệm giống ứng dụng Native (App-like experience).
+- **Responsive**: Tối ưu hóa hiển thị cho mọi kích thước màn hình.
 
 ## 🛠️ Công Nghệ Sử Dụng
 
