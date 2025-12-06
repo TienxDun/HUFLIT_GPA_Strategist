@@ -580,8 +580,15 @@ function calculateTargetGPA() {
 
     // Required Average GPA for the new/retake block
     let requiredGPA = 0;
+    let deficitPoints = 0;
+
     if (creditsToEarn > 0) {
         requiredGPA = pointsNeeded / creditsToEarn;
+        
+        // Calculate deficit if impossible
+        if (requiredGPA > 4.0) {
+            deficitPoints = pointsNeeded - (4.0 * creditsToEarn);
+        }
     } else {
         // No new credits and no retakes?
         // If Current GPA == Target GPA, then 0 needed? No, this case is weird.
@@ -590,10 +597,10 @@ function calculateTargetGPA() {
     }
 
     // 4. Render Results
-    renderTargetResult(requiredGPA, creditsToEarn);
+    renderTargetResult(requiredGPA, creditsToEarn, deficitPoints);
 }
 
-function renderTargetResult(requiredGPA, creditsToEarn) {
+function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0) {
     let html = '';
     let bgClass = '';
     let textClass = '';
@@ -630,6 +637,28 @@ function renderTargetResult(requiredGPA, creditsToEarn) {
                     <i class="bi ${icon} fs-4"></i>
                     <span class="fw-medium">${message}</span>
                 </div>
+                
+                ${(requiredGPA > 4.0 && deficitPoints > 0) ? `
+                <div class="alert alert-light mt-4 border-0 shadow-sm text-start">
+                    <h6 class="alert-heading fw-bold text-dark"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>Gợi ý cải thiện:</h6>
+                    <p class="mb-2 small text-muted">Để đạt mục tiêu, ngoài việc đạt 4.0 cho ${creditsToEarn} tín chỉ sắp tới, bạn cần học cải thiện thêm:</p>
+                    <ul class="list-group list-group-flush bg-transparent">
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom-0">
+                            <span>Nếu cải thiện môn điểm <span class="badge bg-danger">F (0.0)</span></span>
+                            <span class="fw-bold text-dark">~${Math.ceil(deficitPoints / 4.0)} tín chỉ</span>
+                        </li>
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom-0">
+                            <span>Nếu cải thiện môn điểm <span class="badge bg-warning text-dark">D (1.0)</span></span>
+                            <span class="fw-bold text-dark">~${Math.ceil(deficitPoints / 3.0)} tín chỉ</span>
+                        </li>
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom-0">
+                            <span>Nếu cải thiện môn điểm <span class="badge bg-info text-dark">C (2.0)</span></span>
+                            <span class="fw-bold text-dark">~${Math.ceil(deficitPoints / 2.0)} tín chỉ</span>
+                        </li>
+                    </ul>
+                    <p class="mb-0 mt-2 small text-muted fst-italic">*Giả định bạn đạt 4.0 ở các môn học lại này.</p>
+                </div>
+                ` : ''}
             </div>
         </div>
     `;
@@ -672,7 +701,7 @@ function renderTargetResult(requiredGPA, creditsToEarn) {
                                                     </div>
                                                     <div class="flex-grow-1">
                                                         <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="fw-bold text-dark">~${partCredits.toFixed(1)} Tín chỉ</span>
+                                                            <span class="fw-bold text-dark">${Math.round(partCredits)} Tín chỉ</span>
                                                             <span class="badge bg-light text-secondary border">${p.percent.toFixed(0)}%</span>
                                                         </div>
                                                         <div class="progress mt-1" style="height: 4px;">
