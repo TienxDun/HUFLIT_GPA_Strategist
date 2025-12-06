@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUFLIT GPA Strategist</title>
+    
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts 'Inter' -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Import Map for GenAI -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@google/genai": "https://esm.run/@google/genai"
+        }
+    }
+    </script>
+    
+    <!-- Marked Library for Markdown Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+    <!-- Header: Sticky Navbar -->
+    <nav class="navbar navbar-expand-md navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>HUFLIT GPA Strategist</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav ms-auto nav-pills" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pills-target-tab" data-bs-toggle="pill" data-bs-target="#pills-target" type="button" role="tab">
+                            <i class="bi bi-graph-up-arrow me-1"></i> Lộ trình GPA
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-manual-tab" data-bs-toggle="pill" data-bs-target="#pills-manual" type="button" role="tab">
+                            <i class="bi bi-calculator me-1"></i> Tính GPA Thủ công
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-course-tab" data-bs-toggle="pill" data-bs-target="#pills-course" type="button" role="tab">
+                            <i class="bi bi-journal-check me-1"></i> Tính điểm Môn học
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-scale-tab" data-bs-toggle="pill" data-bs-target="#pills-scale" type="button" role="tab">
+                            <i class="bi bi-table me-1"></i> Thang điểm
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="container mt-4">
+        <div class="tab-content" id="pills-tabContent">
+            
+            <!-- Tab 1: Lộ trình GPA (Target GPA) -->
+            <div class="tab-pane fade show active" id="pills-target" role="tabpanel" tabindex="0">
+                <div class="row">
+                    <!-- Left Column: Inputs -->
+                    <div class="col-md-5 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0"><i class="bi bi-input-cursor-text me-2"></i>Thông tin hiện tại</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="current-gpa" class="form-label">GPA hiện tại</label>
+                                    <input type="number" class="form-control" id="current-gpa" placeholder="VD: 3.2" step="0.01" min="0" max="4.0">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="current-credits" class="form-label">Tín chỉ tích lũy</label>
+                                    <input type="number" class="form-control" id="current-credits" placeholder="VD: 60" min="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="target-gpa" class="form-label">GPA Mục tiêu</label>
+                                    <input type="number" class="form-control" id="target-gpa" placeholder="VD: 3.6" step="0.01" min="0" max="4.0">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="new-credits" class="form-label">Tín chỉ mới (dự định học)</label>
+                                    <input type="number" class="form-control" id="new-credits" placeholder="VD: 15" min="0">
+                                </div>
+
+                                <hr>
+
+                                <!-- Retake Toggle -->
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="retake-toggle">
+                                    <label class="form-check-label fw-medium" for="retake-toggle">Học cải thiện (Retake)</label>
+                                </div>
+
+                                <!-- Retake Area -->
+                                <div id="retake-area" class="d-none">
+                                    <div class="mb-2 d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Danh sách môn học lại</small>
+                                        <button class="btn btn-sm btn-outline-secondary" id="add-retake-btn">
+                                            <i class="bi bi-plus-lg"></i> Thêm môn
+                                        </button>
+                                    </div>
+                                    <div id="retake-list" class="d-flex flex-column gap-2 mb-3">
+                                        <!-- Dynamic Retake Items will go here -->
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100 py-2 fw-bold mt-2" id="calc-target-btn">
+                                    <i class="bi bi-calculator-fill me-2"></i>Tính toán Lộ trình
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Results -->
+                    <div class="col-md-7">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0"><i class="bi bi-lightning-charge me-2"></i>Kết quả dự báo</h5>
+                            </div>
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center" id="target-result-container">
+                                <img src="https://cdn-icons-png.flaticon.com/512/6104/6104865.png" alt="Target" width="100" class="mb-3 opacity-50">
+                                <p class="text-muted">Nhập thông tin và nhấn "Tính toán" để xem lộ trình.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Tính GPA Thủ công (Manual Calc) -->
+            <div class="tab-pane fade" id="pills-manual" role="tabpanel" tabindex="0">
+                <div class="row">
+                    <!-- Left Column: Summary (Sticky) -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm border-primary sticky-top" style="top: 90px; z-index: 100;">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="card-title mb-0"><i class="bi bi-calculator me-2"></i>Tổng kết</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Initial Data Inputs -->
+                                <div class="mb-3 bg-light p-2 rounded">
+                                    <label class="form-label small fw-bold text-muted mb-1">Dữ liệu ban đầu (Tùy chọn)</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm" id="manual-initial-gpa" placeholder="GPA cũ" step="0.01" min="0" max="4.0">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm" id="manual-initial-credits" placeholder="TC cũ" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <h6 class="text-muted text-uppercase small">GPA Tích lũy Mới</h6>
+                                    <div class="display-1 fw-bold text-primary mb-2" id="manual-gpa">0.00</div>
+                                    
+                                    <div class="row mt-4">
+                                        <div class="col-6 border-end">
+                                            <h6 class="text-muted small">Tổng Tín chỉ</h6>
+                                            <div class="fs-4 fw-bold" id="manual-credits">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6 class="text-muted small">Xếp loại</h6>
+                                            <div class="fs-4 fw-bold" id="manual-rank">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                <button class="btn btn-outline-danger btn-sm w-100" id="reset-manual-btn">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Làm mới
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Semester List -->
+                    <div class="col-md-8">
+                        <div id="manual-semester-list">
+                            <!-- Semesters will be rendered here -->
+                        </div>
+
+                        <button class="btn btn-outline-primary border-dashed w-100 py-3 fw-medium" id="add-semester-btn" style="border-style: dashed; border-width: 2px;">
+                            <i class="bi bi-plus-circle-fill me-2"></i>Thêm Học kỳ mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Tính điểm Môn học (Course Grade) -->
+            <div class="tab-pane fade" id="pills-course" role="tabpanel" tabindex="0">
+                <div class="row">
+                    <!-- Left Column: Controls -->
+                    <div class="col-md-5 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0"><i class="bi bi-sliders me-2"></i>Cấu hình môn học</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Ratio Selection -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium">Tỷ lệ (Quá trình / Cuối kỳ)</label>
+                                    <div class="btn-group w-100" role="group" id="course-ratio-group">
+                                        <input type="radio" class="btn-check" name="btnradio" id="ratio3070" autocomplete="off" value="0.3">
+                                        <label class="btn btn-outline-danger" for="ratio3070">30% / 70%</label>
+                
+                                        <input type="radio" class="btn-check" name="btnradio" id="ratio4060" autocomplete="off" value="0.4" checked>
+                                        <label class="btn btn-outline-primary" for="ratio4060">40% / 60%</label>
+                
+                                        <input type="radio" class="btn-check" name="btnradio" id="ratio5050" autocomplete="off" value="0.5">
+                                        <label class="btn btn-outline-success" for="ratio5050">50% / 50%</label>
+                                    </div>
+                                </div>
+                
+                                <!-- Process Score Input -->
+                                <div class="mb-4">
+                                    <label for="process-score-input" class="form-label fw-medium">Điểm quá trình</label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <input type="range" class="form-range" min="0" max="10" step="0.1" id="process-score-range">
+                                        <input type="number" class="form-control text-center fw-bold" style="width: 80px;" min="0" max="10" step="0.1" id="process-score-input">
+                                    </div>
+                                </div>
+                
+                                <!-- Accumulated Score -->
+                                <div class="alert alert-dark d-flex justify-content-between align-items-center mb-0" role="alert">
+                                    <span><i class="bi bi-piggy-bank me-2"></i>Điểm đã tích lũy:</span>
+                                    <span class="fw-bold fs-4" id="accumulated-score">0.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Right Column: Results -->
+                    <div class="col-md-7">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0"><i class="bi bi-bullseye me-2"></i>Mục tiêu điểm thi cuối kỳ</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" id="course-grade-results">
+                                    <!-- Results will be injected here via JS -->
+                                    <div class="text-center p-4 text-muted">
+                                        Đang tính toán...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Thang điểm (Grade Scale) -->
+            <div class="tab-pane fade" id="pills-scale" role="tabpanel" tabindex="0">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0"><i class="bi bi-table me-2"></i>Thang điểm Tín chỉ HUFLIT</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered mb-0 text-center align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="py-3">Điểm Chữ</th>
+                                        <th class="py-3">Thang điểm 10</th>
+                                        <th class="py-3">Điểm Số (GPA)</th>
+                                        <th class="py-3">Xếp loại</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="grade-scale-table-body">
+                                    <!-- Data will be populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="constants.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

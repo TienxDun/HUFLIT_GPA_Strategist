@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #d32f2f; /* HUFLIT red-ish color */
+    --secondary-color: #f8f9fa;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f7fa;
+    padding-top: 70px; /* Space for sticky navbar */
+}
+
+/* Navbar Customization */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: white;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-brand i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+/* Navigation Tabs */
+.nav-pills .nav-link {
+    color: #495057;
+    border-radius: 20px;
+    padding: 8px 16px;
+    margin: 0 5px;
+    transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+    background-color: #e9ecef;
+}
+
+/* Tab Content */
+.tab-content {
+    padding: 20px 0;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Soften Borders (Like Tailwind rounded-xl) */
+.card {
+    border-radius: 1rem !important;
+    border: none;
+}
+
+.btn {
+    border-radius: 0.75rem;
+}
+
+.form-control, .form-select, .input-group-text {
+    border-radius: 0.75rem;
+}
+
+.input-group .form-control:not(:first-child), 
+.input-group .form-select:not(:first-child),
+.input-group .input-group-text:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .form-control:not(:last-child), 
+.input-group .form-select:not(:last-child),
+.input-group .input-group-text:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+ 
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .navbar-nav {
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+    
+    .nav-item {
+        white-space: nowrap;
+    }
+    
+    /* Optional: Move nav to bottom on mobile if desired, 
+       but horizontal scroll on top is often cleaner for web apps */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
