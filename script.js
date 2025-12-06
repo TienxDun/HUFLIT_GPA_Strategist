@@ -11,6 +11,35 @@ document.addEventListener('DOMContentLoaded', () => {
     initTargetGPATab();
     initManualCalcTab();
     initGradeScaleTab();
+
+    // Sync Desktop and Mobile Tabs
+    const allNavLinks = document.querySelectorAll('.nav-link[data-bs-toggle="pill"]');
+    allNavLinks.forEach(link => {
+        link.addEventListener('shown.bs.tab', (e) => {
+            const targetId = e.target.getAttribute('data-bs-target');
+            // Find all links that point to the same target
+            const correspondingLinks = document.querySelectorAll(`.nav-link[data-bs-toggle="pill"][data-bs-target="${targetId}"]`);
+            
+            correspondingLinks.forEach(other => {
+                if (other !== e.target) {
+                    // Activate the corresponding link
+                    other.classList.add('active');
+                    other.setAttribute('aria-selected', 'true');
+                    
+                    // Deactivate siblings in the same container
+                    const container = other.closest('.nav');
+                    if (container) {
+                        container.querySelectorAll('.nav-link').forEach(sib => {
+                            if (sib !== other) {
+                                sib.classList.remove('active');
+                                sib.setAttribute('aria-selected', 'false');
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    });
 });
 
 // ==========================================
@@ -183,7 +212,16 @@ function updateManualCourse(semId, courseId, field, value) {
         if (course) {
             course[field] = value;
             // If credits changed, ensure it's a number
-            if (field === 'credits') course.credits = parseFloat(value) || 0;
+            if (field === 'credits') {
+                course.credits = parseFloat(value) || 0;
+                
+                // Update UI for total credits immediately without re-rendering
+                const totalBadge = document.querySelector(`.semester-total-credits[data-sem-id="${semId}"]`);
+                if (totalBadge) {
+                    const newTotal = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+                    totalBadge.textContent = `${newTotal} TC`;
+                }
+            }
             
             saveManualState();
             // Only re-render if toggling retake (to show/hide old grade)
@@ -250,10 +288,15 @@ function calculateManualGPA() {
 }
 
 function renderManualSemesters() {
-    manualSemesterList.innerHTML = manualSemesters.map(sem => `
+    manualSemesterList.innerHTML = manualSemesters.map(sem => {
+        const semTotalCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+        return `
         <div class="card shadow-sm mb-3">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <span class="fw-bold">${sem.name}</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold">${sem.name}</span>
+                    <span class="badge bg-light text-secondary border semester-total-credits" data-sem-id="${sem.id}">${semTotalCredits} TC</span>
+                </div>
                 <div>
                     <button class="btn btn-sm btn-link text-danger delete-semester-btn" data-id="${sem.id}">
                         <i class="bi bi-trash"></i>
@@ -323,7 +366,7 @@ function renderManualSemesters() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `;}).join('');
 }
 
 function saveManualState() {
@@ -494,6 +537,7 @@ function calculateTargetGPA() {
     // 2. Handle Retakes
     let removedPoints = 0;
     let retakeCreditsTotal = 0;
+    let retakeCreditsFromF = 0; // Credits from F grade courses (not in accumulated credits)
     
     if (retakeToggle.checked) {
         const retakeItems = retakeList.querySelectorAll('.input-group');
@@ -504,6 +548,10 @@ function calculateTargetGPA() {
             if (!isNaN(oldGrade) && !isNaN(credits)) {
                 removedPoints += oldGrade * credits;
                 retakeCreditsTotal += credits;
+                
+                if (oldGrade === 0) {
+                    retakeCreditsFromF += credits;
+                }
             }
         });
     }
@@ -513,12 +561,13 @@ function calculateTargetGPA() {
     const currentTotalPoints = currentGPA * currentCredits;
     
     // Effective Current Points (after removing old grades)
+    // Note: If oldGrade was F (0), removedPoints adds 0, so it doesn't change points. Correct.
     const effectiveCurrentPoints = currentTotalPoints - removedPoints;
     
-    // Total Future Credits (Assuming retakes are part of currentCredits, so total credits don't increase by retakeCredits, only by newCredits)
-    // Note: If I retake a course, the credit count in the denominator stays the same (it's the same course).
-    // So Total Credits = CurrentCredits + NewCredits.
-    const totalFutureCredits = currentCredits + newCredits;
+    // Total Future Credits
+    // If retaking a passed course (D, C...), it's already in currentCredits.
+    // If retaking a failed course (F), it is NOT in currentCredits, so we must add it.
+    const totalFutureCredits = currentCredits + newCredits + retakeCreditsFromF;
     
     // Target Total Points
     const targetTotalPoints = targetGPA * totalFutureCredits;
@@ -604,25 +653,33 @@ function renderTargetResult(requiredGPA, creditsToEarn) {
                             <div class="card border-0 shadow-sm h-100" style="background-color: #f8f9fa;">
                                 <div class="card-body position-relative overflow-hidden">
                                     <!-- Decorative background number -->
-                                    <div class="position-absolute top-0 end-0 opacity-25 me-n2 mt-n2" 
-                                         style="font-size: 4rem; font-weight: 900; color: #e9ecef; line-height: 1;">
+                                    <div class="position-absolute top-0 end-0 me-2 mt-0" 
+                                         style="font-size: 5rem; font-weight: 900; color: #dee2e6; line-height: 1; opacity: 0.3; z-index: 0;">
                                         ${index + 1}
                                     </div>
                                     
-                                    <div class="position-relative">
+                                    <div class="position-relative" style="z-index: 1;">
                                         <h6 class="fw-bold text-dark mb-3">${s.title}</h6>
                                         
-                                        <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex flex-column gap-2">
                                             ${s.parts.map(p => {
                                                 const partCredits = (p.percent / 100) * creditsToEarn;
                                                 return `
-                                                <div class="d-flex flex-column align-items-center justify-content-center bg-white rounded-3 border p-2 shadow-sm" 
-                                                     style="flex: ${p.percent}; min-width: 80px;">
-                                                    <span class="display-6 fw-bold ${p.color.replace('bg-', 'text-')}">${p.grade}</span>
-                                                    <span class="small text-muted fw-medium">${p.percent.toFixed(0)}%</span>
-                                                    <span class="badge bg-light text-secondary border mt-1" style="font-size: 0.75rem;">~${partCredits.toFixed(1)} TC</span>
+                                                <div class="d-flex align-items-center bg-white rounded-3 border p-2 shadow-sm">
+                                                    <div class="d-flex align-items-center justify-content-center rounded-circle ${p.color} text-white fw-bold me-3" 
+                                                         style="width: 40px; height: 40px; font-size: 1.2rem;">
+                                                        ${p.grade}
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span class="fw-bold text-dark">~${partCredits.toFixed(1)} Tín chỉ</span>
+                                                            <span class="badge bg-light text-secondary border">${p.percent.toFixed(0)}%</span>
+                                                        </div>
+                                                        <div class="progress mt-1" style="height: 4px;">
+                                                            <div class="progress-bar ${p.color}" role="progressbar" style="width: ${p.percent}%"></div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                ${s.parts.indexOf(p) < s.parts.length - 1 ? '<i class="bi bi-plus-lg text-muted opacity-50"></i>' : ''}
                                             `}).join('')}
                                         </div>
                                     </div>
@@ -837,9 +894,15 @@ function calculateAndRenderCourseGrade() {
         if (requiredFinal <= 0) {
             // Already achieved
             requiredFinal = 0;
-            message = `<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Đã đạt!</span>`;
-            statusClass = 'list-group-item-success'; // Light green background
-            progressColor = 'bg-success';
+            if (grade.gpa === 0) {
+                message = `<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Rớt</span>`;
+                statusClass = 'list-group-item-danger';
+                progressColor = 'bg-danger';
+            } else {
+                message = `<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Đã đạt!</span>`;
+                statusClass = 'list-group-item-success'; // Light green background
+                progressColor = 'bg-success';
+            }
             progressPercent = 100;
         } else if (requiredFinal > 10) {
             // Impossible

@@ -100,25 +100,36 @@ body {
     background: #a8a8a8; 
 }
 
-/* Mobile Responsive Adjustments */
-@media (max-width: 768px) {
-    .navbar-nav {
-        flex-direction: row;
-        justify-content: space-around;
-        width: 100%;
-        overflow-x: auto;
-        padding-bottom: 5px;
-    }
-    
-    .nav-item {
-        white-space: nowrap;
-    }
-    
-    /* Optional: Move nav to bottom on mobile if desired, 
-       but horizontal scroll on top is often cleaner for web apps */
-}
-
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile Bottom Nav Styles */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 90px; /* Space for bottom nav */
+    }
+    
+    #mobile-bottom-tab .nav-link {
+        border-radius: 0;
+        background-color: transparent !important;
+        color: #6c757d; /* Muted color */
+        margin: 0;
+        border-top: 3px solid transparent;
+    }
+    
+    #mobile-bottom-tab .nav-link.active {
+        color: var(--primary-color) !important;
+        font-weight: 600;
+        border-top: 3px solid var(--primary-color);
+    }
+    
+    #mobile-bottom-tab .nav-link i {
+        transition: transform 0.2s;
+    }
+    
+    #mobile-bottom-tab .nav-link.active i {
+        transform: translateY(-2px);
+    }
 }

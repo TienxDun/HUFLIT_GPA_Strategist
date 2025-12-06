@@ -34,18 +34,16 @@
 <body>
 
     <!-- Header: Sticky Navbar -->
-    <nav class="navbar navbar-expand-md navbar-light fixed-top">
+    <nav class="navbar navbar-expand-md navbar-light fixed-top bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-mortarboard-fill"></i>
+            <a class="navbar-brand fw-bold text-primary" href="#">
+                <i class="bi bi-mortarboard-fill me-2"></i>
                 <span>HUFLIT GPA Strategist</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
             
-            <div class="collapse navbar-collapse" id="mainNavbar">
-                <ul class="navbar-nav ms-auto nav-pills" id="pills-tab" role="tablist">
+            <!-- Desktop Menu (Hidden on Mobile) -->
+            <div class="d-none d-md-block">
+                <ul class="nav nav-pills" id="pills-tab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="pills-target-tab" data-bs-toggle="pill" data-bs-target="#pills-target" type="button" role="tab">
                             <i class="bi bi-graph-up-arrow me-1"></i> Lộ trình GPA
@@ -68,6 +66,42 @@
                     </li>
                 </ul>
             </div>
+        </div>
+    </nav>
+
+    <!-- Bottom Navigation for Mobile (Visible only on Mobile) -->
+    <nav class="navbar fixed-bottom navbar-light bg-white border-top d-md-none shadow-lg" style="padding-bottom: env(safe-area-inset-bottom); z-index: 1040;">
+        <div class="container-fluid px-0">
+            <ul class="nav nav-pills nav-fill w-100" id="mobile-bottom-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active d-flex flex-column align-items-center py-2 rounded-0" style="font-size: 0.7rem;" 
+                        id="mobile-pills-target-tab" data-bs-toggle="pill" data-bs-target="#pills-target" type="button" role="tab">
+                        <i class="bi bi-graph-up-arrow fs-4 mb-1"></i>
+                        <span>Lộ trình</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link d-flex flex-column align-items-center py-2 rounded-0" style="font-size: 0.7rem;" 
+                        id="mobile-pills-manual-tab" data-bs-toggle="pill" data-bs-target="#pills-manual" type="button" role="tab">
+                        <i class="bi bi-calculator fs-4 mb-1"></i>
+                        <span>Thủ công</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link d-flex flex-column align-items-center py-2 rounded-0" style="font-size: 0.7rem;" 
+                        id="mobile-pills-course-tab" data-bs-toggle="pill" data-bs-target="#pills-course" type="button" role="tab">
+                        <i class="bi bi-journal-check fs-4 mb-1"></i>
+                        <span>Môn học</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link d-flex flex-column align-items-center py-2 rounded-0" style="font-size: 0.7rem;" 
+                        id="mobile-pills-scale-tab" data-bs-toggle="pill" data-bs-target="#pills-scale" type="button" role="tab">
+                        <i class="bi bi-table fs-4 mb-1"></i>
+                        <span>Thang điểm</span>
+                    </button>
+                </li>
+            </ul>
         </div>
     </nav>
 
