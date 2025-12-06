@@ -596,17 +596,21 @@ function calculateTargetGPA() {
     let retakeCreditsFromF = 0; // Credits from F grade courses (not in accumulated credits)
     
     if (retakeToggle.checked) {
-        const retakeItems = retakeList.querySelectorAll('.input-group');
-        retakeItems.forEach(item => {
-            const oldGrade = parseFloat(item.querySelector('.retake-old-grade').value);
-            const credits = parseFloat(item.querySelector('.retake-credits').value);
+        Array.from(retakeList.children).forEach(item => {
+            const oldGradeSelect = item.querySelector('.retake-old-grade');
+            const creditsInput = item.querySelector('.retake-credits');
             
-            if (!isNaN(oldGrade) && !isNaN(credits)) {
-                removedPoints += oldGrade * credits;
-                retakeCreditsTotal += credits;
+            if (oldGradeSelect && creditsInput) {
+                const oldGrade = parseFloat(oldGradeSelect.value);
+                const credits = parseFloat(creditsInput.value);
                 
-                if (oldGrade === 0) {
-                    retakeCreditsFromF += credits;
+                if (!isNaN(oldGrade) && !isNaN(credits)) {
+                    removedPoints += oldGrade * credits;
+                    retakeCreditsTotal += credits;
+                    
+                    if (oldGrade === 0) {
+                        retakeCreditsFromF += credits;
+                    }
                 }
             }
         });
