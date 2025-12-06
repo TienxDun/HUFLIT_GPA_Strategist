@@ -302,6 +302,17 @@ function calculateManualGPA() {
     manualGpaDisplay.className = `display-1 fw-bold mb-2 ${gpa >= 3.2 ? 'text-success' : (gpa >= 2.5 ? 'text-primary' : 'text-danger')}`;
 }
 
+window.adjustManualCredit = function(semId, courseId, delta) {
+    const input = document.querySelector(`input.manual-input[data-sem-id="${semId}"][data-course-id="${courseId}"][data-field="credits"]`);
+    if (input) {
+        let val = parseFloat(input.value) || 0;
+        val += delta;
+        if (val < 0) val = 0;
+        input.value = val;
+        updateManualCourse(semId, courseId, 'credits', val);
+    }
+};
+
 function renderManualSemesters() {
     manualSemesterList.innerHTML = manualSemesters.map(sem => {
         const semTotalCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
@@ -321,12 +332,12 @@ function renderManualSemesters() {
             <div class="card-body p-2">
                 <div class="table-responsive">
                     <table class="table table-borderless align-middle mb-0">
-                        <thead class="text-muted small border-bottom">
+                        <thead class="text-muted small border-bottom text-nowrap">
                             <tr>
-                                <th style="width: 35%">Môn học</th>
-                                <th style="width: 15%">TC</th>
-                                <th style="width: 20%">Điểm</th>
-                                <th style="width: 25%">Học lại?</th>
+                                <th style="width: 30%; min-width: 100px;">Môn học</th>
+                                <th style="width: 20%; min-width: 85px;">TC</th>
+                                <th style="width: 25%; min-width: 75px;">Điểm</th>
+                                <th style="width: 20%; min-width: 65px;">Học lại?</th>
                                 <th style="width: 5%"></th>
                             </tr>
                         </thead>
@@ -339,9 +350,13 @@ function renderManualSemesters() {
                                             data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="name">
                                     </td>
                                     <td>
-                                        <input type="number" class="form-control form-control-sm manual-input" 
-                                            value="${course.credits}" min="0"
-                                            data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="credits">
+                                        <div class="input-group input-group-sm flex-nowrap" style="min-width: 80px;">
+                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="adjustManualCredit(${sem.id}, ${course.id}, -1)">-</button>
+                                            <input type="number" class="form-control form-control-sm manual-input text-center px-0" 
+                                                value="${course.credits}" min="0" readonly
+                                                data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="credits">
+                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="adjustManualCredit(${sem.id}, ${course.id}, 1)">+</button>
+                                        </div>
                                     </td>
                                     <td>
                                         <select class="form-select form-select-sm manual-input"
@@ -463,27 +478,49 @@ function initTargetGPATab() {
 function addRetakeItem(savedData = null) {
     const id = Date.now();
     const item = document.createElement('div');
-    item.className = 'input-group mb-2';
+    item.className = 'd-flex gap-2 mb-2 align-items-center';
     
     const defaultGrade = savedData ? savedData.oldGrade : (GRADE_SCALE[0] ? GRADE_SCALE[0].gpa : 0);
     const defaultCredits = savedData ? savedData.credits : 3;
 
     item.innerHTML = `
-        <span class="input-group-text bg-light">Điểm cũ</span>
-        <select class="form-select retake-old-grade" aria-label="Old Grade">
-            ${GRADE_SCALE.map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
-        </select>
-        <span class="input-group-text bg-light">TC</span>
-        <input type="number" class="form-control retake-credits" placeholder="3" value="${defaultCredits}" min="1" max="10">
-        <button class="btn btn-outline-danger delete-retake-btn" type="button"><i class="bi bi-trash"></i></button>
+        <div class="input-group flex-grow-1">
+            <span class="input-group-text bg-light text-muted small px-2">Điểm cũ</span>
+            <select class="form-select retake-old-grade" aria-label="Old Grade">
+                ${GRADE_SCALE.map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
+            </select>
+        </div>
+        <div class="input-group flex-nowrap" style="width: 110px;">
+            <button class="btn btn-light border text-muted small px-2 btn-decrement" type="button">-</button>
+            <input type="number" class="form-control retake-credits text-center px-1 border-start-0 border-end-0" placeholder="3" value="${defaultCredits}" min="1" max="10" readonly>
+            <button class="btn btn-light border text-muted small px-2 btn-increment" type="button">+</button>
+        </div>
+        <button class="btn btn-light text-danger border-0 delete-retake-btn p-2" type="button"><i class="bi bi-trash"></i></button>
     `;
 
     // Listeners for inner elements
     const select = item.querySelector('.retake-old-grade');
     const input = item.querySelector('.retake-credits');
+    const btnDec = item.querySelector('.btn-decrement');
+    const btnInc = item.querySelector('.btn-increment');
     
     select.addEventListener('change', saveTargetState);
-    input.addEventListener('input', saveTargetState);
+    
+    btnDec.addEventListener('click', () => {
+        let val = parseFloat(input.value) || 0;
+        if (val > 1) {
+            input.value = val - 1;
+            saveTargetState();
+        }
+    });
+
+    btnInc.addEventListener('click', () => {
+        let val = parseFloat(input.value) || 0;
+        if (val < 10) {
+            input.value = val + 1;
+            saveTargetState();
+        }
+    });
 
     // Delete Event
     item.querySelector('.delete-retake-btn').addEventListener('click', () => {
@@ -497,11 +534,15 @@ function addRetakeItem(savedData = null) {
 function saveTargetState() {
     const retakes = [];
     if (retakeToggle.checked) {
-        const retakeItems = retakeList.querySelectorAll('.input-group');
-        retakeItems.forEach(item => {
-            const oldGrade = parseFloat(item.querySelector('.retake-old-grade').value);
-            const credits = parseFloat(item.querySelector('.retake-credits').value);
-            retakes.push({ oldGrade, credits });
+        Array.from(retakeList.children).forEach(item => {
+            const oldGradeSelect = item.querySelector('.retake-old-grade');
+            const creditsInput = item.querySelector('.retake-credits');
+            if (oldGradeSelect && creditsInput) {
+                retakes.push({ 
+                    oldGrade: parseFloat(oldGradeSelect.value), 
+                    credits: parseFloat(creditsInput.value) 
+                });
+            }
         });
     }
 
@@ -951,24 +992,24 @@ function calculateAndRenderCourseGrade() {
             // Already achieved
             requiredFinal = 0;
             if (grade.gpa === 0) {
-                message = `<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Rớt</span>`;
+                message = `<span class="text-danger fw-bold small"><i class="bi bi-x-circle-fill me-1"></i>Rớt</span>`;
                 statusClass = 'bg-danger-subtle border-danger-subtle';
                 progressColor = 'bg-danger';
             } else {
-                message = `<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Đã đạt!</span>`;
+                message = `<span class="text-success fw-bold small"><i class="bi bi-check-circle-fill me-1"></i>Đạt</span>`;
                 statusClass = 'bg-success-subtle border-success-subtle'; // Light green background
                 progressColor = 'bg-success';
             }
             progressPercent = 100;
         } else if (requiredFinal > 10) {
             // Impossible
-            message = `<span class="text-muted small">Không thể đạt (>10)</span>`;
+            message = `<span class="text-muted small">Không thể (>10)</span>`;
             statusClass = 'bg-light opacity-75 border-light'; // Grayed out
             progressColor = 'bg-secondary';
             progressPercent = 0;
         } else {
             // Possible
-            message = `<span class="text-muted small me-2">Cần thi:</span><strong class="fs-4 text-dark">${requiredFinal.toFixed(2)}</strong>`;
+            message = `<div class="d-flex align-items-baseline"><span class="text-muted small me-2">Cần:</span><strong class="fs-5 text-dark">${requiredFinal.toFixed(2)}</strong></div>`;
             statusClass = 'bg-white border-light-subtle shadow-sm';
             
             // Color logic based on difficulty (Required Score)
@@ -986,31 +1027,25 @@ function calculateAndRenderCourseGrade() {
         }
 
         return `
-            <div class="p-3 rounded-3 border ${statusClass}">
-                <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="p-3 rounded-3 border ${statusClass} mb-2">
+                <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
                         <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm ${badgeColor} me-3" 
-                             style="width: 45px; height: 45px; font-size: 1.2rem;">
+                             style="width: 40px; height: 40px; font-size: 1rem;">
                             ${grade.grade}
                         </div>
                         <div class="d-flex flex-column">
-                            <span class="fw-bold text-dark">GPA ${grade.gpa}</span>
-                            <span class="small text-muted">Thang điểm: ${grade.min} - ${grade.max}</span>
+                            <span class="fw-bold text-dark small">GPA ${grade.gpa}</span>
+                            <span class="text-muted" style="font-size: 0.7rem;">${grade.min} - ${grade.max}</span>
                         </div>
                     </div>
-                    <div class="text-end d-flex align-items-center">
+                    <div class="text-end">
                         ${message}
                     </div>
                 </div>
                 ${requiredFinal <= 10 && requiredFinal > 0 ? `
-                <div class="mt-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <small class="text-muted" style="font-size: 0.7rem;">Độ khó</small>
-                        <small class="text-muted" style="font-size: 0.7rem;">10</small>
-                    </div>
-                    <div class="progress" style="height: 6px; background-color: #e9ecef; border-radius: 3px;">
-                        <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${progressPercent}%" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
+                <div class="progress mt-2" style="height: 4px; background-color: #f0f0f0;">
+                    <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${progressPercent}%" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
                 ` : ''}
             </div>
