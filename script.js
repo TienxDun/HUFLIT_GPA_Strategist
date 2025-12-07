@@ -369,22 +369,22 @@ function calculateManualGPA() {
             const gpa = gradeInfo ? gradeInfo.gpa : 0;
             const credits = parseFloat(course.credits) || 0;
 
-            // Add current course
+            // Add current course - F grades don't count towards total credits
             totalPoints += gpa * credits;
-            totalCredits += credits;
+            if (gpa > 0) {
+                totalCredits += credits;
+            }
 
             // Handle Retake Logic
             if (course.isRetake) {
                 const oldGradeInfo = GRADE_SCALE.find(g => g.grade === course.oldGrade);
                 const oldGpa = oldGradeInfo ? oldGradeInfo.gpa : 0;
                 
-                // Subtract old course effect
-                // Note: This assumes the old course WAS included in the Initial Data or previous semesters.
-                // If totalCredits becomes negative (impossible in reality but possible if user inputs wrong data), we clamp it?
-                // No, let's just do the math.
-                
+                // Subtract old course effect - only if old grade was passing
                 totalPoints -= oldGpa * credits;
-                totalCredits -= credits;
+                if (oldGpa > 0) {
+                    totalCredits -= credits;
+                }
             }
         });
     });
@@ -592,24 +592,24 @@ function initTargetGPATab() {
 function addRetakeItem(savedData = null) {
     const id = Date.now();
     const item = document.createElement('div');
-    item.className = 'd-flex gap-2 mb-2 align-items-center';
+    item.className = 'd-flex gap-2 mb-2 align-items-center flex-nowrap';
     
     const defaultGrade = savedData ? savedData.oldGrade : (GRADE_SCALE[0] ? GRADE_SCALE[0].gpa : 0);
     const defaultCredits = savedData ? savedData.credits : 3;
 
     item.innerHTML = `
-        <div class="input-group flex-grow-1">
+        <div class="input-group flex-grow-1" style="min-width: 0;">
             <span class="input-group-text bg-light text-muted small px-2">Điểm cũ</span>
-            <select class="form-select retake-old-grade" aria-label="Old Grade">
+            <select class="form-select retake-old-grade" aria-label="Old Grade" style="text-overflow: ellipsis;">
                 ${GRADE_SCALE.map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
             </select>
         </div>
-        <div class="input-group flex-nowrap" style="width: 110px;">
+        <div class="input-group flex-nowrap" style="width: 90px; flex-shrink: 0;">
             <button class="btn btn-light border text-muted small px-2 btn-decrement" type="button">-</button>
-            <input type="number" class="form-control retake-credits text-center px-1 border-start-0 border-end-0" placeholder="3" value="${defaultCredits}" min="1" max="10" readonly>
+            <input type="number" class="form-control retake-credits text-center px-0 border-start-0 border-end-0" placeholder="3" value="${defaultCredits}" min="1" max="10" readonly>
             <button class="btn btn-light border text-muted small px-2 btn-increment" type="button">+</button>
         </div>
-        <button class="btn btn-light text-danger border-0 delete-retake-btn p-2" type="button"><i class="bi bi-trash"></i></button>
+        <button class="btn btn-light text-danger border-0 delete-retake-btn p-2 flex-shrink-0" type="button"><i class="bi bi-trash"></i></button>
     `;
 
     // Listeners for inner elements
@@ -771,10 +771,23 @@ function calculateTargetGPA() {
     }
 
     // 4. Render Results
-    renderTargetResult(requiredGPA, creditsToEarn, deficitPoints);
+    const details = {
+        targetGPA,
+        totalFutureCredits,
+        targetTotalPoints,
+        effectiveCurrentPoints,
+        pointsNeeded,
+        creditsToEarn,
+        requiredGPA,
+        currentTotalPoints,
+        removedPoints,
+        currentCredits,
+        retakeCreditsTotal
+    };
+    renderTargetResult(requiredGPA, creditsToEarn, deficitPoints, details);
 }
 
-function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0) {
+function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, details = null) {
     let html = '';
     let bgClass = '';
     let textClass = '';
@@ -851,64 +864,154 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0) {
 
     // Advanced Scenarios
     if (requiredGPA <= 4.0 && requiredGPA > 0) {
-        const suggestions = generateGradeSuggestions(requiredGPA);
+        const suggestions = generateCombinationSuggestions(requiredGPA, creditsToEarn);
         
         html += `
-            <div class="w-100 text-start mt-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-2 text-primary">
-                        <i class="bi bi-stars"></i>
-                    </div>
-                    <h6 class="fw-bold mb-0">Gợi ý chiến lược phân bổ</h6>
+            <div class="px-3 pb-3 bg-white border-top mt-4">
+                <div class="pt-3 mb-3 d-flex align-items-center justify-content-between">
+                    <p class="small fw-bold text-secondary text-uppercase mb-0 d-flex align-items-center">
+                        <i class="bi bi-layers me-2"></i>Các phương án khả thi
+                    </p>
+                    <span class="badge bg-light text-secondary rounded-pill border">${suggestions.length} tổ hợp</span>
                 </div>
-                
-                <div class="row row-cols-1 g-3">
-                    ${suggestions.map((s, index) => `
-                        <div class="col">
-                            <div class="card border-0 shadow-sm h-100" style="background-color: #f8f9fa;">
-                                <div class="card-body position-relative overflow-hidden">
-                                    <!-- Decorative background number -->
-                                    <div class="position-absolute top-0 end-0 me-2 mt-0" 
-                                         style="font-size: 5rem; font-weight: 900; color: #dee2e6; line-height: 1; opacity: 0.3; z-index: 0;">
-                                        ${index + 1}
+                <div class="d-flex flex-column gap-3 overflow-auto pe-1 custom-scrollbar" style="max-height: 400px;">
+                    ${suggestions.map(s => `
+                        <div class="bg-light rounded-3 p-3 border transition-all">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-white text-dark border shadow-sm text-uppercase">Kết hợp ${s.g1.grade} & ${s.g2.grade}</span>
+                            </div>
+                            <div class="d-flex gap-2 align-items-stretch">
+                                <div class="flex-fill p-2 rounded border bg-white position-relative overflow-hidden">
+                                    <div class="position-absolute top-0 start-0 bottom-0 ${getGradeBgSubtle(s.g1.grade)}" style="width: 4px;"></div>
+                                    <div class="d-flex justify-content-between align-items-baseline ps-2">
+                                        <span class="fw-bold ${getGradeTextColor(s.g1.grade)}">${s.g1.grade}</span>
+                                        <span class="small fw-medium text-secondary">${s.c1} TC</span>
                                     </div>
-                                    
-                                    <div class="position-relative" style="z-index: 1;">
-                                        <h6 class="fw-bold text-dark mb-3">${s.title}</h6>
-                                        
-                                        <div class="d-flex flex-column gap-2">
-                                            ${s.parts.map(p => {
-                                                const partCredits = (p.percent / 100) * creditsToEarn;
-                                                return `
-                                                <div class="d-flex align-items-center bg-white rounded-3 border p-2 shadow-sm">
-                                                    <div class="d-flex align-items-center justify-content-center rounded-circle ${p.color} text-white fw-bold me-3" 
-                                                         style="width: 40px; height: 40px; font-size: 1.2rem;">
-                                                        ${p.grade}
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <span class="fw-bold text-dark">${Math.round(partCredits)} Tín chỉ</span>
-                                                            <span class="badge bg-light text-secondary border">${p.percent.toFixed(0)}%</span>
-                                                        </div>
-                                                        <div class="progress mt-1" style="height: 4px;">
-                                                            <div class="progress-bar ${p.color}" role="progressbar" style="width: ${p.percent}%"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            `}).join('')}
-                                        </div>
+                                </div>
+                                <div class="d-flex align-items-center text-muted">
+                                    <i class="bi bi-plus-lg small"></i>
+                                </div>
+                                <div class="flex-fill p-2 rounded border bg-white position-relative overflow-hidden">
+                                    <div class="position-absolute top-0 start-0 bottom-0 ${getGradeBgSubtle(s.g2.grade)}" style="width: 4px;"></div>
+                                    <div class="d-flex justify-content-between align-items-baseline ps-2">
+                                        <span class="fw-bold ${getGradeTextColor(s.g2.grade)}">${s.g2.grade}</span>
+                                        <span class="small fw-medium text-secondary">${s.c2} TC</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
-                
-                <div class="d-flex align-items-start mt-3 text-muted small">
-                    <i class="bi bi-info-circle-fill me-2 mt-1 text-primary"></i>
-                    <div>
-                        Áp dụng cho <strong>${creditsToEarn}</strong> tín chỉ tiếp theo. 
-                        Bạn có thể phối hợp các môn học theo tỷ lệ trên để đạt mục tiêu.
+                <div class="mt-2 small text-muted text-center fst-italic">Danh sách sắp xếp theo độ ổn định (khoảng cách điểm nhỏ nhất)</div>
+            </div>
+        `;
+    }
+
+    // Add Detailed Algorithm Section
+    if (details) {
+        html += `
+            <div class="mt-4 border-top pt-3">
+                <button class="btn btn-light w-100 d-flex align-items-center justify-content-between text-secondary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#algoDetails" aria-expanded="false" aria-controls="algoDetails">
+                    <span class="d-flex align-items-center gap-2">
+                        <div class="bg-light text-secondary p-1 rounded transition-colors">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        Chi tiết thuật toán tính điểm
+                    </span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse" id="algoDetails">
+                    <div class="position-relative ps-3">
+                        <div class="position-absolute start-0 top-0 bottom-0 border-start border-2 ms-3" style="z-index: 0;"></div>
+                        
+                        <!-- Step 1: Target Total Points -->
+                        <div class="d-flex gap-3 mb-3 position-relative" style="z-index: 1;">
+                            <div class="rounded-circle bg-white border d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 32px; height: 32px;">
+                                <span class="small fw-bold text-secondary">1</span>
+                            </div>
+                            <div class="card flex-grow-1 border shadow-sm">
+                                <div class="card-body p-2">
+                                    <div class="small text-muted fw-medium mb-1">Tổng điểm hệ 4 cần đạt</div>
+                                    <div class="d-flex justify-content-between align-items-end">
+                                        <span class="small text-muted">(${details.targetGPA} GPA × ${details.totalFutureCredits} TC)</span>
+                                        <span class="fw-bold font-monospace text-dark">${details.targetTotalPoints.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Current Accumulated Points -->
+                        <div class="d-flex gap-3 mb-3 position-relative" style="z-index: 1;">
+                            <div class="rounded-circle bg-white border d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 32px; height: 32px;">
+                                <span class="small fw-bold text-secondary">2</span>
+                            </div>
+                            <div class="card flex-grow-1 border shadow-sm">
+                                <div class="card-body p-2">
+                                    <div class="small text-muted fw-medium mb-1">Điểm tích lũy hiện có</div>
+                                    <div class="d-flex justify-content-between align-items-end">
+                                        <span class="small text-muted">(${details.currentCredits} TC)</span>
+                                        <span class="fw-bold font-monospace text-dark">${details.currentTotalPoints.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Retake Deduction (Only if retakes exist) -->
+                        ${details.removedPoints > 0 ? `
+                        <div class="d-flex gap-3 mb-3 position-relative" style="z-index: 1;">
+                            <div class="rounded-circle bg-warning-subtle border border-warning-subtle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 32px; height: 32px;">
+                                <span class="small fw-bold text-warning-emphasis">3</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="card border-warning-subtle bg-warning-subtle mb-2 shadow-sm position-relative overflow-hidden">
+                                    <div class="position-absolute top-0 end-0 p-1 bg-warning-subtle rounded-bottom-start">
+                                        <i class="bi bi-trash text-warning-emphasis small"></i>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div class="small text-warning-emphasis fw-bold mb-1">Trừ điểm các môn học lại</div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="small text-warning-emphasis opacity-75">(${details.retakeCreditsTotal} TC cũ)</span>
+                                            <span class="fw-bold font-monospace text-warning-emphasis">- ${details.removedPoints.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card border shadow-sm bg-light">
+                                    <div class="card-body p-2">
+                                        <div class="small text-secondary fw-medium mb-1">Điểm sàn sau khi trừ</div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="small text-muted">Còn lại</span>
+                                            <span class="fw-bold font-monospace text-dark">${details.effectiveCurrentPoints.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Step 4: Final Calculation -->
+                        <div class="d-flex gap-3 position-relative" style="z-index: 1;">
+                            <div class="rounded-circle bg-primary border-4 border-primary-subtle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 32px; height: 32px;">
+                                <span class="small fw-bold text-white">${details.removedPoints > 0 ? '4' : '3'}</span>
+                            </div>
+                            <div class="card flex-grow-1 bg-primary text-white border-0 shadow">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <div class="small text-white-50 text-uppercase fw-bold opacity-75">Điểm cần tích lũy thêm</div>
+                                            <div class="h4 font-monospace fw-bold mb-0">${details.pointsNeeded.toFixed(2)}</div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="small text-white-50">Tổng tín chỉ học</div>
+                                            <div class="fw-bold">${details.creditsToEarn} TC</div>
+                                        </div>
+                                    </div>
+                                    <div class="border-top border-white-50 pt-3 d-flex justify-content-between align-items-center">
+                                        <span class="small fw-medium text-white-50">GPA Trung bình cần đạt</span>
+                                        <span class="badge bg-white bg-opacity-25 px-2 py-1 rounded font-monospace">${details.pointsNeeded.toFixed(2)} / ${details.creditsToEarn} = ${details.requiredGPA.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -919,90 +1022,76 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0) {
     targetResultContainer.classList.remove('justify-content-center', 'align-items-center', 'text-center');
 }
 
-function generateGradeSuggestions(target) {
+function generateCombinationSuggestions(target, totalCredits) {
     const suggestions = [];
-    
-    // 1. Find bracketing grades
-    // Sort grades descending
-    const sortedGrades = [...GRADE_SCALE].sort((a, b) => b.gpa - a.gpa);
-    
-    let upper = null;
-    let lower = null;
-    
-    for (let i = 0; i < sortedGrades.length - 1; i++) {
-        if (sortedGrades[i].gpa >= target && sortedGrades[i+1].gpa <= target) {
-            upper = sortedGrades[i];
-            lower = sortedGrades[i+1];
-            break;
+    // Filter out F (0.0) and D (1.0) grades, keep only D+ (1.5) and above if desired, 
+    // or strictly remove F and D. Based on request "Bỏ các tổ hợp với điểm F và D".
+    // Assuming D+ is acceptable? Or just remove grades < 1.5?
+    // Let's remove grades with GPA <= 1.0 (F=0, D=1). D+ is 1.5.
+    const grades = [...GRADE_SCALE]
+        .filter(g => g.gpa > 1.0) 
+        .sort((a, b) => b.gpa - a.gpa); // Descending GPA
+
+    // Iterate all pairs (G1, G2) with G1 > G2 (Strictly distinct grades)
+    for (let i = 0; i < grades.length; i++) {
+        for (let j = i + 1; j < grades.length; j++) {
+            const g1 = grades[i];
+            const g2 = grades[j];
+
+            // Case 2: g1.gpa != g2.gpa
+            // We want x * g1 + (C - x) * g2 >= target * C
+            // x * (g1 - g2) >= C * (target - g2)
+            const numerator = totalCredits * (target - g2.gpa);
+            const denominator = g1.gpa - g2.gpa;
+            
+            let minX = Math.ceil(numerator / denominator);
+            
+            // Clamp minX
+            if (minX < 0) minX = 0;
+            
+            // If minX > totalCredits, this pair cannot achieve the target
+            if (minX > totalCredits) continue;
+
+            // If minX is valid, we have a solution: x = minX, y = totalCredits - minX
+            const x = minX;
+            const y = totalCredits - x;
+            const avg = (x * g1.gpa + y * g2.gpa) / totalCredits;
+
+            suggestions.push({
+                g1: g1,
+                c1: x,
+                g2: g2,
+                c2: y,
+                avg: avg,
+                gap: Math.abs(g1.gpa - g2.gpa)
+            });
         }
     }
-    
-    if (!upper || !lower) {
-        // Edge case: target is higher than max or lower than min (already handled by caller mostly)
-        // If target is exactly 4.0, upper is A, lower is A?
-        if (target >= 4.0) return [{ title: "Hoàn hảo", gpa: 4.0, parts: [{ grade: 'A', percent: 100, color: 'bg-success', badge: 'bg-success' }] }];
-        // If target is very low
-        return [];
-    }
 
-    // Strategy 1: Minimum Effort (Mix of Upper and Lower)
-    // x * upper + (1-x) * lower = target
-    // x(upper - lower) = target - lower
-    // x = (target - lower) / (upper - lower)
-    const ratio = (target - lower.gpa) / (upper.gpa - lower.gpa);
-    const upperPercent = ratio * 100;
-    const lowerPercent = 100 - upperPercent;
-    
-    suggestions.push({
-        title: "Phương án Tối thiểu",
-        gpa: target,
-        parts: [
-            { grade: upper.grade, percent: upperPercent, color: getGradeColor(upper.grade), badge: getGradeBadge(upper.grade) },
-            { grade: lower.grade, percent: lowerPercent, color: getGradeColor(lower.grade), badge: getGradeBadge(lower.grade) }
-        ]
+    // Filter duplicates and normalize
+    const uniqueSuggestions = [];
+    const seen = new Set();
+
+    suggestions.forEach(s => {
+        let key = '';
+        if (s.c1 === totalCredits) {
+            key = `${s.g1.grade}:${s.c1}`;
+        } else if (s.c2 === totalCredits) {
+            key = `${s.g2.grade}:${s.c2}`;
+        } else {
+            key = `${s.g1.grade}:${s.c1}|${s.g2.grade}:${s.c2}`;
+        }
+
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueSuggestions.push(s);
+        }
     });
 
-    // Strategy 2: Safe Bet (Mix of A and something lower)
-    // If upper is not A, we can try mixing A with lower (or even lower than lower)
-    if (upper.grade !== 'A') {
-        const gradeA = sortedGrades[0]; // A (4.0)
-        // Mix A and Lower
-        // x * 4.0 + (1-x) * lower = target
-        const ratioA = (target - lower.gpa) / (gradeA.gpa - lower.gpa);
-        const percentA = ratioA * 100;
-        
-        suggestions.push({
-            title: "Phương án An toàn (Dùng điểm A)",
-            gpa: target,
-            parts: [
-                { grade: 'A', percent: percentA, color: 'bg-success', badge: 'bg-success' },
-                { grade: lower.grade, percent: 100 - percentA, color: getGradeColor(lower.grade), badge: getGradeBadge(lower.grade) }
-            ]
-        });
-    } else {
-        // If upper is A, maybe mix A and C+ (skip B) to see if we can slack off on some subjects?
-        // Find a grade 2 steps below lower
-        const lowerIndex = sortedGrades.indexOf(lower);
-        if (lowerIndex + 1 < sortedGrades.length) {
-            const evenLower = sortedGrades[lowerIndex + 1];
-             // Mix A and EvenLower
-             // x * 4.0 + (1-x) * evenLower = target
-             const ratioA2 = (target - evenLower.gpa) / (4.0 - evenLower.gpa);
-             if (ratioA2 > 0 && ratioA2 < 1) {
-                 const percentA2 = ratioA2 * 100;
-                 suggestions.push({
-                    title: `Phương án Linh hoạt (A & ${evenLower.grade})`,
-                    gpa: target,
-                    parts: [
-                        { grade: 'A', percent: percentA2, color: 'bg-success', badge: 'bg-success' },
-                        { grade: evenLower.grade, percent: 100 - percentA2, color: getGradeColor(evenLower.grade), badge: getGradeBadge(evenLower.grade) }
-                    ]
-                });
-             }
-        }
-    }
+    // Sort by gap (stability) ascending
+    uniqueSuggestions.sort((a, b) => a.gap - b.gap);
 
-    return suggestions;
+    return uniqueSuggestions;
 }
 
 function getGradeColor(grade) {
@@ -1019,6 +1108,22 @@ function getGradeBadge(grade) {
     if (grade.startsWith('C')) return 'bg-info text-dark';
     if (grade.startsWith('D')) return 'bg-warning text-dark';
     return 'bg-danger';
+}
+
+function getGradeTextColor(grade) {
+    if (grade.startsWith('A')) return 'text-success';
+    if (grade.startsWith('B')) return 'text-primary';
+    if (grade.startsWith('C')) return 'text-info';
+    if (grade.startsWith('D')) return 'text-warning';
+    return 'text-danger';
+}
+
+function getGradeBgSubtle(grade) {
+    if (grade.startsWith('A')) return 'bg-success-subtle';
+    if (grade.startsWith('B')) return 'bg-primary-subtle';
+    if (grade.startsWith('C')) return 'bg-info-subtle';
+    if (grade.startsWith('D')) return 'bg-warning-subtle';
+    return 'bg-danger-subtle';
 }
 
 // ==========================================
