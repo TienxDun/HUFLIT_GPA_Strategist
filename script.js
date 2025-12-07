@@ -361,9 +361,9 @@ function renderManualSemesters() {
                     <table class="table table-borderless align-middle mb-0">
                         <thead class="text-muted small border-bottom text-nowrap">
                             <tr>
-                                <th style="width: 30%; min-width: 100px;">Môn học</th>
-                                <th style="width: 15%; min-width: 85px;">TC</th>
-                                <th style="width: 30%; min-width: 75px;">Điểm</th>
+                                <th style="width: 30%; min-width: 90px;">Môn học</th>
+                                <th style="width: 20%; min-width: 85px;">TC</th>
+                                <th style="width: 25%; min-width: 85px;">Điểm</th>
                                 <th style="width: 20%; min-width: 65px;">Học lại?</th>
                                 <th style="width: 5%"></th>
                             </tr>
