@@ -1153,7 +1153,7 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                         </div>
                     `}).join('')}
                 </div>
-                <div class="mt-2 small text-muted text-center fst-italic">Danh sách sắp xếp theo độ ổn định (khoảng cách điểm nhỏ nhất)</div>
+                <div class="mt-2 small text-muted text-center fst-italic">Danh sách sắp xếp theo độ sát với mục tiêu (từ thấp đến cao)</div>
             </div>
         `;
     }
@@ -1339,8 +1339,17 @@ function generateCombinationSuggestions(target, totalCredits) {
         }
     });
 
-    // Sort by gap (stability) ascending
-    uniqueSuggestions.sort((a, b) => a.gap - b.gap);
+    // Sort by closeness to target (avg - target) ascending, then by gap (stability) ascending
+    uniqueSuggestions.sort((a, b) => {
+        const diffA = a.avg - target;
+        const diffB = b.avg - target;
+        
+        // Use a small epsilon for float comparison if needed, but simple subtraction works for sorting
+        if (Math.abs(diffA - diffB) > 0.0001) {
+            return diffA - diffB;
+        }
+        return a.gap - b.gap;
+    });
 
     return uniqueSuggestions;
 }
