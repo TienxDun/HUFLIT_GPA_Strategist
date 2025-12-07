@@ -1119,10 +1119,17 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                     <span class="badge bg-light text-secondary rounded-pill border">${suggestions.length} tổ hợp</span>
                 </div>
                 <div class="d-flex flex-column gap-3 overflow-auto pe-1 custom-scrollbar" style="max-height: 400px;">
-                    ${suggestions.map(s => `
+                    ${suggestions.map(s => {
+                        const totalPoints = (s.c1 * s.g1.gpa + s.c2 * s.g2.gpa).toFixed(2);
+                        const needed = details ? details.pointsNeeded.toFixed(2) : '0.00';
+                        
+                        return `
                         <div class="bg-light rounded-3 p-3 border transition-all">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="badge bg-white text-dark border shadow-sm text-uppercase">Kết hợp ${s.g1.grade} & ${s.g2.grade}</span>
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle" title="Tổng điểm đạt được / Điểm cần thiết">
+                                    ${totalPoints} / ${needed} điểm
+                                </span>
                             </div>
                             <div class="d-flex gap-2 align-items-stretch">
                                 <div class="flex-fill p-2 rounded border bg-white position-relative overflow-hidden">
@@ -1144,7 +1151,7 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                                 </div>
                             </div>
                         </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
                 <div class="mt-2 small text-muted text-center fst-italic">Danh sách sắp xếp theo độ ổn định (khoảng cách điểm nhỏ nhất)</div>
             </div>
@@ -1696,5 +1703,48 @@ function parsePortalText(text) {
             }
         }
     }
+
+    // Post-processing: Detect Retakes based on Chronological Order
+    // 1. Flatten courses with metadata
+    const allCourses = [];
+    semesters.forEach((sem, semIdx) => {
+        // Parse semester value for sorting: "HK01 (2023-2024)"
+        let semValue = 0;
+        const match = sem.name.match(/HK(\d+)\s*\((\d{4})-(\d{4})\)/);
+        if (match) {
+            const hk = parseInt(match[1]);
+            const year = parseInt(match[2]);
+            semValue = year * 10 + hk;
+        } else {
+            // Fallback: use index if format doesn't match
+            semValue = semIdx; 
+        }
+
+        sem.courses.forEach(course => {
+            allCourses.push({
+                course: course,
+                semValue: semValue,
+                semIdx: semIdx
+            });
+        });
+    });
+
+    // 2. Sort by Semester Value (Oldest First)
+    allCourses.sort((a, b) => a.semValue - b.semValue);
+
+    // 3. Detect Retakes
+    const courseHistory = new Map(); // Name -> Grade
+
+    allCourses.forEach(item => {
+        const name = item.course.name;
+        if (courseHistory.has(name)) {
+            // Found a previous instance
+            item.course.isRetake = true;
+            item.course.oldGrade = courseHistory.get(name);
+        }
+        // Update history with current grade
+        courseHistory.set(name, item.course.grade);
+    });
+
     return semesters;
 }
