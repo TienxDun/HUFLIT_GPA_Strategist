@@ -135,32 +135,46 @@ function initManualCalcTab() {
     });
 
     // Event Delegation for dynamic elements
+    let deleteTimeout = null;
+    
     manualSemesterList.addEventListener('click', (e) => {
         const target = e.target;
         
         // Delete Semester (Request Confirmation)
         const deleteBtn = target.closest('.delete-semester-btn');
         if (deleteBtn) {
+            // Clear any existing timeout
+            if (deleteTimeout) {
+                clearTimeout(deleteTimeout);
+            }
+            
             // Change to confirm state
             deleteBtn.classList.remove('delete-semester-btn', 'text-danger', 'btn-link');
             deleteBtn.classList.add('confirm-delete-semester-btn', 'btn-danger', 'text-white');
             deleteBtn.innerHTML = 'Xóa?';
             
-            // Auto revert after 3 seconds
-            setTimeout(() => {
-                // Check if button still exists and hasn't been clicked (class check)
+            // Auto revert after 2 seconds (reduced from 3)
+            deleteTimeout = setTimeout(() => {
+                // Check if button still exists and hasn't been clicked
                 if (deleteBtn && document.body.contains(deleteBtn) && deleteBtn.classList.contains('confirm-delete-semester-btn')) {
                     deleteBtn.classList.add('delete-semester-btn', 'text-danger', 'btn-link');
                     deleteBtn.classList.remove('confirm-delete-semester-btn', 'btn-danger', 'text-white');
                     deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
                 }
-            }, 3000);
+                deleteTimeout = null;
+            }, 2000);
             return;
         }
 
         // Confirm Delete Semester
         const confirmBtn = target.closest('.confirm-delete-semester-btn');
         if (confirmBtn) {
+            // Clear timeout since user confirmed
+            if (deleteTimeout) {
+                clearTimeout(deleteTimeout);
+                deleteTimeout = null;
+            }
+            
             const semId = parseInt(confirmBtn.dataset.id);
             deleteManualSemester(semId);
             return;
@@ -343,12 +357,20 @@ window.adjustManualCredit = function(semId, courseId, delta) {
 function renderManualSemesters() {
     manualSemesterList.innerHTML = manualSemesters.map(sem => {
         const semTotalCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+        const semTotalPoints = sem.courses.reduce((sum, c) => {
+            const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
+            const gpa = gradeInfo ? gradeInfo.gpa : 0;
+            return sum + (gpa * (parseFloat(c.credits) || 0));
+        }, 0);
+        const semGPA = semTotalCredits > 0 ? (semTotalPoints / semTotalCredits).toFixed(2) : '0.00';
+        
         return `
         <div class="card shadow-sm mb-3">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <span class="fw-bold">${sem.name}</span>
                     <span class="badge bg-light text-secondary border semester-total-credits" data-sem-id="${sem.id}">${semTotalCredits} TC</span>
+                    <span class="badge bg-primary text-white border semester-gpa" data-sem-id="${sem.id}">GPA ${semGPA}</span>
                 </div>
                 <div>
                     <button class="btn btn-sm btn-link text-danger delete-semester-btn" data-id="${sem.id}">
