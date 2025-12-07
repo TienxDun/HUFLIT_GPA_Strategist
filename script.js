@@ -205,6 +205,26 @@ function initManualCalcTab() {
             updateManualCourse(semId, courseId, field, value);
         }
     });
+
+    // Add input event listener for real-time updates
+    manualSemesterList.addEventListener('input', (e) => {
+        const target = e.target;
+        if (target.classList.contains('manual-input') && target.dataset.field === 'credits') {
+            const semId = parseInt(target.dataset.semId);
+            const courseId = parseInt(target.dataset.courseId);
+            const value = target.value;
+            
+            // Update credits and GPA in real-time
+            const semester = manualSemesters.find(s => s.id === semId);
+            if (semester) {
+                const course = semester.courses.find(c => c.id === courseId);
+                if (course) {
+                    course.credits = parseFloat(value) || 0;
+                    updateSemesterStats(semId);
+                }
+            }
+        }
+    });
 }
 
 function addManualSemester() {
@@ -261,6 +281,50 @@ function deleteManualCourse(semId, courseId) {
     }
 }
 
+function updateSemesterStats(semId) {
+    const semester = manualSemesters.find(s => s.id === semId);
+    if (semester) {
+        const semTotalCredits = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+        const semTotalPoints = semester.courses.reduce((sum, c) => {
+            const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
+            const gpa = gradeInfo ? gradeInfo.gpa : 0;
+            return sum + (gpa * (parseFloat(c.credits) || 0));
+        }, 0);
+        const semGPA = semTotalCredits > 0 ? (semTotalPoints / semTotalCredits).toFixed(2) : '0.00';
+        
+        // Update credits badge
+        const creditsBadge = document.querySelector(`.semester-total-credits[data-sem-id="${semId}"]`);
+        if (creditsBadge) {
+            creditsBadge.textContent = `${semTotalCredits} TC`;
+        }
+        
+        // Update GPA badge
+        const gpaBadge = document.querySelector(`.semester-gpa[data-sem-id="${semId}"]`);
+        if (gpaBadge) {
+            gpaBadge.textContent = `GPA ${semGPA}`;
+        }
+    }
+}
+
+function updateSemesterGPA(semId) {
+    const semester = manualSemesters.find(s => s.id === semId);
+    if (semester) {
+        const semTotalCredits = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+        const semTotalPoints = semester.courses.reduce((sum, c) => {
+            const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
+            const gpa = gradeInfo ? gradeInfo.gpa : 0;
+            return sum + (gpa * (parseFloat(c.credits) || 0));
+        }, 0);
+        const semGPA = semTotalCredits > 0 ? (semTotalPoints / semTotalCredits).toFixed(2) : '0.00';
+        
+        // Update GPA badge
+        const gpaBadge = document.querySelector(`.semester-gpa[data-sem-id="${semId}"]`);
+        if (gpaBadge) {
+            gpaBadge.textContent = `GPA ${semGPA}`;
+        }
+    }
+}
+
 function updateManualCourse(semId, courseId, field, value) {
     const semester = manualSemesters.find(s => s.id === semId);
     if (semester) {
@@ -271,12 +335,13 @@ function updateManualCourse(semId, courseId, field, value) {
             if (field === 'credits') {
                 course.credits = parseFloat(value) || 0;
                 
-                // Update UI for total credits immediately without re-rendering
-                const totalBadge = document.querySelector(`.semester-total-credits[data-sem-id="${semId}"]`);
-                if (totalBadge) {
-                    const newTotal = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
-                    totalBadge.textContent = `${newTotal} TC`;
-                }
+                // Update UI for total credits and GPA immediately without re-rendering
+                updateSemesterStats(semId);
+            }
+            
+            // If grade changed, update GPA
+            if (field === 'grade') {
+                updateSemesterGPA(semId);
             }
             
             saveManualState();
