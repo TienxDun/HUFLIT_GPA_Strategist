@@ -573,6 +573,10 @@ function initTargetGPATab() {
     retakeToggle.addEventListener('change', (e) => {
         if (e.target.checked) {
             retakeArea.classList.remove('d-none');
+            // Add default item if list is empty
+            if (retakeList.children.length === 0) {
+                addRetakeItem();
+            }
         } else {
             retakeArea.classList.add('d-none');
             retakeList.innerHTML = ''; // Clear list when hidden
@@ -597,7 +601,10 @@ function addRetakeItem(savedData = null) {
     const item = document.createElement('div');
     item.className = 'd-flex gap-2 mb-2 align-items-center flex-nowrap';
     
-    const defaultGrade = savedData ? savedData.oldGrade : (GRADE_SCALE[0] ? GRADE_SCALE[0].gpa : 0);
+    // Default to Grade D (1.0) if not saved data
+    const dGrade = GRADE_SCALE.find(g => g.grade === 'D');
+    const defaultD_GPA = dGrade ? dGrade.gpa : 1.0;
+    const defaultGrade = savedData ? savedData.oldGrade : defaultD_GPA;
     const defaultCredits = savedData ? savedData.credits : 3;
 
     item.innerHTML = `
@@ -700,6 +707,111 @@ function loadTargetState() {
     }
 }
 
+function generateRetakeSuggestions(deficitPoints, targetGPA) {
+    // 1. Gather all valid candidates from manualSemesters
+    const candidates = [];
+    
+    // Get IDs of courses currently in the Retake List to exclude them
+    const existingRetakeIds = new Set();
+    if (retakeList) {
+        Array.from(retakeList.children).forEach(item => {
+            // Try to find if this item corresponds to a real course
+            // The current UI doesn't strictly link them, but let's assume we want to suggest *new* things.
+            // If the user manually added a retake, we might not know which course it is.
+            // But we can try to match by name if possible, or just ignore for now.
+            // A better approach: The user sees the suggestion and adds it.
+        });
+    }
+
+    manualSemesters.forEach(sem => {
+        sem.courses.forEach(course => {
+            // Skip if grade is A or A+ (GPA 4.0)
+            const gradeInfo = GRADE_SCALE.find(g => g.grade === course.grade);
+            if (!gradeInfo || gradeInfo.gpa >= 4.0) return;
+            
+            // Skip if ignored (name contains *)
+            if (course.name && course.name.includes('*')) return;
+
+            const currentGPA = gradeInfo.gpa;
+            const credits = parseFloat(course.credits) || 0;
+            
+            if (credits <= 0) return;
+
+            // Calculate Potential Gain
+            // If Passed (GPA > 0): Gain = (4.0 - CurrentGPA) * Credits
+            // If Failed (GPA == 0): Gain = (4.0 - TargetGPA) * Credits
+            
+            let gain = 0;
+            if (currentGPA > 0) {
+                gain = (4.0 - currentGPA) * credits;
+            } else {
+                gain = (4.0 - targetGPA) * credits;
+            }
+            
+            candidates.push({
+                ...course,
+                semName: sem.name,
+                currentGPA,
+                gain
+            });
+        });
+    });
+
+    // 2. Find Combinations
+    const suggestions = [];
+    
+    // Sort by gain descending to optimize search
+    candidates.sort((a, b) => b.gain - a.gain);
+    
+    // A. Single Courses
+    for (const c of candidates) {
+        if (c.gain >= deficitPoints) {
+            suggestions.push({
+                courses: [c],
+                totalGain: c.gain,
+                totalCredits: parseFloat(c.credits)
+            });
+        }
+    }
+    
+    // B. Pairs (Limit to top 50 candidates)
+    const topCandidates = candidates.slice(0, 50);
+    for (let i = 0; i < topCandidates.length; i++) {
+        for (let j = i + 1; j < topCandidates.length; j++) {
+            const c1 = topCandidates[i];
+            const c2 = topCandidates[j];
+            
+            // Avoid suggesting same course twice (shouldn't happen as IDs are unique, but good to be safe)
+            if (c1.id === c2.id) continue;
+
+            const pairGain = c1.gain + c2.gain;
+            
+            if (pairGain >= deficitPoints) {
+                suggestions.push({
+                    courses: [c1, c2],
+                    totalGain: pairGain,
+                    totalCredits: parseFloat(c1.credits) + parseFloat(c2.credits)
+                });
+            }
+        }
+    }
+    
+    // 3. Sort and Filter Suggestions
+    // Sort by: 
+    // 1. Number of courses (asc)
+    // 2. Total credits (asc)
+    // 3. Total Gain (desc)
+    
+    suggestions.sort((a, b) => {
+        if (a.courses.length !== b.courses.length) return a.courses.length - b.courses.length;
+        if (a.totalCredits !== b.totalCredits) return a.totalCredits - b.totalCredits;
+        return b.totalGain - a.totalGain;
+    });
+    
+    // Return top 5 unique suggestions
+    return suggestions.slice(0, 5);
+}
+
 function calculateTargetGPA() {
     // 1. Get Inputs
     const currentGPA = parseFloat(currentGpaInput.value) || 0;
@@ -774,6 +886,11 @@ function calculateTargetGPA() {
     }
 
     // 4. Render Results
+    let suggestions = [];
+    if (requiredGPA > 4.0 && deficitPoints > 0) {
+        suggestions = generateRetakeSuggestions(deficitPoints, targetGPA);
+    }
+
     const details = {
         targetGPA,
         totalFutureCredits,
@@ -785,7 +902,8 @@ function calculateTargetGPA() {
         currentTotalPoints,
         removedPoints,
         currentCredits,
-        retakeCreditsTotal
+        retakeCreditsTotal,
+        suggestions
     };
     renderTargetResult(requiredGPA, creditsToEarn, deficitPoints, details);
 }
@@ -836,7 +954,42 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
             <div class="alert alert-light mt-4 border-0 shadow-sm text-start">
                 <h6 class="alert-heading fw-bold text-dark"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>Gợi ý cải thiện:</h6>
                 <p class="mb-2 small text-muted">Để đạt mục tiêu, ngoài việc đạt 4.0 cho ${creditsToEarn} tín chỉ sắp tới, bạn cần học cải thiện thêm:</p>
-                <ul class="list-group list-group-flush bg-transparent">
+                
+                ${(details && details.suggestions && details.suggestions.length > 0) ? `
+                    <div class="d-flex flex-column gap-2 mt-3">
+                        ${details.suggestions.map((s, idx) => `
+                            <div class="bg-white rounded p-2 border shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                                    <span class="badge bg-light text-dark border">Phương án ${idx + 1}</span>
+                                    <span class="small fw-bold text-success">+${s.totalGain.toFixed(2)} điểm</span>
+                                </div>
+                                ${s.courses.map(c => {
+                                    let badgeClass = 'bg-secondary';
+                                    if (c.grade.startsWith('F')) badgeClass = 'bg-danger';
+                                    else if (c.grade.startsWith('D')) badgeClass = 'bg-warning text-dark';
+                                    else if (c.grade.startsWith('C')) badgeClass = 'bg-info text-dark';
+                                    else if (c.grade.startsWith('B')) badgeClass = 'bg-primary';
+                                    
+                                    return `
+                                    <div class="d-flex justify-content-between align-items-center small text-muted py-1">
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-medium text-dark text-truncate" style="max-width: 180px;">${c.name || 'Môn học'}</span>
+                                            <span class="text-secondary" style="font-size: 0.85em;">${c.credits} TC</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge ${badgeClass} rounded-pill" style="min-width: 40px;">${c.grade}</span>
+                                            <i class="bi bi-arrow-right text-secondary" style="font-size: 0.8em;"></i>
+                                            <span class="badge bg-success rounded-pill" style="min-width: 40px;">A</span>
+                                        </div>
+                                    </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p class="mb-0 mt-2 small text-muted fst-italic text-center">Chọn một trong các phương án trên để học cải thiện.</p>
+                ` : `
+                    <ul class="list-group list-group-flush bg-transparent">
                         <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom border-light-subtle">
                             <div class="d-flex align-items-center text-nowrap">
                                 <span class="text-secondary small me-2">Cải thiện môn</span>
@@ -860,6 +1013,7 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                         </li>
                     </ul>
                     <p class="mb-0 mt-2 small text-muted fst-italic">*Giả định bạn đạt 4.0 ở các môn học lại này.</p>
+                `}
                 </div>
                 ` : ''}
         </div>
