@@ -123,25 +123,36 @@
                             <div class="card-body pt-2">
                                 <div class="row g-3 mb-4">
                                     <div class="col-6">
-                                        <label for="current-gpa" class="form-label fw-medium small text-secondary">GPA hiện tại</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="current-gpa" class="form-label fw-medium small text-secondary mb-0">GPA hiện tại</label>
+                                        </div>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-speedometer2"></i></span>
                                             <input type="number" class="form-control border-start-0 ps-0" id="current-gpa" placeholder="3.2" step="0.01" min="0" max="4.0">
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <label for="current-credits" class="form-label fw-medium small text-secondary">Tín chỉ tích lũy</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="current-credits" class="form-label fw-medium small text-secondary mb-0">Tín chỉ tích lũy</label>
+                                        </div>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-stack"></i></span>
                                             <input type="number" class="form-control border-start-0 ps-0" id="current-credits" placeholder="60" min="0">
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <label for="target-gpa" class="form-label fw-medium small text-secondary">GPA Mục tiêu</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="target-gpa" class="form-label fw-medium small text-secondary mb-0">GPA Mục tiêu</label>
+                                        </div>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-flag"></i></span>
                                             <input type="number" class="form-control border-start-0 ps-0" id="target-gpa" placeholder="3.6" step="0.01" min="0" max="4.0">
                                         </div>
+                                        <!-- Spacer for symmetry -->
+                                        <div class="d-flex mt-1" style="visibility: hidden;" aria-hidden="true">
+                                            <button class="btn btn-link p-0 text-decoration-none small text-nowrap" style="font-size: 0.75rem;">&nbsp;</button>
+                                        </div>
+                                        <div class="form-text text-muted fst-italic mt-0" style="font-size: 0.65rem;">Điểm TB mong muốn.</div>
                                     </div>
                                     <div class="col-6">
                                         <!-- Mode: New Credits -->
@@ -153,12 +164,12 @@
                                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-plus-circle"></i></span>
                                                 <input type="number" class="form-control border-start-0 ps-0" id="new-credits" placeholder="15" min="0">
                                             </div>
-                                            <div class="d-flex mt-1">
+                                            <div class="d-flex justify-content-end mt-1">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none small text-nowrap" id="btn-switch-to-total" style="font-size: 0.75rem;">
                                                     <i class="bi bi-arrow-repeat me-1"></i>Đổi sang Tổng TC
                                                 </button>
                                             </div>
-                                            <div class="form-text text-muted fst-italic mt-0" style="font-size: 0.75rem;">Số tín chỉ còn lại bạn cần học tiếp.</div>
+                                            <div class="form-text text-muted fst-italic mt-0 text-end" style="font-size: 0.65rem;">Số tín chỉ còn lại bạn cần học tiếp.</div>
                                         </div>
 
                                         <!-- Mode: Total Credits -->
@@ -170,12 +181,12 @@
                                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-mortarboard"></i></span>
                                                 <input type="number" class="form-control border-start-0 ps-0" id="total-credits" placeholder="130" min="0">
                                             </div>
-                                            <div class="d-flex mt-1">
+                                            <div class="d-flex justify-content-end mt-1">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none small text-nowrap" id="btn-switch-to-new" style="font-size: 0.75rem;">
                                                     <i class="bi bi-arrow-repeat me-1"></i>Đổi sang TC mới
                                                 </button>
                                             </div>
-                                            <div class="form-text text-muted fst-italic mt-0" style="font-size: 0.75rem;">Tổng tín chỉ toàn khóa để tốt nghiệp.</div>
+                                            <div class="form-text text-muted fst-italic mt-0 text-end" style="font-size: 0.65rem;">Tổng tín chỉ toàn khóa để tốt nghiệp.</div>
                                         </div>
                                     </div>
                                 </div>
