@@ -266,7 +266,7 @@ function addManualCourse(semId) {
             credits: 3,
             grade: 'A',
             isRetake: false,
-            oldGrade: 'F'
+            oldGrade: 'D'
         });
         saveManualState();
         renderManualSemesters();
@@ -334,6 +334,14 @@ function updateManualCourse(semId, courseId, field, value) {
         const course = semester.courses.find(c => String(c.id) === String(courseId));
         if (course) {
             course[field] = value;
+            
+            // If toggling Retake ON, ensure oldGrade is set to D if it's missing or empty
+            if (field === 'isRetake' && value === true) {
+                if (!course.oldGrade) {
+                    course.oldGrade = 'D';
+                }
+            }
+
             // If credits changed, ensure it's a number
             if (field === 'credits') {
                 course.credits = parseFloat(value) || 0;
@@ -348,10 +356,12 @@ function updateManualCourse(semId, courseId, field, value) {
             }
             
             saveManualState();
-            // Only re-render if toggling retake (to show/hide old grade)
+            
+            // Re-render if toggling retake to show/hide old grade select
             if (field === 'isRetake') {
                 renderManualSemesters();
             }
+            
             calculateManualGPA();
         }
     }
@@ -1673,7 +1683,9 @@ function parsePortalText(text) {
                 currentSemester.courses.push({
                     name: courseName,
                     credits: credits,
-                    grade: gradeChar
+                    grade: gradeChar,
+                    isRetake: false,
+                    oldGrade: 'D'
                 });
             }
         }
