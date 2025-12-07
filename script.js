@@ -1610,6 +1610,9 @@ if (processImportBtn) {
         renderManualSemesters();
         calculateManualGPA();
 
+        // Remove focus from button to prevent ARIA error
+        processImportBtn.blur();
+
         // Close modal
         const modalEl = document.getElementById('importModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
@@ -1618,7 +1621,10 @@ if (processImportBtn) {
         // Clear textarea
         document.getElementById('import-text-area').value = '';
 
-        alert(`Đã nhập thành công ${importedSemesters.length} học kỳ với ${addedCount} môn học.`);
+        // Show alert after a short delay to allow modal to close properly
+        setTimeout(() => {
+            alert(`Đã nhập thành công ${importedSemesters.length} học kỳ với ${addedCount} môn học.`);
+        }, 150);
     });
 }
 
