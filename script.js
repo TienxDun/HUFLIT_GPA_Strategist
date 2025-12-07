@@ -1316,59 +1316,65 @@ function loadCourseState() {
 // IMPORT PORTAL DATA
 // ==========================================
 
-document.getElementById('process-import-btn')?.addEventListener('click', () => {
-    const text = document.getElementById('import-text-area').value;
-    if (!text.trim()) {
-        alert('Vui lòng dán nội dung bảng điểm vào ô trống.');
-        return;
-    }
-
-    const importedSemesters = parsePortalText(text);
-    
-    if (importedSemesters.length === 0) {
-        alert('Không tìm thấy dữ liệu hợp lệ. Vui lòng kiểm tra lại định dạng copy.');
-        return;
-    }
-
-    // Add imported semesters to manualSemesters
-    let addedCount = 0;
-    importedSemesters.forEach(sem => {
-        if (sem.courses.length > 0) {
-            const newSemId = Date.now() + Math.random().toString(36).substr(2, 9);
-            
-            // Map courses to internal format
-            const courses = sem.courses.map(c => ({
-                id: Date.now() + Math.random().toString(36).substr(2, 9),
-                name: c.name,
-                credits: c.credits,
-                grade: c.grade,
-                isRetake: false,
-                oldGrade: 0
-            }));
-
-            manualSemesters.push({
-                id: newSemId,
-                name: sem.name,
-                courses: courses
-            });
-            addedCount += courses.length;
+// Use event delegation or ensure element exists before adding listener
+// Moving this inside initManualCalcTab or checking existence is safer
+const processImportBtn = document.getElementById('process-import-btn');
+if (processImportBtn) {
+    processImportBtn.addEventListener('click', () => {
+        const text = document.getElementById('import-text-area').value;
+        if (!text.trim()) {
+            alert('Vui lòng dán nội dung bảng điểm vào ô trống.');
+            return;
         }
+
+        const importedSemesters = parsePortalText(text);
+        
+        if (importedSemesters.length === 0) {
+            alert('Không tìm thấy dữ liệu hợp lệ. Vui lòng kiểm tra lại định dạng copy.');
+            return;
+        }
+
+        // Add imported semesters to manualSemesters
+        let addedCount = 0;
+        importedSemesters.forEach(sem => {
+            if (sem.courses.length > 0) {
+                // Use string ID for consistency
+                const newSemId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+                
+                // Map courses to internal format
+                const courses = sem.courses.map(c => ({
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    name: c.name,
+                    credits: c.credits,
+                    grade: c.grade,
+                    isRetake: false,
+                    oldGrade: 0
+                }));
+
+                manualSemesters.push({
+                    id: newSemId,
+                    name: sem.name,
+                    courses: courses
+                });
+                addedCount += courses.length;
+            }
+        });
+
+        saveManualState();
+        renderManualSemesters();
+        calculateManualGPA();
+
+        // Close modal
+        const modalEl = document.getElementById('importModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+
+        // Clear textarea
+        document.getElementById('import-text-area').value = '';
+
+        alert(`Đã nhập thành công ${importedSemesters.length} học kỳ với ${addedCount} môn học.`);
     });
-
-    saveManualState();
-    renderManualSemesters();
-    calculateManualGPA();
-
-    // Close modal
-    const modalEl = document.getElementById('importModal');
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    modal.hide();
-
-    // Clear textarea
-    document.getElementById('import-text-area').value = '';
-
-    alert(`Đã nhập thành công ${importedSemesters.length} học kỳ với ${addedCount} môn học.`);
-});
+}
 
 function parsePortalText(text) {
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
