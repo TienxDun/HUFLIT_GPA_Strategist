@@ -552,6 +552,12 @@ const currentGpaInput = document.getElementById('current-gpa');
 const currentCreditsInput = document.getElementById('current-credits');
 const targetGpaInput = document.getElementById('target-gpa');
 const newCreditsInput = document.getElementById('new-credits');
+const totalCreditsInput = document.getElementById('total-credits'); // New
+const newCreditsGroup = document.getElementById('new-credits-group'); // New
+const totalCreditsGroup = document.getElementById('total-credits-group'); // New
+const btnSwitchToTotal = document.getElementById('btn-switch-to-total'); // New
+const btnSwitchToNew = document.getElementById('btn-switch-to-new'); // New
+
 const retakeToggle = document.getElementById('retake-toggle');
 const retakeArea = document.getElementById('retake-area');
 const retakeList = document.getElementById('retake-list');
@@ -559,15 +565,56 @@ const addRetakeBtn = document.getElementById('add-retake-btn');
 const calcTargetBtn = document.getElementById('calc-target-btn');
 const targetResultContainer = document.getElementById('target-result-container');
 
+let creditMode = 'new'; // 'new' or 'total'
+
 function initTargetGPATab() {
     if (!calcTargetBtn) return;
 
     loadTargetState();
 
     // Input Listeners for Auto-Save
-    [currentGpaInput, currentCreditsInput, targetGpaInput, newCreditsInput].forEach(input => {
-        input.addEventListener('input', saveTargetState);
+    [currentGpaInput, currentCreditsInput, targetGpaInput, newCreditsInput, totalCreditsInput].forEach(input => {
+        if(input) input.addEventListener('input', saveTargetState);
     });
+
+    // Sync Logic
+    if (totalCreditsInput && newCreditsInput && currentCreditsInput) {
+        // When Total Credits changes -> Update New Credits
+        totalCreditsInput.addEventListener('input', () => {
+            const total = parseFloat(totalCreditsInput.value) || 0;
+            const current = parseFloat(currentCreditsInput.value) || 0;
+            newCreditsInput.value = Math.max(0, total - current);
+        });
+
+        // When New Credits changes -> Update Total Credits
+        newCreditsInput.addEventListener('input', () => {
+            const newCred = parseFloat(newCreditsInput.value) || 0;
+            const current = parseFloat(currentCreditsInput.value) || 0;
+            totalCreditsInput.value = current + newCred;
+        });
+
+        // When Current Credits changes -> Update dependent field based on mode
+        currentCreditsInput.addEventListener('input', () => {
+            const current = parseFloat(currentCreditsInput.value) || 0;
+            if (creditMode === 'total') {
+                // If in Total mode, Total is fixed, New changes
+                const total = parseFloat(totalCreditsInput.value) || 0;
+                newCreditsInput.value = Math.max(0, total - current);
+            } else {
+                // If in New mode, New is fixed, Total changes
+                const newCred = parseFloat(newCreditsInput.value) || 0;
+                totalCreditsInput.value = current + newCred;
+            }
+        });
+    }
+
+    // Toggle Mode
+    if (btnSwitchToTotal) {
+        btnSwitchToTotal.addEventListener('click', () => setCreditMode('total'));
+    }
+    if (btnSwitchToNew) {
+        btnSwitchToNew.addEventListener('click', () => setCreditMode('new'));
+    }
 
     // Toggle Retake Area
     retakeToggle.addEventListener('change', (e) => {
@@ -655,6 +702,26 @@ function addRetakeItem(savedData = null) {
     retakeList.appendChild(item);
 }
 
+function setCreditMode(mode) {
+    creditMode = mode;
+    if (mode === 'total') {
+        newCreditsGroup.classList.add('d-none');
+        totalCreditsGroup.classList.remove('d-none');
+        // Sync value just in case
+        const current = parseFloat(currentCreditsInput.value) || 0;
+        const newCred = parseFloat(newCreditsInput.value) || 0;
+        if (!totalCreditsInput.value) totalCreditsInput.value = current + newCred;
+    } else {
+        totalCreditsGroup.classList.add('d-none');
+        newCreditsGroup.classList.remove('d-none');
+        // Sync value just in case
+        const current = parseFloat(currentCreditsInput.value) || 0;
+        const total = parseFloat(totalCreditsInput.value) || 0;
+        if (!newCreditsInput.value) newCreditsInput.value = Math.max(0, total - current);
+    }
+    saveTargetState();
+}
+
 function saveTargetState() {
     const retakes = [];
     if (retakeToggle.checked) {
@@ -675,6 +742,8 @@ function saveTargetState() {
         currentCredits: currentCreditsInput.value,
         targetGpa: targetGpaInput.value,
         newCredits: newCreditsInput.value,
+        totalCredits: totalCreditsInput ? totalCreditsInput.value : '',
+        creditMode: creditMode,
         isRetake: retakeToggle.checked,
         retakes: retakes
     };
@@ -690,7 +759,15 @@ function loadTargetState() {
             currentCreditsInput.value = state.currentCredits || '';
             targetGpaInput.value = state.targetGpa || '';
             newCreditsInput.value = state.newCredits || '';
+            if (totalCreditsInput) totalCreditsInput.value = state.totalCredits || '';
             
+            // Restore Mode
+            if (state.creditMode) {
+                setCreditMode(state.creditMode);
+            } else {
+                setCreditMode('new'); // Default
+            }
+
             retakeToggle.checked = state.isRetake || false;
             if (state.isRetake) {
                 retakeArea.classList.remove('d-none');

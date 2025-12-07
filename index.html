@@ -144,10 +144,38 @@
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <label for="new-credits" class="form-label fw-medium small text-secondary">Tín chỉ mới</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-plus-circle"></i></span>
-                                            <input type="number" class="form-control border-start-0 ps-0" id="new-credits" placeholder="15" min="0">
+                                        <!-- Mode: New Credits -->
+                                        <div id="new-credits-group">
+                                            <div class="d-flex justify-content-between align-items-center mb-1 flex-nowrap">
+                                                <label for="new-credits" class="form-label fw-medium small text-secondary mb-0 text-nowrap">Tín chỉ mới</label>
+                                            </div>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-plus-circle"></i></span>
+                                                <input type="number" class="form-control border-start-0 ps-0" id="new-credits" placeholder="15" min="0">
+                                            </div>
+                                            <div class="d-flex mt-1">
+                                                <button type="button" class="btn btn-link p-0 text-decoration-none small text-nowrap" id="btn-switch-to-total" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-arrow-repeat me-1"></i>Đổi sang Tổng TC
+                                                </button>
+                                            </div>
+                                            <div class="form-text text-muted fst-italic mt-0" style="font-size: 0.75rem;">Số tín chỉ còn lại bạn cần học tiếp.</div>
+                                        </div>
+
+                                        <!-- Mode: Total Credits -->
+                                        <div id="total-credits-group" class="d-none">
+                                            <div class="d-flex justify-content-between align-items-center mb-1 flex-nowrap">
+                                                <label for="total-credits" class="form-label fw-medium small text-secondary mb-0 text-nowrap">Tổng tín chỉ</label>
+                                            </div>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-mortarboard"></i></span>
+                                                <input type="number" class="form-control border-start-0 ps-0" id="total-credits" placeholder="130" min="0">
+                                            </div>
+                                            <div class="d-flex mt-1">
+                                                <button type="button" class="btn btn-link p-0 text-decoration-none small text-nowrap" id="btn-switch-to-new" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-arrow-repeat me-1"></i>Đổi sang TC mới
+                                                </button>
+                                            </div>
+                                            <div class="form-text text-muted fst-italic mt-0" style="font-size: 0.75rem;">Tổng tín chỉ toàn khóa để tốt nghiệp.</div>
                                         </div>
                                     </div>
                                 </div>
