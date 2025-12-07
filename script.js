@@ -62,10 +62,10 @@ function initGradeScaleTab() {
 
         return `
             <tr>
-                <td class="ps-4">
+                <td class="ps-2">
                     <div class="d-flex align-items-center">
                         <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm ${badgeColor}" 
-                             style="width: 40px; height: 40px; font-size: 1.1rem;">
+                             style="width: 32px; height: 32px; font-size: 0.9rem;">
                             ${item.grade}
                         </div>
                     </div>
@@ -76,10 +76,10 @@ function initGradeScaleTab() {
                     </div>
                 </td>
                 <td>
-                    <span class="fw-bold text-primary fs-5">${item.gpa.toFixed(1)}</span>
+                    <span class="fw-bold text-primary">${item.gpa.toFixed(1)}</span>
                 </td>
-                <td class="pe-4 text-end">
-                    <span class="badge bg-light text-dark border fw-normal px-3 py-2 rounded-pill">${rank}</span>
+                <td class="pe-2 text-end">
+                    <span class="badge bg-light text-dark border fw-normal px-2 py-1 rounded-pill">${rank}</span>
                 </td>
             </tr>
         `;
