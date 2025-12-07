@@ -249,6 +249,13 @@
 
                     <!-- Right Column: Semester List -->
                     <div class="col-lg-8 order-first order-lg-last">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-primary mb-0">Danh sách học kỳ</h5>
+                            <button class="btn btn-success btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+                                <i class="bi bi-file-earmark-text me-1"></i>Nhập từ Portal
+                            </button>
+                        </div>
+
                         <div id="manual-semester-list">
                             <!-- Semesters will be rendered here -->
                         </div>
@@ -262,42 +269,53 @@
 
             <!-- Tab 3: Tính điểm Môn học (Course Grade) -->
             <div class="tab-pane fade" id="pills-course" role="tabpanel" tabindex="0">
-                <div class="row">
+                <div class="row g-4">
                     <!-- Left Column: Controls -->
-                    <div class="col-lg-5 mb-4">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-white">
-                                <h5 class="card-title mb-0"><i class="bi bi-sliders me-2"></i>Cấu hình môn học</h5>
+                    <div class="col-lg-5">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                                <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-sliders me-2"></i>Cấu hình môn học</h5>
+                                <p class="text-muted small mt-1 mb-0">Nhập điểm quá trình và chọn tỷ lệ đánh giá</p>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body pt-2">
                                 <!-- Ratio Selection -->
                                 <div class="mb-4">
-                                    <label class="form-label fw-medium">Tỷ lệ (Quá trình / Cuối kỳ)</label>
-                                    <div class="d-flex bg-body-secondary p-1 rounded-pill w-100" id="course-ratio-group">
+                                    <label class="form-label fw-medium small text-secondary">Tỷ lệ (Quá trình / Cuối kỳ)</label>
+                                    <div class="d-flex bg-light p-1 rounded-3 w-100 border" id="course-ratio-group">
                                         <input type="radio" class="btn-check" name="btnradio" id="ratio3070" autocomplete="off" value="0.3">
-                                        <label class="btn btn-sm btn-segmented rounded-pill flex-fill text-nowrap border-0 py-2" for="ratio3070">30 / 70</label>
+                                        <label class="btn btn-sm btn-segmented rounded-3 flex-fill text-nowrap border-0 py-2 fw-medium" for="ratio3070">30 / 70</label>
                 
                                         <input type="radio" class="btn-check" name="btnradio" id="ratio4060" autocomplete="off" value="0.4" checked>
-                                        <label class="btn btn-sm btn-segmented rounded-pill flex-fill text-nowrap border-0 py-2" for="ratio4060">40 / 60</label>
+                                        <label class="btn btn-sm btn-segmented rounded-3 flex-fill text-nowrap border-0 py-2 fw-medium" for="ratio4060">40 / 60</label>
                 
                                         <input type="radio" class="btn-check" name="btnradio" id="ratio5050" autocomplete="off" value="0.5">
-                                        <label class="btn btn-sm btn-segmented rounded-pill flex-fill text-nowrap border-0 py-2" for="ratio5050">50 / 50</label>
+                                        <label class="btn btn-sm btn-segmented rounded-3 flex-fill text-nowrap border-0 py-2 fw-medium" for="ratio5050">50 / 50</label>
                                     </div>
                                 </div>
                 
                                 <!-- Process Score Input -->
                                 <div class="mb-4">
-                                    <label for="process-score-input" class="form-label fw-medium">Điểm quá trình</label>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <input type="range" class="form-range" min="0" max="10" step="0.1" id="process-score-range">
-                                        <input type="number" class="form-control text-center fw-bold" style="width: 80px;" min="0" max="10" step="0.1" id="process-score-input">
+                                    <label for="process-score-input" class="form-label fw-medium small text-secondary">Điểm quá trình</label>
+                                    <div class="bg-light p-3 rounded-3 border">
+                                        <div class="d-flex align-items-center gap-3 mb-2">
+                                            <span class="text-muted small"><i class="bi bi-dash-circle"></i></span>
+                                            <input type="range" class="form-range flex-grow-1" min="0" max="10" step="0.1" id="process-score-range">
+                                            <span class="text-muted small"><i class="bi bi-plus-circle"></i></span>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-pencil"></i></span>
+                                            <input type="number" class="form-control border-start-0 text-center fw-bold text-primary fs-5" style="height: 40px;" min="0" max="10" step="0.1" id="process-score-input">
+                                        </div>
                                     </div>
                                 </div>
                 
                                 <!-- Accumulated Score -->
-                                <div class="bg-body-tertiary rounded-3 p-3 d-flex align-items-center justify-content-between border border-light-subtle">
-                                    <span class="text-secondary fw-medium"><i class="bi bi-piggy-bank me-2"></i>Điểm đã tích lũy</span>
-                                    <span class="fw-bold fs-4 text-dark" id="accumulated-score">0.00</span>
+                                <div class="bg-primary-subtle rounded-3 p-3 d-flex align-items-center justify-content-between border border-primary-subtle">
+                                    <div>
+                                        <div class="text-primary fw-bold small text-uppercase mb-1">Điểm đã tích lũy</div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">(Điểm quá trình × Tỷ lệ)</div>
+                                    </div>
+                                    <span class="fw-bold display-6 text-primary" id="accumulated-score">0.00</span>
                                 </div>
                             </div>
                         </div>
@@ -353,7 +371,40 @@
         </div>
         
         <!-- Mobile Spacer to prevent content from being hidden behind bottom nav -->
-        <div class="d-lg-none" style="height: 100px;"></div>
+        <div class="d-lg-none" style="height: 120px;"></div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-primary"><i class="bi bi-cloud-upload me-2"></i>Nhập dữ liệu từ Portal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">
+                        Copy toàn bộ bảng điểm từ trang Portal (bao gồm cả tên học kỳ) và dán vào ô bên dưới.
+                        Hệ thống sẽ tự động nhận diện các môn học và điểm số.
+                    </p>
+                    <textarea class="form-control font-monospace small" id="import-text-area" rows="10" placeholder="Ví dụ:
+Năm học: 2023-2024 - Học kỳ: HK01
+1	1010443	Triết học Mác - Lênin	3.0	7.0	3.00	B ..."></textarea>
+                    <div class="alert alert-info d-flex align-items-center mt-3 mb-0 py-2 small" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <div>
+                            Hỗ trợ định dạng copy trực tiếp từ trang xem điểm của HUFLIT Portal.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="process-import-btn">
+                        <i class="bi bi-magic me-1"></i>Phân tích & Nhập
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap 5.3 JS Bundle -->

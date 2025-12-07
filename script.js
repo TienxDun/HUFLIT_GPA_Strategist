@@ -175,21 +175,21 @@ function initManualCalcTab() {
                 deleteTimeout = null;
             }
             
-            const semId = parseInt(confirmBtn.dataset.id);
+            const semId = confirmBtn.dataset.id;
             deleteManualSemester(semId);
             return;
         }
 
         // Add Course
         if (target.closest('.add-course-btn')) {
-            const semId = parseInt(target.closest('.add-course-btn').dataset.id);
+            const semId = target.closest('.add-course-btn').dataset.id;
             addManualCourse(semId);
         }
 
         // Delete Course
         if (target.closest('.delete-course-btn')) {
-            const semId = parseInt(target.closest('.delete-course-btn').dataset.semId);
-            const courseId = parseInt(target.closest('.delete-course-btn').dataset.courseId);
+            const semId = target.closest('.delete-course-btn').dataset.semId;
+            const courseId = target.closest('.delete-course-btn').dataset.courseId;
             deleteManualCourse(semId, courseId);
         }
     });
@@ -197,8 +197,8 @@ function initManualCalcTab() {
     manualSemesterList.addEventListener('change', (e) => {
         const target = e.target;
         if (target.classList.contains('manual-input')) {
-            const semId = parseInt(target.dataset.semId);
-            const courseId = parseInt(target.dataset.courseId);
+            const semId = target.dataset.semId;
+            const courseId = target.dataset.courseId;
             const field = target.dataset.field;
             const value = target.type === 'checkbox' ? target.checked : target.value;
             
@@ -210,14 +210,14 @@ function initManualCalcTab() {
     manualSemesterList.addEventListener('input', (e) => {
         const target = e.target;
         if (target.classList.contains('manual-input') && target.dataset.field === 'credits') {
-            const semId = parseInt(target.dataset.semId);
-            const courseId = parseInt(target.dataset.courseId);
+            const semId = target.dataset.semId;
+            const courseId = target.dataset.courseId;
             const value = target.value;
             
             // Update credits and GPA in real-time
-            const semester = manualSemesters.find(s => s.id === semId);
+            const semester = manualSemesters.find(s => String(s.id) === String(semId));
             if (semester) {
-                const course = semester.courses.find(c => c.id === courseId);
+                const course = semester.courses.find(c => String(c.id) === String(courseId));
                 if (course) {
                     course.credits = parseFloat(value) || 0;
                     updateSemesterStats(semId);
@@ -228,7 +228,7 @@ function initManualCalcTab() {
 }
 
 function addManualSemester() {
-    const id = Date.now();
+    const id = Date.now().toString();
     manualSemesters.push({
         id: id,
         name: `Học kỳ ${manualSemesters.length + 1}`,
@@ -242,11 +242,14 @@ function addManualSemester() {
 
 function deleteManualSemester(id) {
     // Removed blocking confirm() to fix violation
-    manualSemesters = manualSemesters.filter(s => s.id !== id);
+    manualSemesters = manualSemesters.filter(s => String(s.id) !== String(id));
     
     // Re-index semester names to ensure sequential order
     manualSemesters.forEach((sem, index) => {
-        sem.name = `Học kỳ ${index + 1}`;
+        // Only rename if it matches default pattern "Học kỳ X"
+        if (sem.name.startsWith('Học kỳ ')) {
+            sem.name = `Học kỳ ${index + 1}`;
+        }
     });
 
     saveManualState();
@@ -255,10 +258,10 @@ function deleteManualSemester(id) {
 }
 
 function addManualCourse(semId) {
-    const semester = manualSemesters.find(s => s.id === semId);
+    const semester = manualSemesters.find(s => String(s.id) === String(semId));
     if (semester) {
         semester.courses.push({
-            id: Date.now(),
+            id: Date.now().toString(),
             name: '',
             credits: 3,
             grade: 'A',
@@ -272,9 +275,9 @@ function addManualCourse(semId) {
 }
 
 function deleteManualCourse(semId, courseId) {
-    const semester = manualSemesters.find(s => s.id === semId);
+    const semester = manualSemesters.find(s => String(s.id) === String(semId));
     if (semester) {
-        semester.courses = semester.courses.filter(c => c.id !== courseId);
+        semester.courses = semester.courses.filter(c => String(c.id) !== String(courseId));
         saveManualState();
         renderManualSemesters();
         calculateManualGPA();
@@ -282,7 +285,7 @@ function deleteManualCourse(semId, courseId) {
 }
 
 function updateSemesterStats(semId) {
-    const semester = manualSemesters.find(s => s.id === semId);
+    const semester = manualSemesters.find(s => String(s.id) === String(semId));
     if (semester) {
         const semTotalCredits = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
         const semTotalPoints = semester.courses.reduce((sum, c) => {
@@ -307,7 +310,7 @@ function updateSemesterStats(semId) {
 }
 
 function updateSemesterGPA(semId) {
-    const semester = manualSemesters.find(s => s.id === semId);
+    const semester = manualSemesters.find(s => String(s.id) === String(semId));
     if (semester) {
         const semTotalCredits = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
         const semTotalPoints = semester.courses.reduce((sum, c) => {
@@ -326,9 +329,9 @@ function updateSemesterGPA(semId) {
 }
 
 function updateManualCourse(semId, courseId, field, value) {
-    const semester = manualSemesters.find(s => s.id === semId);
+    const semester = manualSemesters.find(s => String(s.id) === String(semId));
     if (semester) {
-        const course = semester.courses.find(c => c.id === courseId);
+        const course = semester.courses.find(c => String(c.id) === String(courseId));
         if (course) {
             course[field] = value;
             // If credits changed, ensure it's a number
@@ -465,11 +468,11 @@ function renderManualSemesters() {
                                     </td>
                                     <td>
                                         <div class="input-group input-group-sm flex-nowrap" style="min-width: 80px;">
-                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="adjustManualCredit(${sem.id}, ${course.id}, -1)">-</button>
+                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="adjustManualCredit('${sem.id}', '${course.id}', -1)">-</button>
                                             <input type="number" class="form-control form-control-sm manual-input text-center px-0" 
                                                 value="${course.credits}" min="0" readonly
                                                 data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="credits">
-                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="adjustManualCredit(${sem.id}, ${course.id}, 1)">+</button>
+                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="adjustManualCredit('${sem.id}', '${course.id}', 1)">+</button>
                                         </div>
                                     </td>
                                     <td>
@@ -1307,4 +1310,131 @@ function loadCourseState() {
         processScoreInput.value = 7.0;
         processScoreRange.value = 7.0;
     }
+}
+
+// ==========================================
+// IMPORT PORTAL DATA
+// ==========================================
+
+document.getElementById('process-import-btn')?.addEventListener('click', () => {
+    const text = document.getElementById('import-text-area').value;
+    if (!text.trim()) {
+        alert('Vui lòng dán nội dung bảng điểm vào ô trống.');
+        return;
+    }
+
+    const importedSemesters = parsePortalText(text);
+    
+    if (importedSemesters.length === 0) {
+        alert('Không tìm thấy dữ liệu hợp lệ. Vui lòng kiểm tra lại định dạng copy.');
+        return;
+    }
+
+    // Add imported semesters to manualSemesters
+    let addedCount = 0;
+    importedSemesters.forEach(sem => {
+        if (sem.courses.length > 0) {
+            const newSemId = Date.now() + Math.random().toString(36).substr(2, 9);
+            
+            // Map courses to internal format
+            const courses = sem.courses.map(c => ({
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                name: c.name,
+                credits: c.credits,
+                grade: c.grade,
+                isRetake: false,
+                oldGrade: 0
+            }));
+
+            manualSemesters.push({
+                id: newSemId,
+                name: sem.name,
+                courses: courses
+            });
+            addedCount += courses.length;
+        }
+    });
+
+    saveManualState();
+    renderManualSemesters();
+    calculateManualGPA();
+
+    // Close modal
+    const modalEl = document.getElementById('importModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+
+    // Clear textarea
+    document.getElementById('import-text-area').value = '';
+
+    alert(`Đã nhập thành công ${importedSemesters.length} học kỳ với ${addedCount} môn học.`);
+});
+
+function parsePortalText(text) {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    const semesters = [];
+    let currentSemester = null;
+
+    for (const line of lines) {
+        // Check for Semester Header
+        // "Năm học: 2023-2024 - Học kỳ: HK01"
+        const semMatch = line.match(/Năm học:\s*(\d{4}-\d{4})\s*-\s*Học kỳ:\s*(HK\d+)/i);
+        if (semMatch) {
+            currentSemester = {
+                name: `${semMatch[2]} (${semMatch[1]})`, // HK01 (2023-2024)
+                courses: []
+            };
+            semesters.push(currentSemester);
+            continue;
+        }
+
+        // Check for Course Line
+        // Regex to find: Credits (float), Grade10 (float), Grade4 (float), GradeChar (Letters+opt +)
+        // Matches: 3.0 7.0 3.00 B
+        // Updated regex to correctly handle '+' grades by using lookahead (?=\s|$) instead of \b
+        const courseMatch = line.match(/(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+([A-Z]\+?)(?=\s|$)/);
+        
+        if (courseMatch && currentSemester) {
+            // Extract parts
+            const matchIndex = courseMatch.index;
+            const prefix = line.substring(0, matchIndex).trim();
+            
+            // Try to extract name from prefix "STT Code Name"
+            // Remove STT (digits) and Code (alphanumeric)
+            // Example: "1 1010443 Triết học Mác - Lênin"
+            let courseName = prefix;
+            
+            // Regex to remove STT and Code: ^\d+\s+\w+\s+
+            const nameMatch = prefix.match(/^\d+\s+\w+\s+(.+)$/);
+            if (nameMatch) {
+                courseName = nameMatch[1].trim();
+            }
+
+            // Skip courses with '*' in the name (e.g. "Giáo dục quốc phòng *")
+            if (courseName.includes('*')) {
+                continue;
+            }
+
+            const credits = parseFloat(courseMatch[1]);
+            let gradeChar = courseMatch[4];
+
+            // Map A+ to A (since A+ is not in standard scale but appears in portal)
+            if (gradeChar === 'A+') {
+                gradeChar = 'A';
+            }
+
+            // Validate grade char against GRADE_SCALE
+            const isValidGrade = GRADE_SCALE.some(g => g.grade === gradeChar);
+
+            // Additional check: Credits should be reasonable (e.g. < 20) to avoid matching course codes
+            if (isValidGrade && credits < 20) {
+                currentSemester.courses.push({
+                    name: courseName,
+                    credits: credits,
+                    grade: gradeChar
+                });
+            }
+        }
+    }
+    return semesters;
 }
