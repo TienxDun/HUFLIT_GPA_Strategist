@@ -4,10 +4,28 @@ Công cụ tính toán GPA và lập kế hoạch điểm số cho sinh viên HU
 
 ## Tính năng chính
 
-- **Tính điểm cần đạt**: Dự đoán điểm cần thi cho từng môn để đạt GPA mục tiêu.
-- **Tính điểm thủ công**: Nhập điểm chi tiết từng học kỳ để tính GPA tổng thể.
-- **Thang điểm tín chỉ**: Hiển thị quy đổi điểm theo quy chế HUFLIT.
-- **Giao diện tối giản**: Tối ưu cho thiết bị di động và máy tính.
+- **🎯 Tính điểm mục tiêu (Target GPA)**: 
+  - Dự đoán điểm trung bình cần đạt cho các tín chỉ tiếp theo.
+  - Tự động phân tích và **gợi ý các môn cần học lại (Retake)** nếu mục tiêu quá cao so với khả năng của các môn mới.
+  - Hỗ trợ tính toán kết hợp giữa học mới và học cải thiện.
+
+- **📥 Import dữ liệu thông minh**: 
+  - Copy bảng điểm trực tiếp từ Portal đào tạo và dán vào công cụ.
+  - Tự động nhận diện tên môn, số tín chỉ và điểm số.
+  - Tự động lọc bỏ các môn bị hủy hoặc chưa có điểm.
+
+- **📝 Tính thủ công chi tiết**: 
+  - Quản lý điểm số theo từng học kỳ.
+  - Tính GPA tích lũy và GPA từng kỳ theo thời gian thực.
+  - Lưu trữ dữ liệu tự động trên trình duyệt (không mất khi tải lại trang).
+
+- **📊 Thang điểm chuẩn HUFLIT**: 
+  - Tích hợp sẵn thang điểm quy đổi (A, B+, B, C+...) theo quy chế mới nhất.
+
+- **📱 Giao diện hiện đại**: 
+  - Tối ưu hoàn toàn cho Mobile và Tablet.
+  - Chế độ Dark/Light mode (theo hệ thống).
+  - Thao tác nhanh gọn, trực quan.
 
 ## Cách sử dụng
 
