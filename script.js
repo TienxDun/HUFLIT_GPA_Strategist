@@ -489,7 +489,7 @@ function renderManualSemesters() {
                                                 <select class="form-select form-select-xs manual-input" style="font-size: 0.75rem; padding: 2px;"
                                                     data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="oldGrade">
                                                     <option value="" disabled>Điểm cũ</option>
-                                                    ${GRADE_SCALE.map(g => `<option value="${g.grade}" ${course.oldGrade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
+                                                    ${GRADE_SCALE.filter(g => g.gpa > 0).map(g => `<option value="${g.grade}" ${course.oldGrade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
                                                 </select>
                                             ` : ''}
                                         </div>
@@ -601,7 +601,7 @@ function addRetakeItem(savedData = null) {
         <div class="input-group flex-grow-1" style="min-width: 0;">
             <span class="input-group-text bg-light text-muted small px-2">Điểm cũ</span>
             <select class="form-select retake-old-grade" aria-label="Old Grade" style="text-overflow: ellipsis;">
-                ${GRADE_SCALE.map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
+                ${GRADE_SCALE.filter(g => g.gpa > 0).map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
             </select>
         </div>
         <div class="input-group flex-nowrap" style="width: 90px; flex-shrink: 0;">
@@ -921,7 +921,7 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                     <i class="bi bi-chevron-down"></i>
                 </button>
                 <div class="collapse" id="algoDetails">
-                    <div class="position-relative ps-3">
+                    <div class="position-relative">
                         <div class="position-absolute start-0 top-0 bottom-0 border-start border-2 ms-3" style="z-index: 0;"></div>
                         
                         <!-- Step 1: Target Total Points -->
