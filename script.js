@@ -138,10 +138,32 @@ function initManualCalcTab() {
     manualSemesterList.addEventListener('click', (e) => {
         const target = e.target;
         
-        // Delete Semester
-        if (target.closest('.delete-semester-btn')) {
-            const semId = parseInt(target.closest('.delete-semester-btn').dataset.id);
+        // Delete Semester (Request Confirmation)
+        const deleteBtn = target.closest('.delete-semester-btn');
+        if (deleteBtn) {
+            // Change to confirm state
+            deleteBtn.classList.remove('delete-semester-btn', 'text-danger', 'btn-link');
+            deleteBtn.classList.add('confirm-delete-semester-btn', 'btn-danger', 'text-white');
+            deleteBtn.innerHTML = 'Xóa?';
+            
+            // Auto revert after 3 seconds
+            setTimeout(() => {
+                // Check if button still exists and hasn't been clicked (class check)
+                if (deleteBtn && document.body.contains(deleteBtn) && deleteBtn.classList.contains('confirm-delete-semester-btn')) {
+                    deleteBtn.classList.add('delete-semester-btn', 'text-danger', 'btn-link');
+                    deleteBtn.classList.remove('confirm-delete-semester-btn', 'btn-danger', 'text-white');
+                    deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                }
+            }, 3000);
+            return;
+        }
+
+        // Confirm Delete Semester
+        const confirmBtn = target.closest('.confirm-delete-semester-btn');
+        if (confirmBtn) {
+            const semId = parseInt(confirmBtn.dataset.id);
             deleteManualSemester(semId);
+            return;
         }
 
         // Add Course
@@ -185,12 +207,17 @@ function addManualSemester() {
 }
 
 function deleteManualSemester(id) {
-    if(confirm('Xóa học kỳ này?')) {
-        manualSemesters = manualSemesters.filter(s => s.id !== id);
-        saveManualState();
-        renderManualSemesters();
-        calculateManualGPA();
-    }
+    // Removed blocking confirm() to fix violation
+    manualSemesters = manualSemesters.filter(s => s.id !== id);
+    
+    // Re-index semester names to ensure sequential order
+    manualSemesters.forEach((sem, index) => {
+        sem.name = `Học kỳ ${index + 1}`;
+    });
+
+    saveManualState();
+    renderManualSemesters();
+    calculateManualGPA();
 }
 
 function addManualCourse(semId) {
