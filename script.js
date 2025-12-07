@@ -1334,6 +1334,11 @@ if (processImportBtn) {
             return;
         }
 
+        // Clear existing data before importing
+        manualSemesters = [];
+        if (manualInitialGpaInput) manualInitialGpaInput.value = '';
+        if (manualInitialCreditsInput) manualInitialCreditsInput.value = '';
+
         // Add imported semesters to manualSemesters
         let addedCount = 0;
         importedSemesters.forEach(sem => {
