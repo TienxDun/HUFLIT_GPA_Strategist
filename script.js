@@ -435,12 +435,23 @@ window.adjustManualCredit = function(semId, courseId, delta) {
 function renderManualSemesters() {
     manualSemesterList.innerHTML = manualSemesters.map(sem => {
         const semTotalCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
-        const semTotalPoints = sem.courses.reduce((sum, c) => {
+        
+        // Calculate Semester GPA (excluding ungraded and F grades to match Global GPA logic)
+        let semGpaPoints = 0;
+        let semGpaCredits = 0;
+        
+        sem.courses.forEach(c => {
             const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
             const gpa = gradeInfo ? gradeInfo.gpa : 0;
-            return sum + (gpa * (parseFloat(c.credits) || 0));
-        }, 0);
-        const semGPA = semTotalCredits > 0 ? (semTotalPoints / semTotalCredits).toFixed(2) : '0.00';
+            const credits = parseFloat(c.credits) || 0;
+            
+            if (gradeInfo && gpa > 0) {
+                semGpaPoints += gpa * credits;
+                semGpaCredits += credits;
+            }
+        });
+        
+        const semGPA = semGpaCredits > 0 ? (semGpaPoints / semGpaCredits).toFixed(2) : '0.00';
         
         return `
         <div class="card shadow-sm mb-3">
@@ -488,6 +499,7 @@ function renderManualSemesters() {
                                     <td>
                                         <select class="form-select form-select-sm manual-input"
                                             data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="grade">
+                                            <option value="" ${course.grade === '' ? 'selected' : ''}>--</option>
                                             ${GRADE_SCALE.map(g => `<option value="${g.grade}" ${course.grade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
                                         </select>
                                     </td>
@@ -1662,12 +1674,16 @@ function parsePortalText(text) {
             continue;
         }
 
-        // Check for Course Line
+        // Check for Course Line (Graded)
         // Regex to find: Credits (float), Grade10 (float), Grade4 (float), GradeChar (Letters+opt +)
         // Matches: 3.0 7.0 3.00 B
         // Updated regex to correctly handle '+' grades by using lookahead (?=\s|$) instead of \b
         const courseMatch = line.match(/(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+([A-Z]\+?)(?=\s|$)/);
         
+        // Check for Course Line (Ungraded)
+        // Matches: Credits (float) followed by "Chưa nhập điểm" or "Chưa khảo sát"
+        const ungradedMatch = line.match(/(\d+(?:\.\d+)?)\s+(?=Chưa nhập điểm|Chưa khảo sát)/);
+
         if (courseMatch && currentSemester) {
             // Extract parts
             const matchIndex = courseMatch.index;
@@ -1708,6 +1724,32 @@ function parsePortalText(text) {
                     grade: gradeChar,
                     isRetake: false,
                     oldGrade: 'D'
+                });
+            }
+        } else if (ungradedMatch && currentSemester) {
+            // Handle Ungraded Course
+            const credits = parseFloat(ungradedMatch[1]);
+            const matchIndex = ungradedMatch.index;
+            const prefix = line.substring(0, matchIndex).trim();
+            
+            let courseName = prefix;
+            const nameMatch = prefix.match(/^\d+\s+\w+\s+(.+)$/);
+            if (nameMatch) {
+                courseName = nameMatch[1].trim();
+            }
+            
+            // Skip courses with '*' in the name
+            if (courseName.includes('*')) {
+                continue;
+            }
+            
+            if (credits < 20) {
+                currentSemester.courses.push({
+                    name: courseName,
+                    credits: credits,
+                    grade: "", // Empty grade
+                    isRetake: false,
+                    oldGrade: ""
                 });
             }
         }
