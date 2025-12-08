@@ -1020,6 +1020,30 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
     let icon = '';
     let message = '';
 
+    // Handle case where calculation is impossible due to 0 credits
+    if (requiredGPA >= 999 && creditsToEarn <= 0) {
+        html = `
+            <div class="text-center mb-4 w-100">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger text-white shadow-sm mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-x-lg fs-2"></i>
+                </div>
+                <h6 class="text-uppercase text-secondary fw-bold small letter-spacing-1 mb-2">Không thể tính toán</h6>
+                <div class="fs-5 fw-bold text-danger mb-2">Cần thêm tín chỉ</div>
+                <p class="text-muted fw-medium mb-0 px-3">Bạn cần nhập thêm <b>tín chỉ mới</b> hoặc chọn <b>học cải thiện</b> để có thể thay đổi GPA.</p>
+                <div class="mt-3">
+                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis px-3 py-2 border border-danger-subtle">
+                        Không có tín chỉ để tính điểm
+                    </span>
+                </div>
+            </div>`;
+        
+        if (targetResultContainer) {
+            targetResultContainer.innerHTML = html;
+            targetResultContainer.classList.remove('d-none');
+        }
+        return;
+    }
+
     if (requiredGPA <= 4.0 && requiredGPA >= 0) {
         // Feasible
         bgClass = 'bg-success-subtle';
