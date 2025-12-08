@@ -844,7 +844,8 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
             const credits = parseFloat(course.credits) || 0;
             
             // Skip if credits < 2 (Minimum credits requirement)
-            if (credits < 2) return;
+            // Use strict comparison and ensure it's a number
+            if (credits < 2.0) return;
 
             // Calculate Potential Gain
             // If Passed (GPA > 0): Gain = (4.0 - CurrentGPA) * Credits
@@ -869,11 +870,18 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
     // 2. Find Combinations
     const suggestions = [];
     
+    // Filter candidates again to be absolutely sure we don't include < 2 credits
+    // Double check parsing and value
+    const validCandidates = candidates.filter(c => {
+        const creds = parseFloat(c.credits);
+        return !isNaN(creds) && creds >= 2.0;
+    });
+
     // Sort by gain descending to optimize search
-    candidates.sort((a, b) => b.gain - a.gain);
+    validCandidates.sort((a, b) => b.gain - a.gain);
     
     // A. Single Courses
-    for (const c of candidates) {
+    for (const c of validCandidates) {
         if (c.gain >= deficitPoints) {
             suggestions.push({
                 courses: [c],
@@ -884,7 +892,7 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
     }
     
     // B. Pairs (Limit to top 50 candidates)
-    const topCandidates = candidates.slice(0, 50);
+    const topCandidates = validCandidates.slice(0, 50);
     for (let i = 0; i < topCandidates.length; i++) {
         for (let j = i + 1; j < topCandidates.length; j++) {
             const c1 = topCandidates[i];
@@ -892,6 +900,9 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
             
             // Avoid suggesting same course twice (shouldn't happen as IDs are unique, but good to be safe)
             if (c1.id === c2.id) continue;
+
+            // Double check credits again just to be paranoid
+            if (parseFloat(c1.credits) < 2.0 || parseFloat(c2.credits) < 2.0) continue;
 
             const pairGain = c1.gain + c2.gain;
             
@@ -1379,6 +1390,10 @@ function generateCombinationSuggestions(target, totalCredits) {
             // If minX is valid, we have a solution: x = minX, y = totalCredits - minX
             const x = minX;
             const y = totalCredits - x;
+
+            // Filter out solutions where any component has < 2 credits (unless it's 0)
+            if ((x > 0 && x < 2) || (y > 0 && y < 2)) continue;
+
             const avg = (x * g1.gpa + y * g2.gpa) / totalCredits;
 
             suggestions.push({
@@ -1680,7 +1695,7 @@ if (processImportBtn) {
                 const courses = sem.courses.map(c => ({
                     id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                     name: c.name,
-                    credits: c.credits,
+                    credits: parseFloat(c.credits) || 0, // Ensure credits is a number
                     grade: c.grade,
                     isRetake: false,
                     oldGrade: 0
