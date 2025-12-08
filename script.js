@@ -777,10 +777,10 @@ function loadTargetState() {
     if (saved) {
         try {
             const state = JSON.parse(saved);
-            currentGpaInput.value = state.currentGpa || '';
-            currentCreditsInput.value = state.currentCredits || '';
-            targetGpaInput.value = state.targetGpa || '';
-            newCreditsInput.value = state.newCredits || '';
+            if (currentGpaInput) currentGpaInput.value = state.currentGpa || '';
+            if (currentCreditsInput) currentCreditsInput.value = state.currentCredits || '';
+            if (targetGpaInput) targetGpaInput.value = state.targetGpa || '';
+            if (newCreditsInput) newCreditsInput.value = state.newCredits || '';
             if (totalCreditsInput) totalCreditsInput.value = state.totalCredits || '';
             
             // Restore Mode
@@ -790,15 +790,19 @@ function loadTargetState() {
                 setCreditMode('new'); // Default
             }
 
-            retakeToggle.checked = state.isRetake || false;
-            if (state.isRetake) {
-                retakeArea.classList.remove('d-none');
-                retakeList.innerHTML = '';
-                if (state.retakes && Array.isArray(state.retakes)) {
-                    state.retakes.forEach(r => addRetakeItem(r));
+            if (retakeToggle) {
+                retakeToggle.checked = state.isRetake || false;
+                if (state.isRetake) {
+                    if (retakeArea) retakeArea.classList.remove('d-none');
+                    if (retakeList) {
+                        retakeList.innerHTML = '';
+                        if (state.retakes && Array.isArray(state.retakes)) {
+                            state.retakes.forEach(r => addRetakeItem(r));
+                        }
+                    }
+                } else {
+                    if (retakeArea) retakeArea.classList.add('d-none');
                 }
-            } else {
-                retakeArea.classList.add('d-none');
             }
         } catch (e) {
             console.error("Error loading target state", e);
