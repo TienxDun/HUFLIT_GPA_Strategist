@@ -514,7 +514,7 @@ function renderManualSemesters() {
                                                 <select class="form-select form-select-xs manual-input" style="font-size: 0.75rem; padding: 2px;"
                                                     data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="oldGrade">
                                                     <option value="" disabled>Điểm cũ</option>
-                                                    ${GRADE_SCALE.filter(g => g.gpa > 0).map(g => `<option value="${g.grade}" ${course.oldGrade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
+                                                    ${GRADE_SCALE.map(g => `<option value="${g.grade}" ${course.oldGrade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
                                                 </select>
                                             ` : ''}
                                         </div>
@@ -680,7 +680,7 @@ function addRetakeItem(savedData = null) {
         <div class="input-group flex-grow-1" style="min-width: 0;">
             <span class="input-group-text bg-light text-muted small px-2">Điểm cũ</span>
             <select class="form-select retake-old-grade" aria-label="Old Grade" style="text-overflow: ellipsis;">
-                ${GRADE_SCALE.filter(g => g.gpa > 0).map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
+                ${GRADE_SCALE.map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
             </select>
         </div>
         <div class="input-group flex-nowrap" style="width: 90px; flex-shrink: 0;">
@@ -950,6 +950,8 @@ function calculateTargetGPA() {
 
     // 3. Logic Calculation
     // Current Total Points
+    // Note: According to user, F grade is not recorded in the previous cumulative GPA.
+    // So we treat it as if it wasn't there.
     const currentTotalPoints = currentGPA * currentCredits;
     
     // Effective Current Points (after removing old grades)
