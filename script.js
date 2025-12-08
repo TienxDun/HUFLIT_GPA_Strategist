@@ -917,10 +917,21 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
 
 function calculateTargetGPA() {
     // 1. Get Inputs
+    // Ensure we parse values correctly, handling potential empty strings from restored state
     const currentGPA = parseFloat(currentGpaInput.value) || 0;
     const currentCredits = parseFloat(currentCreditsInput.value) || 0;
     const targetGPA = parseFloat(targetGpaInput.value) || 0;
-    const newCredits = parseFloat(newCreditsInput.value) || 0;
+    
+    // Handle New Credits based on mode
+    let newCredits = 0;
+    if (creditMode === 'total') {
+        const total = parseFloat(totalCreditsInput.value) || 0;
+        newCredits = Math.max(0, total - currentCredits);
+        // Update the hidden input for consistency
+        if (newCreditsInput) newCreditsInput.value = newCredits;
+    } else {
+        newCredits = parseFloat(newCreditsInput.value) || 0;
+    }
 
     // 2. Handle Retakes
     let removedPoints = 0;
