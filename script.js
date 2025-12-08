@@ -404,6 +404,11 @@ function calculateManualGPA() {
 
     const gpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
     
+    console.log("--- Manual GPA Calculation ---");
+    console.log("Initial State:", { initialGPA, initialCredits });
+    console.log("Semesters:", manualSemesters.length);
+    console.log("Result:", { totalPoints, totalCredits, gpa });
+
     // Update UI
     manualGpaDisplay.textContent = gpa.toFixed(2);
     manualCreditsDisplay.textContent = totalCredits;
@@ -1021,6 +1026,20 @@ function calculateTargetGPA() {
         retakeCreditsTotal,
         suggestions
     };
+
+    console.log("--- Target GPA Calculation ---");
+    console.log("Inputs:", { currentGPA, currentCredits, targetGPA, newCredits, creditMode });
+    console.log("Retakes:", { removedPoints, retakeCreditsTotal, retakeCreditsFromF });
+    console.log("Calculation:", { 
+        currentTotalPoints, 
+        effectiveCurrentPoints, 
+        totalFutureCredits, 
+        targetTotalPoints, 
+        pointsNeeded, 
+        creditsToEarn, 
+        requiredGPA 
+    });
+
     renderTargetResult(requiredGPA, creditsToEarn, deficitPoints, details);
 }
 
