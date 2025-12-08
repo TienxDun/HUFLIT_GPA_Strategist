@@ -164,3 +164,130 @@ body {
     color: #adb5bd !important; /* Lighter gray */
     opacity: 0.6 !important;
 }
+
+/* Floating Contact Button */
+.floating-contact-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), #ff6b6b);
+    border: none;
+    box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.floating-contact-btn:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 20px rgba(211, 47, 47, 0.6);
+}
+
+.floating-contact-btn i {
+    font-size: 1.75rem; /* Slightly larger icon */
+}
+
+/* Contact Modal Customization */
+.contact-modal-content {
+    border: none;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.contact-modal-header {
+    background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+    height: 130px;
+    position: relative;
+    border-bottom: none;
+    padding: 0;
+}
+
+.contact-modal-header .btn-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    padding: 12px;
+    opacity: 1;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.contact-modal-header .btn-close:hover {
+    background-color: white;
+    transform: rotate(90deg) scale(1.1);
+}
+
+.contact-avatar-container {
+    margin-top: -65px; /* Pull avatar up to overlap header */
+    margin-bottom: 15px;
+    position: relative;
+    display: inline-block;
+}
+
+.contact-avatar {
+    width: 130px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    background-color: white;
+}
+
+.contact-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background-color: #1da1f2; /* Blue checkmark color */
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid white;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.contact-name {
+    font-weight: 800;
+    color: #212529;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+}
+
+.contact-role {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    background-color: rgba(211, 47, 47, 0.08);
+    padding: 6px 16px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.contact-actions .btn {
+    padding: 12px 20px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border-width: 2px;
+}
+
+.contact-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.contact-actions .btn-outline-primary:hover {
+    background-color: #f8f9fa;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}

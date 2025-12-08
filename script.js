@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTargetGPATab();
     initManualCalcTab();
     initGradeScaleTab();
+    initContactButton();
 
     // Sync Desktop and Mobile Tabs
     const allNavLinks = document.querySelectorAll('.nav-link[data-bs-toggle="pill"]');
@@ -1874,4 +1875,18 @@ function parsePortalText(text) {
     });
 
     return semesters;
+}
+// ==========================================
+// CONTACT BUTTON LOGIC
+// ==========================================
+function initContactButton() {
+    const wrapper = document.getElementById('contact-floating-wrapper');
+    const closeBtn = document.getElementById('close-contact-btn');
+
+    if (!wrapper || !closeBtn) return;
+
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering modal
+        wrapper.style.display = 'none';
+    });
 }
