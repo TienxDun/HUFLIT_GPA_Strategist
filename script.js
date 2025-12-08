@@ -843,7 +843,8 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
             const currentGPA = gradeInfo.gpa;
             const credits = parseFloat(course.credits) || 0;
             
-            if (credits <= 0) return;
+            // Skip if credits < 2 (Minimum credits requirement)
+            if (credits < 2) return;
 
             // Calculate Potential Gain
             // If Passed (GPA > 0): Gain = (4.0 - CurrentGPA) * Credits
