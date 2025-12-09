@@ -109,6 +109,57 @@ const manualInitialCreditsInput = document.getElementById('manual-initial-credit
 function initManualCalcTab() {
     if (!addSemesterBtn) return;
 
+    // Apply Manual Data to Target Tab
+    const applyBtn = document.getElementById('apply-manual-to-target-btn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            const gpa = manualGpaDisplay.textContent;
+            const credits = manualCreditsDisplay.textContent;
+
+            const targetGpaInput = document.getElementById('current-gpa');
+            const targetCreditsInput = document.getElementById('current-credits');
+            const goalGpaInput = document.getElementById('target-gpa');
+
+            if (targetGpaInput && targetCreditsInput) {
+                targetGpaInput.value = gpa;
+                targetCreditsInput.value = credits;
+
+                // Auto-suggest Target GPA
+                if (goalGpaInput) {
+                    const currentGpaVal = parseFloat(gpa);
+                    let suggestedTarget = '';
+                    
+                    if (currentGpaVal < 2.0) suggestedTarget = '2.0';
+                    else if (currentGpaVal < 2.5) suggestedTarget = '2.5';
+                    else if (currentGpaVal < 3.2) suggestedTarget = '3.2';
+                    else if (currentGpaVal < 3.6) suggestedTarget = '3.6';
+                    else suggestedTarget = '4.0';
+
+                    goalGpaInput.value = suggestedTarget;
+                    goalGpaInput.classList.add('is-valid');
+                    setTimeout(() => goalGpaInput.classList.remove('is-valid'), 2000);
+                }
+
+                // Switch to Tab 1
+                const targetTabBtn = document.querySelector('button[data-bs-target="#pills-target"]');
+                if (targetTabBtn) {
+                    const tab = bootstrap.Tab.getOrCreateInstance(targetTabBtn);
+                    tab.show();
+                }
+                
+                // Highlight inputs
+                targetGpaInput.focus();
+                targetGpaInput.classList.add('is-valid');
+                targetCreditsInput.classList.add('is-valid');
+                
+                setTimeout(() => {
+                    targetGpaInput.classList.remove('is-valid');
+                    targetCreditsInput.classList.remove('is-valid');
+                }, 2000);
+            }
+        });
+    }
+
     loadManualState();
     renderManualSemesters();
     calculateManualGPA();
