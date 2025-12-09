@@ -1963,32 +1963,41 @@ function fetchVisitCount() {
     const container = document.getElementById('visit-count-container');
     const countSpan = document.getElementById('visit-count');
     
-    // Endpoint for GoatCounter public stats
-    const endpoint = `https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json?rnd=${Math.random()}`;
+    // Xóa nội dung cũ
+    countSpan.innerHTML = '';
+    
+    // Tạo thẻ script mới để gọi JSONP
+    // JSONP (JSON with Padding) giúp vượt qua lỗi CORS bằng cách nhúng script thay vì fetch
+    const script = document.createElement('script');
+    
+    // Tên hàm callback toàn cục để GoatCounter gọi lại
+    const callbackName = 'goatcounter_callback_' + Math.floor(Math.random() * 10000);
+    
+    // Định nghĩa hàm callback
+    window[callbackName] = function(data) {
+        if (data && data.count) {
+            countSpan.textContent = data.count;
+            container.style.display = 'block';
+        }
+        // Dọn dẹp
+        delete window[callbackName];
+        document.body.removeChild(script);
+    };
 
-    fetch(endpoint)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.count) {
-                countSpan.textContent = data.count;
-                container.style.display = 'block';
-            }
-        })
-        .catch(error => {
-            // Xử lý riêng cho môi trường Localhost (thường bị chặn CORS)
-            if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
-                console.warn('GoatCounter: Counter bị chặn trên Localhost do CORS. Hiển thị số giả lập để xem trước giao diện.');
-                countSpan.textContent = '1.234'; // Số giả lập
-                container.style.display = 'block';
-            } else {
-                // Lỗi trên Production thường do cấu hình sai domain
-                console.error('GoatCounter Error: Lỗi CORS/400. Vui lòng vào Settings > Site > "Sites that can embed GoatCounter" và sửa thành: tienxdun.github.io (lưu ý KHÔNG có https:// hay đường dẫn phía sau)');
-                container.style.display = 'none';
-            }
-        });
+    // URL endpoint với tham số callback
+    // Lưu ý: GoatCounter hỗ trợ JSONP thông qua tham số ?callback=...
+    // Chúng ta dùng endpoint /counter/TOTAL.json để lấy tổng
+    script.src = `https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json?callback=${callbackName}&rnd=${Math.random()}`;
+    
+    // Xử lý lỗi nếu script không tải được
+    script.onerror = function() {
+        console.warn('Không thể tải script đếm lượt truy cập.');
+        container.style.display = 'none';
+        delete window[callbackName];
+        if (document.body.contains(script)) {
+            document.body.removeChild(script);
+        }
+    };
+
+    document.body.appendChild(script);
 }
