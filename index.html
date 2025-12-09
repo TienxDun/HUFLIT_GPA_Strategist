@@ -547,14 +547,83 @@ Năm học: 2023-2024 - Học kỳ: HK01
                     </p>
                     
                     <div class="d-grid gap-2 contact-actions">
-                        <a href="https://tienxdun-hgs-docs.notion.site/introductions" target="_blank" class="btn btn-outline-primary rounded-pill">
+                        <button type="button" class="btn btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#userGuideModal">
                             <i class="bi bi-book-half me-2"></i>Xem hướng dẫn sử dụng
-                        </a>
+                        </button>
 
                         <a href="https://www.facebook.com/tienxdun/" target="_blank" class="btn btn-primary rounded-pill shadow-sm">
                             <i class="bi bi-messenger me-2"></i>Nhắn tin qua Facebook
                         </a>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Guide Modal -->
+    <div class="modal fade" id="userGuideModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-book-half me-2 text-primary"></i>Hướng dẫn sử dụng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="guideTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="guide-target-tab" data-bs-toggle="tab" data-bs-target="#guide-target" type="button" role="tab">Lộ trình GPA</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="guide-manual-tab" data-bs-toggle="tab" data-bs-target="#guide-manual" type="button" role="tab">Tính GPA Thủ công</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="guide-course-tab" data-bs-toggle="tab" data-bs-target="#guide-course" type="button" role="tab">Tính điểm Môn học</button>
+                        </li>
+                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="guide-scale-tab" data-bs-toggle="tab" data-bs-target="#guide-scale" type="button" role="tab">Thang điểm</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="guideTabContent">
+                        <div class="tab-pane fade show active" id="guide-target" role="tabpanel">
+                            <h6><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Lộ trình GPA</h6>
+                            <p>Tính năng này giúp bạn lập kế hoạch để đạt được GPA mục tiêu.</p>
+                            <ul>
+                                <li><strong>Bước 1:</strong> Copy bảng điểm từ Portal đào tạo.</li>
+                                <li><strong>Bước 2:</strong> Dán vào ô nhập liệu và bấm "Phân tích".</li>
+                                <li><strong>Bước 3:</strong> Nhập GPA mục tiêu bạn muốn đạt được.</li>
+                                <li><strong>Kết quả:</strong> Hệ thống sẽ tính toán điểm trung bình các môn còn lại bạn cần đạt để hoàn thành mục tiêu.</li>
+                            </ul>
+                        </div>
+                        <div class="tab-pane fade" id="guide-manual" role="tabpanel">
+                            <h6><i class="bi bi-calculator me-2 text-primary"></i>Tính GPA Thủ công</h6>
+                            <p>Tính GPA dựa trên điểm số bạn tự nhập.</p>
+                            <ul>
+                                <li>Thêm các học kỳ và môn học.</li>
+                                <li>Nhập số tín chỉ và điểm số (hệ 10 hoặc hệ 4).</li>
+                                <li>Hệ thống sẽ tự động tính GPA và CPA (GPA tích lũy).</li>
+                            </ul>
+                        </div>
+                        <div class="tab-pane fade" id="guide-course" role="tabpanel">
+                            <h6><i class="bi bi-journal-check me-2 text-primary"></i>Tính điểm Môn học</h6>
+                            <p>Dự tính điểm tổng kết môn học.</p>
+                            <ul>
+                                <li>Nhập % điểm quá trình và % điểm thi.</li>
+                                <li>Nhập điểm quá trình hiện có.</li>
+                                <li>Hệ thống sẽ cho biết bạn cần thi bao nhiêu điểm để đạt A, B, C, D...</li>
+                            </ul>
+                        </div>
+                        <div class="tab-pane fade" id="guide-scale" role="tabpanel">
+                            <h6><i class="bi bi-table me-2 text-primary"></i>Thang điểm</h6>
+                            <p>Tra cứu thang điểm chính thức của HUFLIT.</p>
+                            <ul>
+                                <li>Xem quy đổi điểm hệ 10 sang điểm chữ và hệ 4.</li>
+                                <li>Xếp loại học lực tương ứng.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-target="#contactModal" data-bs-toggle="modal">Quay lại</button>
                 </div>
             </div>
         </div>

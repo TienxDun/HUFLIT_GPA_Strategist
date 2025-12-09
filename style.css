@@ -100,6 +100,39 @@ body {
     background: #a8a8a8; 
 }
 
+/* Mobile Responsive Header */
+@media (max-width: 576px) {
+    .navbar .container {
+        padding-left: 10px;
+        padding-right: 10px;
+        flex-wrap: nowrap; /* Force no wrap */
+    }
+
+    .navbar-brand {
+        font-size: 0.95rem !important;
+        gap: 5px;
+        margin-right: 5px;
+    }
+    
+    .navbar-brand i {
+        font-size: 1.1rem !important;
+    }
+
+    .navbar-brand span {
+        white-space: nowrap;
+    }
+
+    .visit-count-container .badge {
+        font-size: 0.65rem;
+        padding: 4px 6px !important;
+        white-space: nowrap;
+    }
+    
+    .visit-count-container .small {
+        display: none; /* Hide text "lượt" to save space */
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
