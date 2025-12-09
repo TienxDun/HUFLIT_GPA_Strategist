@@ -1963,30 +1963,31 @@ function fetchVisitCount() {
     const container = document.getElementById('visit-count-container');
     const countSpan = document.getElementById('visit-count');
     
-    // Endpoint for GoatCounter public stats (requires 'Allow adding visitor counts' enabled in settings)
-    // Using the counter.json endpoint for the TOTAL path to get site totals
-    const endpoint = 'https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json';
+    // Endpoint for GoatCounter public stats
+    // IMPORTANT: You must enable "Allow adding visitor counts on your website" in GoatCounter settings
+    // Path: Settings > Site > Allow adding visitor counts on your website
+    // Using random param to prevent caching
+    const endpoint = `https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json?rnd=${Math.random()}`;
 
     fetch(endpoint)
         .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
+            if (!response.ok) {
+                // If 400/403, it likely means the setting is disabled
+                if (response.status === 400 || response.status === 403) {
+                    console.warn('GoatCounter: Vui lòng bật tùy chọn "Allow adding visitor counts" trong phần Settings của GoatCounter.');
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             return response.json();
         })
         .then(data => {
-            // data.count is the total count string/number
             if (data && data.count) {
-                // Format number with dots (e.g. 1.234)
-                // data.count is already a formatted string with separators according to docs, 
-                // but let's ensure we display it correctly.
-                // If it's a string "1,234", we can use it directly or reformat if needed.
-                // The docs say: "containing the total number of visitors as a formatted string with thousands separators."
                 countSpan.textContent = data.count;
                 container.style.display = 'block';
             }
         })
         .catch(error => {
-            console.log('Could not fetch visit count:', error);
-            // Hide container if fetch fails
+            console.warn('Không thể tải số lượt truy cập:', error);
             container.style.display = 'none';
         });
 }
