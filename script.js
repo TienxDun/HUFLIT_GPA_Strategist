@@ -1986,7 +1986,8 @@ function fetchVisitCount() {
                 countSpan.textContent = '1.234'; // Số giả lập
                 container.style.display = 'block';
             } else {
-                console.warn('Không thể tải số lượt truy cập. Vui lòng kiểm tra cấu hình "Sites that can embed" trên GoatCounter.', error);
+                // Lỗi trên Production thường do cấu hình sai domain
+                console.error('GoatCounter Error: Lỗi CORS/400. Vui lòng vào Settings > Site > "Sites that can embed GoatCounter" và sửa thành: tienxdun.github.io (lưu ý KHÔNG có https:// hay đường dẫn phía sau)');
                 container.style.display = 'none';
             }
         });
