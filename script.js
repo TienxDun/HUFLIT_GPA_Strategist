@@ -1963,41 +1963,30 @@ function fetchVisitCount() {
     const container = document.getElementById('visit-count-container');
     const countSpan = document.getElementById('visit-count');
     
-    // Xóa nội dung cũ
-    countSpan.innerHTML = '';
+    // Reset nội dung và hiển thị loading (nếu cần)
+    countSpan.textContent = '...';
     
-    // Tạo thẻ script mới để gọi JSONP
-    // JSONP (JSON with Padding) giúp vượt qua lỗi CORS bằng cách nhúng script thay vì fetch
-    const script = document.createElement('script');
-    
-    // Tên hàm callback toàn cục để GoatCounter gọi lại
-    const callbackName = 'goatcounter_callback_' + Math.floor(Math.random() * 10000);
-    
-    // Định nghĩa hàm callback
-    window[callbackName] = function(data) {
-        if (data && data.count) {
-            countSpan.textContent = data.count;
-            container.style.display = 'block';
-        }
-        // Dọn dẹp
-        delete window[callbackName];
-        document.body.removeChild(script);
-    };
+    // URL endpoint lấy dữ liệu JSON
+    // Lưu ý: Cần bật "Allow adding visitor counts on your website" trong cài đặt GoatCounter để tránh lỗi CORS
+    const url = `https://tienxdun.goatcounter.com/counter/TOTAL.json?rnd=${Math.random()}`;
 
-    // URL endpoint với tham số callback
-    // Lưu ý: GoatCounter hỗ trợ JSONP thông qua tham số ?callback=...
-    // Chúng ta dùng endpoint /counter/TOTAL.json để lấy tổng
-    script.src = `https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json?callback=${callbackName}&rnd=${Math.random()}`;
-    
-    // Xử lý lỗi nếu script không tải được
-    script.onerror = function() {
-        console.warn('Không thể tải script đếm lượt truy cập.');
-        container.style.display = 'none';
-        delete window[callbackName];
-        if (document.body.contains(script)) {
-            document.body.removeChild(script);
-        }
-    };
-
-    document.body.appendChild(script);
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.count) {
+                countSpan.textContent = data.count;
+                container.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.warn('Không thể lấy lượt truy cập (Lỗi CORS hoặc Mạng):', error);
+            console.warn('Vui lòng kiểm tra cài đặt "Allow adding visitor counts" trên GoatCounter.');
+            // Ẩn container nếu lỗi
+            container.style.display = 'none';
+        });
 }
