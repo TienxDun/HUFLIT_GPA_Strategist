@@ -2066,7 +2066,7 @@ function fetchVisitCount() {
 // ==========================================
 
 function initThemeToggle() {
-    const toggleBtns = document.querySelectorAll('#theme-toggle-mobile, #theme-toggle-desktop');
+    const toggleBtns = document.querySelectorAll('#theme-toggle-mobile, #theme-toggle-desktop, #theme-toggle');
     const navbar = document.querySelector('.navbar');
     
     // Check local storage or system preference
