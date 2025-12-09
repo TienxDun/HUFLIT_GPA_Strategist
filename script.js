@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initManualCalcTab();
     initGradeScaleTab();
     initContactButton();
+    initThemeToggle();
     fetchVisitCount();
 
     // Sync Desktop and Mobile Tabs
@@ -1280,7 +1281,7 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                                 </span>
                             </div>
                             <div class="d-flex gap-2 align-items-stretch">
-                                <div class="flex-fill p-2 rounded border bg-white position-relative overflow-hidden">
+                                <div class="flex-grow-1 p-2 rounded border bg-white position-relative overflow-hidden" style="flex-basis: 0;">
                                     <div class="position-absolute top-0 start-0 bottom-0 ${getGradeBgSubtle(s.g1.grade)}" style="width: 4px;"></div>
                                     <div class="d-flex justify-content-between align-items-baseline ps-2">
                                         <span class="fw-bold ${getGradeTextColor(s.g1.grade)}">${s.g1.grade}</span>
@@ -1290,7 +1291,7 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                                 <div class="d-flex align-items-center text-muted">
                                     <i class="bi bi-plus-lg small"></i>
                                 </div>
-                                <div class="flex-fill p-2 rounded border bg-white position-relative overflow-hidden">
+                                <div class="flex-grow-1 p-2 rounded border bg-white position-relative overflow-hidden" style="flex-basis: 0;">
                                     <div class="position-absolute top-0 start-0 bottom-0 ${getGradeBgSubtle(s.g2.grade)}" style="width: 4px;"></div>
                                     <div class="d-flex justify-content-between align-items-baseline ps-2">
                                         <span class="fw-bold ${getGradeTextColor(s.g2.grade)}">${s.g2.grade}</span>
@@ -1679,7 +1680,7 @@ function calculateAndRenderCourseGrade() {
                     </div>
                 </div>
                 ${requiredFinal <= 10 && requiredFinal > 0 ? `
-                <div class="progress mt-2" style="height: 4px; background-color: #f0f0f0;">
+                <div class="progress mt-2" style="height: 4px;">
                     <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${progressPercent}%" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
                 ` : ''}
@@ -1993,4 +1994,61 @@ function fetchVisitCount() {
             // Ẩn container nếu lỗi
             containers.forEach(container => container.style.display = 'none');
         });
+}
+
+// ==========================================
+// THEME TOGGLE (DARK MODE)
+// ==========================================
+
+function initThemeToggle() {
+    const toggleBtn = document.getElementById('theme-toggle');
+    if (!toggleBtn) return;
+    
+    const icon = toggleBtn.querySelector('i');
+    const navbar = document.querySelector('.navbar');
+    
+    // Check local storage or system preference
+    const getPreferredTheme = () => {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme) {
+            return storedTheme;
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+
+    const setTheme = (theme) => {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('theme', theme);
+        
+        // Update Icon and Navbar
+        if (theme === 'dark') {
+            icon.classList.remove('bi-moon-stars-fill');
+            icon.classList.add('bi-sun-fill');
+            toggleBtn.classList.replace('btn-outline-secondary', 'btn-outline-light');
+            
+            if (navbar) {
+                navbar.classList.remove('navbar-light', 'bg-white');
+                navbar.classList.add('navbar-dark', 'bg-dark');
+            }
+        } else {
+            icon.classList.remove('bi-sun-fill');
+            icon.classList.add('bi-moon-stars-fill');
+            toggleBtn.classList.replace('btn-outline-light', 'btn-outline-secondary');
+            
+            if (navbar) {
+                navbar.classList.remove('navbar-dark', 'bg-dark');
+                navbar.classList.add('navbar-light', 'bg-white');
+            }
+        }
+    };
+
+    // Initialize
+    setTheme(getPreferredTheme());
+
+    // Event Listener
+    toggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+    });
 }
