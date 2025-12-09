@@ -522,11 +522,13 @@ function renderManualSemesters() {
         return `
         <div class="card shadow-sm mb-3">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2">
                     <span class="fw-bold">${sem.name}</span>
-                    <span class="badge bg-light text-secondary border semester-total-credits" data-sem-id="${sem.id}">${semTotalCredits} TC</span>
-                    <span class="badge bg-primary text-white border semester-gpa" data-sem-id="${sem.id}">GPA ${semGPA}</span>
-                    <span class="badge bg-success text-white border semester-cum-gpa" data-sem-id="${sem.id}" title="GPA Tích lũy">GPA tích lũy ${cumGPA}</span>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-light text-secondary border semester-total-credits" data-sem-id="${sem.id}">${semTotalCredits} TC</span>
+                        <span class="badge bg-primary text-white border semester-gpa" data-sem-id="${sem.id}">GPA ${semGPA}</span>
+                        <span class="badge bg-success text-white border semester-cum-gpa" data-sem-id="${sem.id}" title="GPA Tích lũy">GPA tích lũy ${cumGPA}</span>
+                    </div>
                 </div>
                 <div>
                     <button class="btn btn-sm btn-link text-danger delete-semester-btn" data-id="${sem.id}">
