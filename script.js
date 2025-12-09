@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTargetGPATab();
     initManualCalcTab();
     initGradeScaleTab();
+    initContactButton();
 
     // Sync Desktop and Mobile Tabs
     const allNavLinks = document.querySelectorAll('.nav-link[data-bs-toggle="pill"]');
@@ -404,6 +405,11 @@ function calculateManualGPA() {
 
     const gpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
     
+    console.log("--- Manual GPA Calculation ---");
+    console.log("Initial State:", { initialGPA, initialCredits });
+    console.log("Semesters:", manualSemesters.length);
+    console.log("Result:", { totalPoints, totalCredits, gpa });
+
     // Update UI
     manualGpaDisplay.textContent = gpa.toFixed(2);
     manualCreditsDisplay.textContent = totalCredits;
@@ -435,12 +441,23 @@ window.adjustManualCredit = function(semId, courseId, delta) {
 function renderManualSemesters() {
     manualSemesterList.innerHTML = manualSemesters.map(sem => {
         const semTotalCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
-        const semTotalPoints = sem.courses.reduce((sum, c) => {
+        
+        // Calculate Semester GPA (excluding ungraded and F grades to match Global GPA logic)
+        let semGpaPoints = 0;
+        let semGpaCredits = 0;
+        
+        sem.courses.forEach(c => {
             const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
             const gpa = gradeInfo ? gradeInfo.gpa : 0;
-            return sum + (gpa * (parseFloat(c.credits) || 0));
-        }, 0);
-        const semGPA = semTotalCredits > 0 ? (semTotalPoints / semTotalCredits).toFixed(2) : '0.00';
+            const credits = parseFloat(c.credits) || 0;
+            
+            if (gradeInfo && gpa > 0) {
+                semGpaPoints += gpa * credits;
+                semGpaCredits += credits;
+            }
+        });
+        
+        const semGPA = semGpaCredits > 0 ? (semGpaPoints / semGpaCredits).toFixed(2) : '0.00';
         
         return `
         <div class="card shadow-sm mb-3">
@@ -488,6 +505,7 @@ function renderManualSemesters() {
                                     <td>
                                         <select class="form-select form-select-sm manual-input"
                                             data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="grade">
+                                            <option value="" ${course.grade === '' ? 'selected' : ''}>--</option>
                                             ${GRADE_SCALE.map(g => `<option value="${g.grade}" ${course.grade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
                                         </select>
                                     </td>
@@ -502,7 +520,7 @@ function renderManualSemesters() {
                                                 <select class="form-select form-select-xs manual-input" style="font-size: 0.75rem; padding: 2px;"
                                                     data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="oldGrade">
                                                     <option value="" disabled>Điểm cũ</option>
-                                                    ${GRADE_SCALE.filter(g => g.gpa > 0).map(g => `<option value="${g.grade}" ${course.oldGrade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
+                                                    ${GRADE_SCALE.map(g => `<option value="${g.grade}" ${course.oldGrade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
                                                 </select>
                                             ` : ''}
                                         </div>
@@ -668,7 +686,7 @@ function addRetakeItem(savedData = null) {
         <div class="input-group flex-grow-1" style="min-width: 0;">
             <span class="input-group-text bg-light text-muted small px-2">Điểm cũ</span>
             <select class="form-select retake-old-grade" aria-label="Old Grade" style="text-overflow: ellipsis;">
-                ${GRADE_SCALE.filter(g => g.gpa > 0).map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
+                ${GRADE_SCALE.map(g => `<option value="${g.gpa}" ${Math.abs(g.gpa - defaultGrade) < 0.01 ? 'selected' : ''}>${g.grade} (${g.gpa})</option>`).join('')}
             </select>
         </div>
         <div class="input-group flex-nowrap" style="width: 90px; flex-shrink: 0;">
@@ -765,10 +783,10 @@ function loadTargetState() {
     if (saved) {
         try {
             const state = JSON.parse(saved);
-            currentGpaInput.value = state.currentGpa || '';
-            currentCreditsInput.value = state.currentCredits || '';
-            targetGpaInput.value = state.targetGpa || '';
-            newCreditsInput.value = state.newCredits || '';
+            if (currentGpaInput) currentGpaInput.value = state.currentGpa || '';
+            if (currentCreditsInput) currentCreditsInput.value = state.currentCredits || '';
+            if (targetGpaInput) targetGpaInput.value = state.targetGpa || '';
+            if (newCreditsInput) newCreditsInput.value = state.newCredits || '';
             if (totalCreditsInput) totalCreditsInput.value = state.totalCredits || '';
             
             // Restore Mode
@@ -778,15 +796,19 @@ function loadTargetState() {
                 setCreditMode('new'); // Default
             }
 
-            retakeToggle.checked = state.isRetake || false;
-            if (state.isRetake) {
-                retakeArea.classList.remove('d-none');
-                retakeList.innerHTML = '';
-                if (state.retakes && Array.isArray(state.retakes)) {
-                    state.retakes.forEach(r => addRetakeItem(r));
+            if (retakeToggle) {
+                retakeToggle.checked = state.isRetake || false;
+                if (state.isRetake) {
+                    if (retakeArea) retakeArea.classList.remove('d-none');
+                    if (retakeList) {
+                        retakeList.innerHTML = '';
+                        if (state.retakes && Array.isArray(state.retakes)) {
+                            state.retakes.forEach(r => addRetakeItem(r));
+                        }
+                    }
+                } else {
+                    if (retakeArea) retakeArea.classList.add('d-none');
                 }
-            } else {
-                retakeArea.classList.add('d-none');
             }
         } catch (e) {
             console.error("Error loading target state", e);
@@ -822,7 +844,9 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
             const currentGPA = gradeInfo.gpa;
             const credits = parseFloat(course.credits) || 0;
             
-            if (credits <= 0) return;
+            // Skip if credits < 2 (Minimum credits requirement)
+            // Use strict comparison and ensure it's a number
+            if (credits < 2.0) return;
 
             // Calculate Potential Gain
             // If Passed (GPA > 0): Gain = (4.0 - CurrentGPA) * Credits
@@ -847,11 +871,18 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
     // 2. Find Combinations
     const suggestions = [];
     
+    // Filter candidates again to be absolutely sure we don't include < 2 credits
+    // Double check parsing and value
+    const validCandidates = candidates.filter(c => {
+        const creds = parseFloat(c.credits);
+        return !isNaN(creds) && creds >= 2.0;
+    });
+
     // Sort by gain descending to optimize search
-    candidates.sort((a, b) => b.gain - a.gain);
+    validCandidates.sort((a, b) => b.gain - a.gain);
     
     // A. Single Courses
-    for (const c of candidates) {
+    for (const c of validCandidates) {
         if (c.gain >= deficitPoints) {
             suggestions.push({
                 courses: [c],
@@ -862,7 +893,7 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
     }
     
     // B. Pairs (Limit to top 50 candidates)
-    const topCandidates = candidates.slice(0, 50);
+    const topCandidates = validCandidates.slice(0, 50);
     for (let i = 0; i < topCandidates.length; i++) {
         for (let j = i + 1; j < topCandidates.length; j++) {
             const c1 = topCandidates[i];
@@ -870,6 +901,9 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
             
             // Avoid suggesting same course twice (shouldn't happen as IDs are unique, but good to be safe)
             if (c1.id === c2.id) continue;
+
+            // Double check credits again just to be paranoid
+            if (parseFloat(c1.credits) < 2.0 || parseFloat(c2.credits) < 2.0) continue;
 
             const pairGain = c1.gain + c2.gain;
             
@@ -901,10 +935,21 @@ function generateRetakeSuggestions(deficitPoints, targetGPA) {
 
 function calculateTargetGPA() {
     // 1. Get Inputs
+    // Ensure we parse values correctly, handling potential empty strings from restored state
     const currentGPA = parseFloat(currentGpaInput.value) || 0;
     const currentCredits = parseFloat(currentCreditsInput.value) || 0;
     const targetGPA = parseFloat(targetGpaInput.value) || 0;
-    const newCredits = parseFloat(newCreditsInput.value) || 0;
+    
+    // Handle New Credits based on mode
+    let newCredits = 0;
+    if (creditMode === 'total') {
+        const total = parseFloat(totalCreditsInput.value) || 0;
+        newCredits = Math.max(0, total - currentCredits);
+        // Update the hidden input for consistency
+        if (newCreditsInput) newCreditsInput.value = newCredits;
+    } else {
+        newCredits = parseFloat(newCreditsInput.value) || 0;
+    }
 
     // 2. Handle Retakes
     let removedPoints = 0;
@@ -934,6 +979,8 @@ function calculateTargetGPA() {
 
     // 3. Logic Calculation
     // Current Total Points
+    // Note: According to user, F grade is not recorded in the previous cumulative GPA.
+    // So we treat it as if it wasn't there.
     const currentTotalPoints = currentGPA * currentCredits;
     
     // Effective Current Points (after removing old grades)
@@ -992,6 +1039,20 @@ function calculateTargetGPA() {
         retakeCreditsTotal,
         suggestions
     };
+
+    console.log("--- Target GPA Calculation ---");
+    console.log("Inputs:", { currentGPA, currentCredits, targetGPA, newCredits, creditMode });
+    console.log("Retakes:", { removedPoints, retakeCreditsTotal, retakeCreditsFromF });
+    console.log("Calculation:", { 
+        currentTotalPoints, 
+        effectiveCurrentPoints, 
+        totalFutureCredits, 
+        targetTotalPoints, 
+        pointsNeeded, 
+        creditsToEarn, 
+        requiredGPA 
+    });
+
     renderTargetResult(requiredGPA, creditsToEarn, deficitPoints, details);
 }
 
@@ -1001,6 +1062,30 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
     let textClass = '';
     let icon = '';
     let message = '';
+
+    // Handle case where calculation is impossible due to 0 credits
+    if (requiredGPA >= 999 && creditsToEarn <= 0) {
+        html = `
+            <div class="text-center mb-4 w-100">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger text-white shadow-sm mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-x-lg fs-2"></i>
+                </div>
+                <h6 class="text-uppercase text-secondary fw-bold small letter-spacing-1 mb-2">Không thể tính toán</h6>
+                <div class="fs-5 fw-bold text-danger mb-2">Cần thêm tín chỉ</div>
+                <p class="text-muted fw-medium mb-0 px-3">Bạn cần nhập thêm <b>tín chỉ mới</b> hoặc chọn <b>học cải thiện</b> để có thể thay đổi GPA.</p>
+                <div class="mt-3">
+                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis px-3 py-2 border border-danger-subtle">
+                        Không có tín chỉ để tính điểm
+                    </span>
+                </div>
+            </div>`;
+        
+        if (targetResultContainer) {
+            targetResultContainer.innerHTML = html;
+            targetResultContainer.classList.remove('d-none');
+        }
+        return;
+    }
 
     if (requiredGPA <= 4.0 && requiredGPA >= 0) {
         // Feasible
@@ -1306,6 +1391,10 @@ function generateCombinationSuggestions(target, totalCredits) {
             // If minX is valid, we have a solution: x = minX, y = totalCredits - minX
             const x = minX;
             const y = totalCredits - x;
+
+            // Filter out solutions where any component has < 2 credits (unless it's 0)
+            if ((x > 0 && x < 2) || (y > 0 && y < 2)) continue;
+
             const avg = (x * g1.gpa + y * g2.gpa) / totalCredits;
 
             suggestions.push({
@@ -1607,7 +1696,7 @@ if (processImportBtn) {
                 const courses = sem.courses.map(c => ({
                     id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                     name: c.name,
-                    credits: c.credits,
+                    credits: parseFloat(c.credits) || 0, // Ensure credits is a number
                     grade: c.grade,
                     isRetake: false,
                     oldGrade: 0
@@ -1662,12 +1751,16 @@ function parsePortalText(text) {
             continue;
         }
 
-        // Check for Course Line
+        // Check for Course Line (Graded)
         // Regex to find: Credits (float), Grade10 (float), Grade4 (float), GradeChar (Letters+opt +)
         // Matches: 3.0 7.0 3.00 B
         // Updated regex to correctly handle '+' grades by using lookahead (?=\s|$) instead of \b
         const courseMatch = line.match(/(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+([A-Z]\+?)(?=\s|$)/);
         
+        // Check for Course Line (Ungraded)
+        // Matches: Credits (float) followed by "Chưa nhập điểm" or "Chưa khảo sát"
+        const ungradedMatch = line.match(/(\d+(?:\.\d+)?)\s+(?=Chưa nhập điểm|Chưa khảo sát)/);
+
         if (courseMatch && currentSemester) {
             // Extract parts
             const matchIndex = courseMatch.index;
@@ -1708,6 +1801,32 @@ function parsePortalText(text) {
                     grade: gradeChar,
                     isRetake: false,
                     oldGrade: 'D'
+                });
+            }
+        } else if (ungradedMatch && currentSemester) {
+            // Handle Ungraded Course
+            const credits = parseFloat(ungradedMatch[1]);
+            const matchIndex = ungradedMatch.index;
+            const prefix = line.substring(0, matchIndex).trim();
+            
+            let courseName = prefix;
+            const nameMatch = prefix.match(/^\d+\s+\w+\s+(.+)$/);
+            if (nameMatch) {
+                courseName = nameMatch[1].trim();
+            }
+            
+            // Skip courses with '*' in the name
+            if (courseName.includes('*')) {
+                continue;
+            }
+            
+            if (credits < 20) {
+                currentSemester.courses.push({
+                    name: courseName,
+                    credits: credits,
+                    grade: "", // Empty grade
+                    isRetake: false,
+                    oldGrade: ""
                 });
             }
         }
@@ -1756,4 +1875,18 @@ function parsePortalText(text) {
     });
 
     return semesters;
+}
+// ==========================================
+// CONTACT BUTTON LOGIC
+// ==========================================
+function initContactButton() {
+    const wrapper = document.getElementById('contact-floating-wrapper');
+    const closeBtn = document.getElementById('close-contact-btn');
+
+    if (!wrapper || !closeBtn) return;
+
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering modal
+        wrapper.style.display = 'none';
+    });
 }
