@@ -468,7 +468,7 @@
                         <div class="collapse mt-2" id="importInstructions">
                             <div class="card card-body bg-light border-0 p-3">
                                 <div class="mb-3">
-                                    <h6 class="fw-bold text-dark small mb-2">1. Truy cập trang xem điểm</h6>
+                                    <h6 class="fw-bold text-dark small mb-2">1. Truy cập trang Kết quả học tập</h6>
                                     <img src="images/HD1.png" class="img-fluid rounded shadow-sm border" alt="Hướng dẫn bước 1">
                                 </div>
                                 <div>
@@ -488,7 +488,7 @@ Năm học: 2023-2024 - Học kỳ: HK01
                     <div class="alert alert-info d-flex align-items-center mt-3 mb-0 py-2 small" role="alert">
                         <i class="bi bi-info-circle-fill me-2"></i>
                         <div>
-                            Hỗ trợ định dạng copy trực tiếp từ trang xem điểm của HUFLIT Portal.
+                            Hỗ trợ định dạng copy trực tiếp từ trang Kết quả học tập của HUFLIT Portal.
                         </div>
                     </div>
                 </div>
@@ -561,69 +561,209 @@ Năm học: 2023-2024 - Học kỳ: HK01
     </div>
 
     <!-- User Guide Modal -->
-    <div class="modal fade" id="userGuideModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="userGuideModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold"><i class="bi bi-book-half me-2 text-primary"></i>Hướng dẫn sử dụng</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" id="guideHeaderCloseBtn" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <ul class="nav nav-tabs mb-3" id="guideTab" role="tablist">
+                    <ul class="nav nav-pills mb-4 guide-nav-pills justify-content-center" id="guideTab" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="guide-target-tab" data-bs-toggle="tab" data-bs-target="#guide-target" type="button" role="tab">Lộ trình GPA</button>
+                            <button class="nav-link active" id="guide-target-tab" data-bs-toggle="pill" data-bs-target="#guide-target" type="button" role="tab">
+                                <i class="bi bi-graph-up-arrow d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Lộ trình GPA
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="guide-manual-tab" data-bs-toggle="tab" data-bs-target="#guide-manual" type="button" role="tab">Tính GPA Thủ công</button>
+                            <button class="nav-link" id="guide-manual-tab" data-bs-toggle="pill" data-bs-target="#guide-manual" type="button" role="tab">
+                                <i class="bi bi-calculator d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Tính GPA Thủ công
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="guide-course-tab" data-bs-toggle="tab" data-bs-target="#guide-course" type="button" role="tab">Tính điểm Môn học</button>
+                            <button class="nav-link" id="guide-course-tab" data-bs-toggle="pill" data-bs-target="#guide-course" type="button" role="tab">
+                                <i class="bi bi-journal-check d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Tính điểm Môn học
+                            </button>
                         </li>
                          <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="guide-scale-tab" data-bs-toggle="tab" data-bs-target="#guide-scale" type="button" role="tab">Thang điểm</button>
+                            <button class="nav-link" id="guide-scale-tab" data-bs-toggle="pill" data-bs-target="#guide-scale" type="button" role="tab">
+                                <i class="bi bi-table d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Thang điểm
+                            </button>
                         </li>
                     </ul>
                     <div class="tab-content" id="guideTabContent">
                         <div class="tab-pane fade show active" id="guide-target" role="tabpanel">
-                            <h6><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Lộ trình GPA</h6>
-                            <p>Tính năng này giúp bạn lập kế hoạch để đạt được GPA mục tiêu.</p>
-                            <ul>
-                                <li><strong>Bước 1:</strong> Copy bảng điểm từ Portal đào tạo.</li>
-                                <li><strong>Bước 2:</strong> Dán vào ô nhập liệu và bấm "Phân tích".</li>
-                                <li><strong>Bước 3:</strong> Nhập GPA mục tiêu bạn muốn đạt được.</li>
-                                <li><strong>Kết quả:</strong> Hệ thống sẽ tính toán điểm trung bình các môn còn lại bạn cần đạt để hoàn thành mục tiêu.</li>
-                            </ul>
+                            <h5 class="mb-3 text-primary fw-bold"><i class="bi bi-graph-up-arrow me-2"></i>Lộ trình GPA</h5>
+                            <p class="text-secondary mb-4">Công cụ giúp bạn tính toán điểm số cần đạt trong các môn học còn lại để đạt được mục tiêu GPA mong muốn khi ra trường.</p>
+                            
+                            <div class="alert alert-light border-start border-4 border-info shadow-sm mb-4" role="alert">
+                                <div class="d-flex">
+                                    <i class="bi bi-info-circle-fill text-info me-3 fs-4"></i>
+                                    <div>
+                                        <strong>Lưu ý quan trọng:</strong>
+                                        <div class="small text-muted">Dữ liệu của bạn được xử lý trực tiếp trên trình duyệt, đảm bảo riêng tư và không được lưu trữ lại.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">1</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Sao chép bảng điểm</h6>
+                                        <p class="small text-muted mb-0">Truy cập Portal đào tạo -> Kết quả học tập. Nhấn <strong>Ctrl + A</strong> để chọn tất cả, sau đó <strong>Ctrl + C</strong> để sao chép.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">2</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Nhập dữ liệu</h6>
+                                        <p class="small text-muted mb-0">Dán (<strong>Ctrl + V</strong>) nội dung vừa sao chép vào ô nhập liệu trên trang web này và bấm nút <strong>"Phân tích bảng điểm"</strong>.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">3</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Đặt mục tiêu GPA</h6>
+                                        <p class="small text-muted mb-0">Hệ thống sẽ hiển thị GPA hiện tại. Hãy nhập mức <strong>GPA Mục tiêu</strong> bạn muốn (ví dụ: 3.2, 3.6) để xem cần phấn đấu bao nhiêu.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-success rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="bi bi-check-lg"></i></span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Xem kết quả & Gợi ý</h6>
+                                        <p class="small text-muted mb-0">Nhận kết quả về điểm trung bình cần đạt cho các tín chỉ còn lại. Hệ thống cũng sẽ gợi ý các môn điểm thấp nên học cải thiện để tối ưu điểm số.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="tab-pane fade" id="guide-manual" role="tabpanel">
-                            <h6><i class="bi bi-calculator me-2 text-primary"></i>Tính GPA Thủ công</h6>
-                            <p>Tính GPA dựa trên điểm số bạn tự nhập.</p>
-                            <ul>
-                                <li>Thêm các học kỳ và môn học.</li>
-                                <li>Nhập số tín chỉ và điểm số (hệ 10 hoặc hệ 4).</li>
-                                <li>Hệ thống sẽ tự động tính GPA và CPA (GPA tích lũy).</li>
-                            </ul>
+                            <h5 class="mb-3 text-primary fw-bold"><i class="bi bi-calculator me-2"></i>Tính GPA Thủ công</h5>
+                            <p class="text-secondary mb-4">Công cụ linh hoạt cho phép bạn tự nhập điểm để tính toán GPA cho từng học kỳ hoặc dự tính kết quả học tập.</p>
+
+                            <div class="d-flex flex-column gap-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">1</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Tạo học kỳ & Môn học</h6>
+                                        <p class="small text-muted mb-0">Nhấn nút <strong>"Thêm học kỳ"</strong> để bắt đầu. Trong mỗi học kỳ, nhấn <strong>"Thêm môn học"</strong> tương ứng với số lượng môn bạn muốn tính.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">2</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Nhập thông tin chi tiết</h6>
+                                        <p class="small text-muted mb-0">Điền <strong>Số tín chỉ</strong> và <strong>Điểm số</strong> cho từng môn. Bạn có thể nhập điểm hệ 10 (ví dụ: 8.5) hoặc chọn điểm chữ (A, B+...).</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-success rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="bi bi-check-lg"></i></span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Xem kết quả tức thì</h6>
+                                        <p class="small text-muted mb-0">Hệ thống tự động tính <strong>GPA</strong> (điểm TB học kỳ) và <strong>CPA</strong> (điểm TB tích lũy) ngay khi bạn nhập liệu.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="tab-pane fade" id="guide-course" role="tabpanel">
-                            <h6><i class="bi bi-journal-check me-2 text-primary"></i>Tính điểm Môn học</h6>
-                            <p>Dự tính điểm tổng kết môn học.</p>
-                            <ul>
-                                <li>Nhập % điểm quá trình và % điểm thi.</li>
-                                <li>Nhập điểm quá trình hiện có.</li>
-                                <li>Hệ thống sẽ cho biết bạn cần thi bao nhiêu điểm để đạt A, B, C, D...</li>
-                            </ul>
+                            <h5 class="mb-3 text-primary fw-bold"><i class="bi bi-journal-check me-2"></i>Tính điểm Môn học</h5>
+                            <p class="text-secondary mb-4">Giúp bạn biết chính xác cần thi bao nhiêu điểm để đạt được điểm tổng kết mong muốn (A, B, C...).</p>
+
+                            <div class="d-flex flex-column gap-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">1</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Cấu hình trọng số</h6>
+                                        <p class="small text-muted mb-0">Nhập tỷ lệ phần trăm (%) của <strong>Điểm quá trình</strong> và <strong>Điểm thi</strong> theo đề cương môn học (ví dụ: 40% - 60%).</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">2</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Nhập điểm hiện có</h6>
+                                        <p class="small text-muted mb-0">Nhập điểm quá trình bạn đã đạt được (hoặc dự kiến).</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-success rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="bi bi-check-lg"></i></span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Bảng dự tính điểm thi</h6>
+                                        <p class="small text-muted mb-0">Hệ thống sẽ liệt kê danh sách các điểm số bạn cần đạt trong kỳ thi cuối kỳ để đạt được từng mức điểm chữ (A, B+, B...).</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="tab-pane fade" id="guide-scale" role="tabpanel">
-                            <h6><i class="bi bi-table me-2 text-primary"></i>Thang điểm</h6>
-                            <p>Tra cứu thang điểm chính thức của HUFLIT.</p>
-                            <ul>
-                                <li>Xem quy đổi điểm hệ 10 sang điểm chữ và hệ 4.</li>
-                                <li>Xếp loại học lực tương ứng.</li>
-                            </ul>
+                            <h5 class="mb-3 text-primary fw-bold"><i class="bi bi-table me-2"></i>Thang điểm HUFLIT</h5>
+                            <p class="text-secondary mb-4">Bảng tra cứu thang điểm chính thức được áp dụng tại HUFLIT, giúp bạn đối chiếu giữa các hệ điểm.</p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary"><i class="bi bi-123 me-2"></i>Hệ 10 & Điểm Chữ</h6>
+                                            <p class="small text-muted mb-0">Điểm tổng kết môn học (hệ 10) sẽ được quy đổi sang điểm chữ tương ứng. Ví dụ: 8.5 - 10.0 là điểm A.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary"><i class="bi bi-4-square me-2"></i>Quy đổi Hệ 4</h6>
+                                            <p class="small text-muted mb-0">Điểm chữ sẽ được quy đổi sang hệ 4 để tính GPA. Ví dụ: A = 4.0, B+ = 3.5.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-0" role="alert">
+                                        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                                        <div>
+                                            <strong>Lưu ý về điểm đạt:</strong>
+                                            <div class="small">Điểm D (4.0 - 5.4) là điểm đạt tối thiểu. Điểm F (< 4.0) là rớt môn và phải học lại.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-target="#contactModal" data-bs-toggle="modal">Quay lại</button>
+                <div class="modal-footer justify-content-between">
+                    <div class="form-check" id="guideCheckContainer">
+                        <input class="form-check-input" type="checkbox" id="guideUnderstandCheck">
+                        <label class="form-check-label small text-muted" for="guideUnderstandCheck">
+                            Tôi đã biết cách mở lại hướng dẫn này ở nút Liên hệ <i class="bi bi-chat-text-fill text-primary"></i>
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="guideConfirmBtn" data-bs-dismiss="modal">Đã hiểu</button>
                 </div>
             </div>
         </div>

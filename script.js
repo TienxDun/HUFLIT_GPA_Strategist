@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initGradeScaleTab();
     initContactButton();
     initThemeToggle();
+    initUserGuide();
     fetchVisitCount();
 
     // Sync Desktop and Mobile Tabs
@@ -2052,4 +2053,70 @@ function initThemeToggle() {
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         setTheme(newTheme);
     });
+}
+
+// ==========================================
+// USER GUIDE AUTO-SHOW
+// ==========================================
+
+function initUserGuide() {
+    const modalEl = document.getElementById('userGuideModal');
+    if (!modalEl) return;
+
+    const headerCloseBtn = document.getElementById('guideHeaderCloseBtn');
+    const checkContainer = document.getElementById('guideCheckContainer');
+    const checkbox = document.getElementById('guideUnderstandCheck');
+    const confirmBtn = document.getElementById('guideConfirmBtn');
+
+    // Logic for Checkbox
+    if (checkbox && confirmBtn) {
+        checkbox.addEventListener('change', () => {
+            confirmBtn.disabled = !checkbox.checked;
+        });
+    }
+
+    modalEl.addEventListener('show.bs.modal', (event) => {
+        // If relatedTarget is null, it's triggered by JS (Auto-show)
+        // If relatedTarget is defined, it's triggered by a button click (Manual)
+        const isManual = !!event.relatedTarget;
+
+        if (isManual) {
+            // Manual mode: Allow closing easily
+            if (headerCloseBtn) headerCloseBtn.style.display = 'block';
+            if (checkContainer) checkContainer.style.display = 'none';
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Đóng';
+                confirmBtn.classList.remove('btn-primary');
+                confirmBtn.classList.add('btn-secondary');
+            }
+        } else {
+            // Auto mode: Force check
+            if (headerCloseBtn) headerCloseBtn.style.display = 'none';
+            if (checkContainer) checkContainer.style.display = 'block';
+            if (checkbox) checkbox.checked = false;
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Bắt đầu sử dụng';
+                confirmBtn.classList.remove('btn-secondary');
+                confirmBtn.classList.add('btn-primary');
+            }
+        }
+    });
+
+    // Mark as seen when closed (only matters if it wasn't seen before)
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        if (!localStorage.getItem('hasSeenGuide')) {
+            localStorage.setItem('hasSeenGuide', 'true');
+        }
+    });
+
+    // Auto show logic
+    if (!localStorage.getItem('hasSeenGuide')) {
+        // Use a small timeout to ensure Bootstrap is fully ready and for better UX
+        setTimeout(() => {
+            const guideModal = new bootstrap.Modal(modalEl);
+            guideModal.show();
+        }, 1000);
+    }
 }

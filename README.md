@@ -25,7 +25,7 @@ Tính toán điểm thi cuối kỳ cần đạt dựa trên điểm quá trình
 ![Tính GPA thủ công](images/Tab2.2.png)
 
 #### Hướng dẫn Import từ Portal
-1. Truy cập Portal đào tạo, vào phần xem điểm.
+1. Truy cập Portal đào tạo, vào phần Kết quả học tập.
 2. Bôi đen và copy toàn bộ bảng điểm.
 3. Dán vào công cụ để tự động nhập.
 
