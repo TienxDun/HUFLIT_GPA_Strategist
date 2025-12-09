@@ -1698,8 +1698,8 @@ if (processImportBtn) {
                     name: c.name,
                     credits: parseFloat(c.credits) || 0, // Ensure credits is a number
                     grade: c.grade,
-                    isRetake: false,
-                    oldGrade: 0
+                    isRetake: c.isRetake || false,
+                    oldGrade: c.oldGrade || 'D'
                 }));
 
                 manualSemesters.push({
