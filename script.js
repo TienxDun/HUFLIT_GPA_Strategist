@@ -1963,26 +1963,31 @@ function fetchVisitCount() {
     const container = document.getElementById('visit-count-container');
     const countSpan = document.getElementById('visit-count');
     
-    // Check if GoatCounter script is loaded
-    if (window.goatcounter && window.goatcounter.visit_count) {
-        // Clear previous content
-        countSpan.innerHTML = '';
-        
-        // Use the official library method which handles CORS/JSONP correctly
-        window.goatcounter.visit_count({
-            append: '#visit-count',
-            path: 'TOTAL',
-            type: 'html',
-            no_branding: true,
-            style: `
-                div { display: inline; font-family: inherit; color: inherit; }
-                #gcvc-views { display: inline; font-weight: bold; }
-            `
+    // Endpoint for GoatCounter public stats
+    const endpoint = `https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json?rnd=${Math.random()}`;
+
+    fetch(endpoint)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.count) {
+                countSpan.textContent = data.count;
+                container.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            // Xử lý riêng cho môi trường Localhost (thường bị chặn CORS)
+            if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+                console.warn('GoatCounter: Counter bị chặn trên Localhost do CORS. Hiển thị số giả lập để xem trước giao diện.');
+                countSpan.textContent = '1.234'; // Số giả lập
+                container.style.display = 'block';
+            } else {
+                console.warn('Không thể tải số lượt truy cập. Vui lòng kiểm tra cấu hình "Sites that can embed" trên GoatCounter.', error);
+                container.style.display = 'none';
+            }
         });
-        
-        container.style.display = 'block';
-    } else {
-        // Retry if library not loaded yet (e.g. slow network)
-        setTimeout(fetchVisitCount, 500);
-    }
 }
