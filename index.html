@@ -62,44 +62,42 @@
                 <span>HUFLIT GPA Strategist</span>
             </a>
             
-            <!-- Mobile Visit Count -->
-            <div class="d-lg-none visit-count-container" style="display: none;">
-                <span class="badge bg-light text-secondary border rounded-pill px-2 py-1">
-                    <i class="bi bi-eye-fill me-1 text-primary"></i>
-                    <span class="visit-count-value fw-bold text-dark">...</span> <span class="small">lượt</span>
-                </span>
-            </div>
+            <div class="d-flex align-items-center">
+                <!-- Mobile Visit Count -->
+                <div class="d-lg-none visit-count-container me-2" style="display: none;">
+                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-1">
+                        <i class="bi bi-eye-fill me-1 text-primary"></i>
+                        <span class="visit-count-value fw-bold text-dark">...</span> <span class="small">lượt</span>
+                    </span>
+                </div>
 
-            <!-- Desktop Menu (Hidden on Mobile) -->
-            <div class="d-none d-lg-block">
-                <ul class="nav nav-pills" id="pills-tab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="pills-target-tab" data-bs-toggle="pill" data-bs-target="#pills-target" type="button" role="tab">
-                            <i class="bi bi-graph-up-arrow me-1"></i> Lộ trình GPA
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="pills-manual-tab" data-bs-toggle="pill" data-bs-target="#pills-manual" type="button" role="tab">
-                            <i class="bi bi-calculator me-1"></i> Tính GPA Thủ công
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="pills-course-tab" data-bs-toggle="pill" data-bs-target="#pills-course" type="button" role="tab">
-                            <i class="bi bi-journal-check me-1"></i> Tính điểm Môn học
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="pills-scale-tab" data-bs-toggle="pill" data-bs-target="#pills-scale" type="button" role="tab">
-                            <i class="bi bi-table me-1"></i> Thang điểm
-                        </button>
-                    </li>
-                </ul>
-            </div>
+                <!-- Desktop Menu (Hidden on Mobile) -->
+                <div class="d-none d-lg-block">
+                    <ul class="nav nav-pills" id="pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="pills-target-tab" data-bs-toggle="pill" data-bs-target="#pills-target" type="button" role="tab">
+                                <i class="bi bi-graph-up-arrow me-1"></i> Lộ trình GPA
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pills-manual-tab" data-bs-toggle="pill" data-bs-target="#pills-manual" type="button" role="tab">
+                                <i class="bi bi-calculator me-1"></i> Tính GPA Thủ công
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pills-course-tab" data-bs-toggle="pill" data-bs-target="#pills-course" type="button" role="tab">
+                                <i class="bi bi-journal-check me-1"></i> Tính điểm Môn học
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pills-scale-tab" data-bs-toggle="pill" data-bs-target="#pills-scale" type="button" role="tab">
+                                <i class="bi bi-table me-1"></i> Thang điểm
+                            </button>
+                        </li>
+                    </ul>
+                </div>
 
-            <!-- Theme Toggle Button -->
-            <button class="btn btn-outline-secondary border-0 rounded-circle ms-2" id="theme-toggle" aria-label="Toggle Dark Mode">
-                <i class="bi bi-moon-stars-fill"></i>
-            </button>
+            </div>
         </div>
     </nav>
 
@@ -524,6 +522,9 @@ Năm học: 2023-2024 - Học kỳ: HK01
             <div class="modal-content contact-modal-content">
                 <!-- Custom Header with Gradient Background -->
                 <div class="contact-modal-header">
+                    <button class="btn btn-light rounded-circle shadow-sm position-absolute top-0 start-0 m-3" id="theme-toggle" aria-label="Toggle Dark Mode" style="width: 40px; height: 40px;">
+                        <i class="bi bi-moon-stars-fill"></i>
+                    </button>
                     <button type="button" class="btn-close shadow-sm" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
