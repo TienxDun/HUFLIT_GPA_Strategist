@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initManualCalcTab();
     initGradeScaleTab();
     initContactButton();
+    fetchVisitCount();
 
     // Sync Desktop and Mobile Tabs
     const allNavLinks = document.querySelectorAll('.nav-link[data-bs-toggle="pill"]');
@@ -1960,11 +1961,11 @@ function initContactButton() {
 }
 
 function fetchVisitCount() {
-    const container = document.getElementById('visit-count-container');
-    const countSpan = document.getElementById('visit-count');
+    const containers = document.querySelectorAll('.visit-count-container');
+    const countSpans = document.querySelectorAll('.visit-count-value');
     
     // Reset nội dung và hiển thị loading (nếu cần)
-    countSpan.textContent = '...';
+    countSpans.forEach(span => span.textContent = '...');
     
     // URL endpoint lấy dữ liệu JSON
     // Lưu ý: Cần bật "Allow adding visitor counts on your website" trong cài đặt GoatCounter để tránh lỗi CORS
@@ -1979,14 +1980,15 @@ function fetchVisitCount() {
         })
         .then(data => {
             if (data && data.count) {
-                countSpan.textContent = data.count;
-                container.style.display = 'block';
+                countSpans.forEach(span => span.textContent = data.count);
+                // Remove inline display: none to let Bootstrap classes handle visibility
+                containers.forEach(container => container.style.removeProperty('display'));
             }
         })
         .catch(error => {
             console.warn('Không thể lấy lượt truy cập (Lỗi CORS hoặc Mạng):', error);
             console.warn('Vui lòng kiểm tra cài đặt "Allow adding visitor counts" trên GoatCounter.');
             // Ẩn container nếu lỗi
-            container.style.display = 'none';
+            containers.forEach(container => container.style.display = 'none');
         });
 }
