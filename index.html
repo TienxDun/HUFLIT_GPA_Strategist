@@ -425,12 +425,12 @@
 
             <!-- Tab 4: Thang điểm (Grade Scale) -->
             <div class="tab-pane fade" id="pills-scale" role="tabpanel" tabindex="0">
-                <div class="row">
+                <div class="row g-4">
                     <!-- Left Column: Grade Scale Table -->
-                    <div class="col-lg-7 mb-4 mb-lg-0">
+                    <div class="col-lg-7">
                         <div class="card shadow-sm border-0 h-100">
                             <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
-                                <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-table me-2"></i>Thang điểm Tín chỉ HUFLIT</h5>
+                                <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-table me-2"></i>Thang điểm Tín chỉ</h5>
                                 <p class="text-muted small mt-1 mb-0">Quy đổi điểm số theo quy chế tín chỉ hiện hành</p>
                             </div>
                             <div class="card-body p-0">
@@ -447,49 +447,48 @@
 
                     <!-- Right Column: GPA Classification -->
                     <div class="col-lg-5">
-                        <div class="h-100">
-                            <h6 class="fw-bold text-secondary mb-3 ps-1"><i class="bi bi-award me-2"></i>Xếp loại Học lực (GPA)</h6>
-                            <div class="row g-2">
-                                <div class="col-6 col-md-4 col-lg-6">
-                                    <div class="p-3 rounded-3 bg-white border shadow-sm h-100 position-relative overflow-hidden">
-                                        <div class="position-absolute top-0 start-0 bottom-0 bg-success" style="width: 4px;"></div>
-                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">3.60 - 4.00</div>
-                                        <div class="fw-bold text-success">Xuất sắc</div>
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                                <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-award me-2"></i>Xếp loại Học lực</h5>
+                                <p class="text-muted small mt-1 mb-0">Phân loại dựa trên điểm trung bình tích lũy</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="p-3 rounded-3 bg-success-subtle border border-success-subtle h-100 text-center">
+                                            <div class="fw-bold text-success mb-1">Xuất sắc</div>
+                                            <div class="small text-success-emphasis fw-bold">3.60 - 4.00</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-6 col-md-4 col-lg-6">
-                                    <div class="p-3 rounded-3 bg-white border shadow-sm h-100 position-relative overflow-hidden">
-                                        <div class="position-absolute top-0 start-0 bottom-0 bg-primary" style="width: 4px;"></div>
-                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">3.20 - 3.59</div>
-                                        <div class="fw-bold text-primary">Giỏi</div>
+                                    <div class="col-6">
+                                        <div class="p-3 rounded-3 bg-primary-subtle border border-primary-subtle h-100 text-center">
+                                            <div class="fw-bold text-primary mb-1">Giỏi</div>
+                                            <div class="small text-primary-emphasis fw-bold">3.20 - 3.59</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-6 col-md-4 col-lg-6">
-                                    <div class="p-3 rounded-3 bg-white border shadow-sm h-100 position-relative overflow-hidden">
-                                        <div class="position-absolute top-0 start-0 bottom-0 bg-info" style="width: 4px;"></div>
-                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">2.50 - 3.19</div>
-                                        <div class="fw-bold text-info text-dark">Khá</div>
+                                    <div class="col-6">
+                                        <div class="p-3 rounded-3 bg-info-subtle border border-info-subtle h-100 text-center">
+                                            <div class="fw-bold text-info-emphasis mb-1">Khá</div>
+                                            <div class="small text-info-emphasis fw-bold">2.50 - 3.19</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-6 col-md-4 col-lg-6">
-                                    <div class="p-3 rounded-3 bg-white border shadow-sm h-100 position-relative overflow-hidden">
-                                        <div class="position-absolute top-0 start-0 bottom-0 bg-warning" style="width: 4px;"></div>
-                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">2.00 - 2.49</div>
-                                        <div class="fw-bold text-warning text-dark">Trung bình</div>
+                                    <div class="col-6">
+                                        <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle h-100 text-center">
+                                            <div class="fw-bold text-warning-emphasis mb-1">Trung bình</div>
+                                            <div class="small text-warning-emphasis fw-bold">2.00 - 2.49</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-6 col-md-4 col-lg-6">
-                                    <div class="p-3 rounded-3 bg-white border shadow-sm h-100 position-relative overflow-hidden">
-                                        <div class="position-absolute top-0 start-0 bottom-0 bg-secondary" style="width: 4px;"></div>
-                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">1.00 - 1.99</div>
-                                        <div class="fw-bold text-secondary">Yếu</div>
+                                    <div class="col-6">
+                                        <div class="p-3 rounded-3 bg-secondary-subtle border border-secondary-subtle h-100 text-center">
+                                            <div class="fw-bold text-secondary mb-1">Yếu</div>
+                                            <div class="small text-secondary-emphasis fw-bold">1.00 - 1.99</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-6 col-md-4 col-lg-6">
-                                    <div class="p-3 rounded-3 bg-white border shadow-sm h-100 position-relative overflow-hidden">
-                                        <div class="position-absolute top-0 start-0 bottom-0 bg-danger" style="width: 4px;"></div>
-                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">&lt; 1.00</div>
-                                        <div class="fw-bold text-danger">Kém</div>
+                                    <div class="col-6">
+                                        <div class="p-3 rounded-3 bg-danger-subtle border border-danger-subtle h-100 text-center">
+                                            <div class="fw-bold text-danger mb-1">Kém</div>
+                                            <div class="small text-danger-emphasis fw-bold">&lt; 1.00</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
