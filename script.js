@@ -203,6 +203,15 @@ function initManualCalcTab() {
             const field = target.dataset.field;
             const value = target.type === 'checkbox' ? target.checked : target.value;
             
+            // Visual feedback for grade
+            if (field === 'grade') {
+                if (value === '') {
+                    target.classList.add('border-warning', 'bg-warning-subtle');
+                } else {
+                    target.classList.remove('border-warning', 'bg-warning-subtle');
+                }
+            }
+
             updateManualCourse(semId, courseId, field, value);
         }
     });
@@ -289,12 +298,21 @@ function updateSemesterStats(semId) {
     const semester = manualSemesters.find(s => String(s.id) === String(semId));
     if (semester) {
         const semTotalCredits = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
-        const semTotalPoints = semester.courses.reduce((sum, c) => {
+        
+        let semGpaPoints = 0;
+        let semGpaCredits = 0;
+        
+        semester.courses.forEach(c => {
             const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
-            const gpa = gradeInfo ? gradeInfo.gpa : 0;
-            return sum + (gpa * (parseFloat(c.credits) || 0));
-        }, 0);
-        const semGPA = semTotalCredits > 0 ? (semTotalPoints / semTotalCredits).toFixed(2) : '0.00';
+            if (gradeInfo) {
+                const gpa = gradeInfo.gpa;
+                const credits = parseFloat(c.credits) || 0;
+                semGpaPoints += gpa * credits;
+                semGpaCredits += credits;
+            }
+        });
+
+        const semGPA = semGpaCredits > 0 ? (semGpaPoints / semGpaCredits).toFixed(2) : '0.00';
         
         // Update credits badge
         const creditsBadge = document.querySelector(`.semester-total-credits[data-sem-id="${semId}"]`);
@@ -313,13 +331,20 @@ function updateSemesterStats(semId) {
 function updateSemesterGPA(semId) {
     const semester = manualSemesters.find(s => String(s.id) === String(semId));
     if (semester) {
-        const semTotalCredits = semester.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
-        const semTotalPoints = semester.courses.reduce((sum, c) => {
+        let semGpaPoints = 0;
+        let semGpaCredits = 0;
+        
+        semester.courses.forEach(c => {
             const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
-            const gpa = gradeInfo ? gradeInfo.gpa : 0;
-            return sum + (gpa * (parseFloat(c.credits) || 0));
-        }, 0);
-        const semGPA = semTotalCredits > 0 ? (semTotalPoints / semTotalCredits).toFixed(2) : '0.00';
+            if (gradeInfo) {
+                const gpa = gradeInfo.gpa;
+                const credits = parseFloat(c.credits) || 0;
+                semGpaPoints += gpa * credits;
+                semGpaCredits += credits;
+            }
+        });
+
+        const semGPA = semGpaCredits > 0 ? (semGpaPoints / semGpaCredits).toFixed(2) : '0.00';
         
         // Update GPA badge
         const gpaBadge = document.querySelector(`.semester-gpa[data-sem-id="${semId}"]`);
@@ -439,7 +464,40 @@ window.adjustManualCredit = function(semId, courseId, delta) {
 };
 
 function renderManualSemesters() {
-    manualSemesterList.innerHTML = manualSemesters.map(sem => {
+    // Pre-calculate cumulative GPA for each semester
+    let runningTotalPoints = (parseFloat(manualInitialGpaInput.value) || 0) * (parseFloat(manualInitialCreditsInput.value) || 0);
+    let runningTotalCredits = parseFloat(manualInitialCreditsInput.value) || 0;
+
+    const semesterCumulativeGPAs = manualSemesters.map(sem => {
+        sem.courses.forEach(course => {
+            const gradeInfo = GRADE_SCALE.find(g => g.grade === course.grade);
+            const gpa = gradeInfo ? gradeInfo.gpa : 0;
+            const credits = parseFloat(course.credits) || 0;
+
+            // Add current course
+            runningTotalPoints += gpa * credits;
+            if (gpa > 0) {
+                runningTotalCredits += credits;
+            }
+
+            // Handle Retake Logic
+            if (course.isRetake) {
+                const oldGradeInfo = GRADE_SCALE.find(g => g.grade === course.oldGrade);
+                const oldGpa = oldGradeInfo ? oldGradeInfo.gpa : 0;
+                
+                // Subtract old course effect
+                runningTotalPoints -= oldGpa * credits;
+                if (oldGpa > 0) {
+                    runningTotalCredits -= credits;
+                }
+            }
+        });
+
+        const cumGPA = runningTotalCredits > 0 ? (runningTotalPoints / runningTotalCredits).toFixed(2) : '0.00';
+        return cumGPA;
+    });
+
+    manualSemesterList.innerHTML = manualSemesters.map((sem, index) => {
         const semTotalCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
         
         // Calculate Semester GPA (excluding ungraded and F grades to match Global GPA logic)
@@ -451,13 +509,14 @@ function renderManualSemesters() {
             const gpa = gradeInfo ? gradeInfo.gpa : 0;
             const credits = parseFloat(c.credits) || 0;
             
-            if (gradeInfo && gpa > 0) {
+            if (gradeInfo) {
                 semGpaPoints += gpa * credits;
                 semGpaCredits += credits;
             }
         });
         
         const semGPA = semGpaCredits > 0 ? (semGpaPoints / semGpaCredits).toFixed(2) : '0.00';
+        const cumGPA = semesterCumulativeGPAs[index];
         
         return `
         <div class="card shadow-sm mb-3">
@@ -466,6 +525,7 @@ function renderManualSemesters() {
                     <span class="fw-bold">${sem.name}</span>
                     <span class="badge bg-light text-secondary border semester-total-credits" data-sem-id="${sem.id}">${semTotalCredits} TC</span>
                     <span class="badge bg-primary text-white border semester-gpa" data-sem-id="${sem.id}">GPA ${semGPA}</span>
+                    <span class="badge bg-success text-white border semester-cum-gpa" data-sem-id="${sem.id}" title="GPA Tích lũy">GPA tích lũy ${cumGPA}</span>
                 </div>
                 <div>
                     <button class="btn btn-sm btn-link text-danger delete-semester-btn" data-id="${sem.id}">
@@ -503,7 +563,7 @@ function renderManualSemesters() {
                                         </div>
                                     </td>
                                     <td>
-                                        <select class="form-select form-select-sm manual-input"
+                                        <select class="form-select form-select-sm manual-input ${course.grade === '' ? 'border-warning bg-warning-subtle' : ''}"
                                             data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="grade">
                                             <option value="" ${course.grade === '' ? 'selected' : ''}>--</option>
                                             ${GRADE_SCALE.map(g => `<option value="${g.grade}" ${course.grade === g.grade ? 'selected' : ''}>${g.grade}</option>`).join('')}
