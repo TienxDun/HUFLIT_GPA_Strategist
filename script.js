@@ -1963,31 +1963,26 @@ function fetchVisitCount() {
     const container = document.getElementById('visit-count-container');
     const countSpan = document.getElementById('visit-count');
     
-    // Endpoint for GoatCounter public stats
-    // IMPORTANT: You must enable "Allow adding visitor counts on your website" in GoatCounter settings
-    // Path: Settings > Site > Allow adding visitor counts on your website
-    // Using random param to prevent caching
-    const endpoint = `https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json?rnd=${Math.random()}`;
-
-    fetch(endpoint)
-        .then(response => {
-            if (!response.ok) {
-                // If 400/403, it likely means the setting is disabled
-                if (response.status === 400 || response.status === 403) {
-                    console.warn('GoatCounter: Vui lòng bật tùy chọn "Allow adding visitor counts" trong phần Settings của GoatCounter.');
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.count) {
-                countSpan.textContent = data.count;
-                container.style.display = 'block';
-            }
-        })
-        .catch(error => {
-            console.warn('Không thể tải số lượt truy cập:', error);
-            container.style.display = 'none';
+    // Check if GoatCounter script is loaded
+    if (window.goatcounter && window.goatcounter.visit_count) {
+        // Clear previous content
+        countSpan.innerHTML = '';
+        
+        // Use the official library method which handles CORS/JSONP correctly
+        window.goatcounter.visit_count({
+            append: '#visit-count',
+            path: 'TOTAL',
+            type: 'html',
+            no_branding: true,
+            style: `
+                div { display: inline; font-family: inherit; color: inherit; }
+                #gcvc-views { display: inline; font-weight: bold; }
+            `
         });
+        
+        container.style.display = 'block';
+    } else {
+        // Retry if library not loaded yet (e.g. slow network)
+        setTimeout(fetchVisitCount, 500);
+    }
 }
