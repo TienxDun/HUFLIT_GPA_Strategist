@@ -2066,10 +2066,7 @@ function fetchVisitCount() {
 // ==========================================
 
 function initThemeToggle() {
-    const toggleBtn = document.getElementById('theme-toggle');
-    if (!toggleBtn) return;
-    
-    const icon = toggleBtn.querySelector('i');
+    const toggleBtns = document.querySelectorAll('#theme-toggle-mobile, #theme-toggle-desktop');
     const navbar = document.querySelector('.navbar');
     
     // Check local storage or system preference
@@ -2086,22 +2083,28 @@ function initThemeToggle() {
         document.documentElement.setAttribute('data-bs-theme', theme);
         localStorage.setItem('theme', theme);
         
-        // Update Icon and Navbar
-        if (theme === 'dark') {
-            icon.classList.remove('bi-moon-stars-fill');
-            icon.classList.add('bi-sun-fill');
-            toggleBtn.classList.replace('btn-outline-secondary', 'btn-outline-light');
-            
-            if (navbar) {
+        // Update Icons for all buttons
+        toggleBtns.forEach(btn => {
+            const icon = btn.querySelector('i');
+            if (theme === 'dark') {
+                icon.classList.remove('bi-moon-stars-fill');
+                icon.classList.add('bi-sun-fill');
+                btn.classList.replace('btn-light', 'btn-dark');
+                btn.classList.replace('border', 'border-secondary');
+            } else {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-stars-fill');
+                btn.classList.replace('btn-dark', 'btn-light');
+                btn.classList.replace('border-secondary', 'border');
+            }
+        });
+
+        // Update Navbar classes
+        if (navbar) {
+            if (theme === 'dark') {
                 navbar.classList.remove('navbar-light', 'bg-white');
                 navbar.classList.add('navbar-dark', 'bg-dark');
-            }
-        } else {
-            icon.classList.remove('bi-sun-fill');
-            icon.classList.add('bi-moon-stars-fill');
-            toggleBtn.classList.replace('btn-outline-light', 'btn-outline-secondary');
-            
-            if (navbar) {
+            } else {
                 navbar.classList.remove('navbar-dark', 'bg-dark');
                 navbar.classList.add('navbar-light', 'bg-white');
             }
@@ -2111,11 +2114,13 @@ function initThemeToggle() {
     // Initialize
     setTheme(getPreferredTheme());
 
-    // Event Listener
-    toggleBtn.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
+    // Event Listeners
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
     });
 }
 

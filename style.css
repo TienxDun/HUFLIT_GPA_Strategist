@@ -718,3 +718,111 @@ body {
         margin-bottom: 0.25rem !important;
     }
 }
+
+/* Dark Mode Overrides */
+[data-bs-theme="dark"] body {
+    background-color: #212529;
+    color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .navbar {
+    background-color: #343a40 !important;
+    border-bottom: 1px solid #495057;
+}
+
+[data-bs-theme="dark"] .navbar-brand span {
+    color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: #2b3035;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .card-header {
+    background-color: #2b3035 !important;
+    border-bottom-color: #495057 !important;
+}
+
+[data-bs-theme="dark"] .card-title {
+    color: #6ea8fe !important; /* Light primary */
+}
+
+[data-bs-theme="dark"] .bg-white {
+    background-color: #2b3035 !important;
+}
+
+[data-bs-theme="dark"] .bg-light {
+    background-color: #343a40 !important;
+}
+
+[data-bs-theme="dark"] .text-dark {
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: #adb5bd !important;
+}
+
+[data-bs-theme="dark"] .table {
+    color: #f8f9fa;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+    color: #f8f9fa;
+    background-color: #343a40;
+}
+
+[data-bs-theme="dark"] .nav-pills .nav-link {
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .nav-pills .nav-link:hover:not(.active) {
+    background-color: #343a40;
+}
+
+[data-bs-theme="dark"] .modal-content {
+    background-color: #2b3035;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer {
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-bs-theme="dark"] .form-control, 
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] .input-group-text {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .form-control:focus, 
+[data-bs-theme="dark"] .form-select:focus {
+    background-color: #343a40;
+    color: #f8f9fa;
+    border-color: #86b7fe;
+}
+
+/* Specific overrides for the GPA Classification cards */
+[data-bs-theme="dark"] .bg-success-subtle { background-color: rgba(25, 135, 84, 0.2) !important; border-color: rgba(25, 135, 84, 0.3) !important; }
+[data-bs-theme="dark"] .bg-primary-subtle { background-color: rgba(13, 110, 253, 0.2) !important; border-color: rgba(13, 110, 253, 0.3) !important; }
+[data-bs-theme="dark"] .bg-info-subtle { background-color: rgba(13, 202, 240, 0.2) !important; border-color: rgba(13, 202, 240, 0.3) !important; }
+[data-bs-theme="dark"] .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.2) !important; border-color: rgba(255, 193, 7, 0.3) !important; }
+[data-bs-theme="dark"] .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.2) !important; border-color: rgba(108, 117, 125, 0.3) !important; }
+[data-bs-theme="dark"] .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.2) !important; border-color: rgba(220, 53, 69, 0.3) !important; }
+
+[data-bs-theme="dark"] .text-success-emphasis { color: #75b798 !important; }
+[data-bs-theme="dark"] .text-primary-emphasis { color: #6ea8fe !important; }
+[data-bs-theme="dark"] .text-info-emphasis { color: #3dd5f3 !important; }
+[data-bs-theme="dark"] .text-warning-emphasis { color: #ffda6a !important; }
+[data-bs-theme="dark"] .text-secondary-emphasis { color: #a7acb1 !important; }
+[data-bs-theme="dark"] .text-danger-emphasis { color: #ea868f !important; }
+
