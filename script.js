@@ -1949,4 +1949,44 @@ function initContactButton() {
         e.stopPropagation(); // Prevent triggering modal
         wrapper.style.display = 'none';
     });
+
+    // Fetch Visit Count when modal is opened
+    const contactModal = document.getElementById('contactModal');
+    if (contactModal) {
+        contactModal.addEventListener('shown.bs.modal', () => {
+            fetchVisitCount();
+        });
+    }
+}
+
+function fetchVisitCount() {
+    const container = document.getElementById('visit-count-container');
+    const countSpan = document.getElementById('visit-count');
+    
+    // Endpoint for GoatCounter public stats (requires 'Allow adding visitor counts' enabled in settings)
+    // Using the counter.json endpoint for the TOTAL path to get site totals
+    const endpoint = 'https://huflit-gpa-strategist.goatcounter.com/counter/TOTAL.json';
+
+    fetch(endpoint)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            // data.count is the total count string/number
+            if (data && data.count) {
+                // Format number with dots (e.g. 1.234)
+                // data.count is already a formatted string with separators according to docs, 
+                // but let's ensure we display it correctly.
+                // If it's a string "1,234", we can use it directly or reformat if needed.
+                // The docs say: "containing the total number of visitors as a formatted string with thousands separators."
+                countSpan.textContent = data.count;
+                container.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.log('Could not fetch visit count:', error);
+            // Hide container if fetch fails
+            container.style.display = 'none';
+        });
 }
