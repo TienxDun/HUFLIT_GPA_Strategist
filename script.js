@@ -148,10 +148,22 @@ function initManualCalcTab() {
                 }
                 
                 // Highlight inputs
-                targetGpaInput.focus();
                 targetGpaInput.classList.add('is-valid');
                 targetCreditsInput.classList.add('is-valid');
                 
+                // Focus on New Credits Input (or Total Credits if active)
+                const newCreditsInput = document.getElementById('new-credits');
+                const totalCreditsInput = document.getElementById('total-credits');
+                
+                // Check which mode is active (New Credits is default visible)
+                if (newCreditsInput && newCreditsInput.offsetParent !== null) {
+                    newCreditsInput.focus();
+                    newCreditsInput.select(); // Select content if any
+                } else if (totalCreditsInput) {
+                    totalCreditsInput.focus();
+                    totalCreditsInput.select();
+                }
+
                 setTimeout(() => {
                     targetGpaInput.classList.remove('is-valid');
                     targetCreditsInput.classList.remove('is-valid');
