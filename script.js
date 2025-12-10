@@ -530,6 +530,53 @@ window.adjustManualCredit = function(semId, courseId, delta) {
     }
 };
 
+function getYearInfo(semName) {
+    // Try to find year pattern like (2023-2024)
+    const yearMatch = semName.match(/\((\d{4}-\d{4})\)/);
+    if (yearMatch) {
+        return { id: yearMatch[1], label: `Năm học ${yearMatch[1]}` };
+    }
+    
+    // Try to find "Học kỳ X"
+    const numMatch = semName.match(/Học kỳ (\d+)/i);
+    if (numMatch) {
+        const num = parseInt(numMatch[1]);
+        const yearNum = Math.ceil(num / 3); // Assume 3 semesters per year
+        return { id: `year_${yearNum}`, label: `Năm thứ ${yearNum}` };
+    }
+
+    return { id: 'other', label: 'Khác' };
+}
+
+function calculateYearlyStats(semesters) {
+    const stats = {};
+    
+    semesters.forEach(sem => {
+        const yearInfo = getYearInfo(sem.name);
+        if (!stats[yearInfo.id]) {
+            stats[yearInfo.id] = {
+                label: yearInfo.label,
+                points: 0,
+                credits: 0,
+                semesterCount: 0
+            };
+        }
+        
+        sem.courses.forEach(c => {
+            const gradeInfo = GRADE_SCALE.find(g => g.grade === c.grade);
+            if (gradeInfo) {
+                const gpa = gradeInfo.gpa;
+                const credits = parseFloat(c.credits) || 0;
+                stats[yearInfo.id].points += gpa * credits;
+                stats[yearInfo.id].credits += credits;
+            }
+        });
+        stats[yearInfo.id].semesterCount++;
+    });
+    
+    return stats;
+}
+
 function renderManualSemesters() {
     // Pre-calculate cumulative GPA for each semester
     let runningTotalPoints = (parseFloat(manualInitialGpaInput.value) || 0) * (parseFloat(manualInitialCreditsInput.value) || 0);
@@ -564,6 +611,9 @@ function renderManualSemesters() {
         return cumGPA;
     });
 
+    // Calculate Yearly Stats
+    const yearStats = calculateYearlyStats(manualSemesters);
+
     manualSemesterList.innerHTML = manualSemesters.map((sem, index) => {
         const semTotalCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
         
@@ -584,6 +634,29 @@ function renderManualSemesters() {
         
         const semGPA = semGpaCredits > 0 ? (semGpaPoints / semGpaCredits).toFixed(2) : '0.00';
         const cumGPA = semesterCumulativeGPAs[index];
+        
+        // Check if we should show year summary
+        let yearSummaryHtml = '';
+        const currentYear = getYearInfo(sem.name);
+        const nextSem = manualSemesters[index + 1];
+        const nextYear = nextSem ? getYearInfo(nextSem.name) : null;
+        
+        if (!nextYear || nextYear.id !== currentYear.id) {
+            // End of year group
+            const stat = yearStats[currentYear.id];
+            if (stat && stat.credits > 0) {
+                const yearGPA = (stat.points / stat.credits).toFixed(2);
+                yearSummaryHtml = `
+                    <div class="alert alert-info d-flex justify-content-between align-items-center mb-3 shadow-sm border-info-subtle bg-info-subtle text-info-emphasis">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-mortarboard-fill me-2 fs-5"></i>
+                            <span class="fw-bold">GPA Trung bình ${stat.label}</span>
+                        </div>
+                        <span class="badge bg-info text-dark fs-6 border border-info-subtle">GPA ${yearGPA}</span>
+                    </div>
+                `;
+            }
+        }
         
         return `
         <div class="card shadow-sm mb-3">
@@ -670,6 +743,7 @@ function renderManualSemesters() {
                 </button>
             </div>
         </div>
+        ${yearSummaryHtml}
     `;}).join('');
 }
 
