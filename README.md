@@ -50,6 +50,49 @@ Tính toán điểm thi cuối kỳ cần đạt dựa trên điểm quá trình
 - Tương thích hoàn toàn với mobile và desktop.
 - Giao diện tối ưu cho từng kích thước màn hình.
 
+## 🔄 Luồng hoạt động chính
+
+### 1. Tính toán Lộ trình GPA (Target GPA)
+
+```mermaid
+graph TD
+    A[Bắt đầu] --> B[Nhập GPA & Tín chỉ hiện tại]
+    B --> C[Nhập GPA Mục tiêu]
+    C --> D[Nhập Tín chỉ còn lại]
+    D --> E{Cần học cải thiện?}
+    E -- Có --> F[Thêm môn học lại]
+    E -- Không --> G[Tính GPA cần đạt]
+    F --> G
+    G --> H{Yêu cầu > 4.0?}
+    H -- Có --> I[Cảnh báo: Không khả thi]
+    H -- Không --> J[Hiển thị GPA cần đạt]
+    I --> K[Gợi ý học lại thêm]
+```
+
+### 2. Nhập liệu & Tính GPA Thủ công
+
+```mermaid
+graph TD
+    A[Bắt đầu] --> B{Phương thức nhập}
+    B -- Import --> C[Dán dữ liệu từ Portal]
+    C --> D[Tự động phân tích & điền]
+    B -- Thủ công --> E[Thêm Học kỳ & Môn học]
+    D --> F[Tính GPA thời gian thực]
+    E --> F
+    F --> G[Hiển thị GPA & Xếp loại]
+    G --> H[Đồng bộ sang tab Lộ trình]
+```
+
+### 3. Dự báo điểm thi (Course Grade)
+
+```mermaid
+graph TD
+    A["Chọn tỷ lệ (vd: 40/60)"] --> B["Nhập điểm quá trình"]
+    B --> C["Tính điểm tích lũy"]
+    C --> D["Tính điểm thi cần đạt"]
+    D --> E["Hiển thị mục tiêu cho A, B, C..."]
+```
+
 ## 🛠 Công nghệ sử dụng
 
 - **Frontend**: HTML5, CSS3 (Bootstrap 5.3)
