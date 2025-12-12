@@ -1686,6 +1686,7 @@ const courseRatioGroup = document.getElementById('course-ratio-group');
 const processScoreRange = document.getElementById('process-score-range');
 const processScoreInput = document.getElementById('process-score-input');
 const accumulatedScoreDisplay = document.getElementById('accumulated-score');
+const scoreToPassDisplay = document.getElementById('score-to-pass');
 const courseGradeResults = document.getElementById('course-grade-results');
 
 function initCourseGradeTab() {
@@ -1741,6 +1742,19 @@ function calculateAndRenderCourseGrade() {
     // 3. Calculate Accumulated Score
     const accumulated = processScore * processWeight;
     accumulatedScoreDisplay.textContent = accumulated.toFixed(2);
+
+    // 3.5 Calculate Score Needed to Pass (Grade D, min 4.0)
+    const passGrade = GRADE_SCALE.find(g => g.grade === 'D');
+    const passTarget = passGrade ? passGrade.min : 4.0;
+    let requiredPass = (passTarget - accumulated) / finalWeight;
+    
+    if (requiredPass <= 0) {
+        scoreToPassDisplay.textContent = "Đã qua";
+    } else if (requiredPass > 10) {
+        scoreToPassDisplay.textContent = "Không thể";
+    } else {
+        scoreToPassDisplay.textContent = requiredPass.toFixed(2);
+    }
 
     // 4. Calculate Requirements for each Grade
     const resultsHTML = GRADE_SCALE.map(grade => {
