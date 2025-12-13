@@ -179,23 +179,33 @@ body {
 /* Segmented Control (Modern Radio Group) */
 .btn-check:checked + .btn-segmented {
     background-color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    font-weight: 700;
+    transform: scale(1.02);
+    z-index: 1;
+    transition: all 0.2s ease;
 }
 
 /* Specific Colors for Ratios */
 #ratio3070:checked + .btn-segmented {
     color: #dc3545; /* Danger Red */
+    background-color: #fff5f5;
+    border: 1px solid #dc3545;
 }
 #ratio4060:checked + .btn-segmented {
     color: #0d6efd; /* Primary Blue */
+    background-color: #f0f7ff;
+    border: 1px solid #0d6efd;
 }
 #ratio5050:checked + .btn-segmented {
     color: #198754; /* Success Green */
+    background-color: #f0fff4;
+    border: 1px solid #198754;
 }
 
 .btn-check:not(:checked) + .btn-segmented {
     color: #6c757d;
+    border: 1px solid transparent; /* Prevent layout shift */
 }
 .btn-check:not(:checked) + .btn-segmented:hover {
     background-color: rgba(255,255,255,0.5);
@@ -403,13 +413,32 @@ body {
 
 /* Segmented Control in Dark Mode */
 [data-bs-theme="dark"] .btn-check:checked + .btn-segmented {
-    background-color: #495057;
+    background-color: #343a40;
     color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    font-weight: 700;
+    transform: scale(1.02);
+}
+
+[data-bs-theme="dark"] #ratio3070:checked + .btn-segmented {
+    color: #ea868f;
+    border: 1px solid #ea868f;
+    background-color: rgba(220, 53, 69, 0.2);
+}
+[data-bs-theme="dark"] #ratio4060:checked + .btn-segmented {
+    color: #6ea8fe;
+    border: 1px solid #6ea8fe;
+    background-color: rgba(13, 110, 253, 0.2);
+}
+[data-bs-theme="dark"] #ratio5050:checked + .btn-segmented {
+    color: #75b798;
+    border: 1px solid #75b798;
+    background-color: rgba(25, 135, 84, 0.2);
 }
 
 [data-bs-theme="dark"] .btn-check:not(:checked) + .btn-segmented {
     color: #adb5bd;
+    border: 1px solid transparent;
 }
 
 [data-bs-theme="dark"] .btn-check:not(:checked) + .btn-segmented:hover {
