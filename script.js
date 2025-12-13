@@ -1443,7 +1443,7 @@ function renderTargetResult(requiredGPA, creditsToEarn, deficitPoints = 0, detai
                         </div>
                     `}).join('')}
                 </div>
-                <div class="mt-2 small text-muted text-center fst-italic">Danh sách sắp xếp theo độ sát với mục tiêu (từ thấp đến cao)</div>
+                <div class="mt-2 small text-muted text-center fst-italic">Danh sách sắp xếp theo mức độ đạt được từ dễ - khó</div>
             </div>
         `;
     }
