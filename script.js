@@ -299,7 +299,7 @@ function initManualCalcTab() {
                 const course = semester.courses.find(c => String(c.id) === String(courseId));
                 if (course) {
                     course.credits = parseFloat(value) || 0;
-                    updateSemesterStats(semId);
+                    updateAllSemesterBadges();
                 }
             }
         }
@@ -442,12 +442,12 @@ function updateManualCourse(semId, courseId, field, value) {
                 course.credits = parseFloat(value) || 0;
                 
                 // Update UI for total credits and GPA immediately without re-rendering
-                updateSemesterStats(semId);
+                updateAllSemesterBadges();
             }
             
             // If grade changed, update GPA
             if (field === 'grade') {
-                updateSemesterGPA(semId);
+                updateAllSemesterBadges();
             }
             
             saveManualState();
@@ -654,7 +654,7 @@ function renderManualSemesters() {
                             <i class="bi bi-mortarboard-fill me-2 fs-5"></i>
                             <span class="fw-bold">GPA Trung bình ${stat.label}</span>
                         </div>
-                        <span class="badge bg-info text-dark fs-6 border border-info-subtle">GPA ${yearGPA}</span>
+                        <span class="badge bg-info text-dark fs-6 border border-info-subtle year-gpa-badge" data-year-id="${currentYear.id}">GPA ${yearGPA}</span>
                     </div>
                 `;
             }
@@ -2354,5 +2354,72 @@ function initChristmasTreeInteraction() {
             }
         });
     }
+}
+
+
+function updateAllSemesterBadges() {
+    let runningTotalPoints = (parseFloat(manualInitialGpaInput.value) || 0) * (parseFloat(manualInitialCreditsInput.value) || 0);
+    let runningTotalCredits = parseFloat(manualInitialCreditsInput.value) || 0;
+
+    manualSemesters.forEach(sem => {
+        // 1. Calculate Semester Stats
+        let semGpaPoints = 0;
+        let semGpaCredits = 0;
+        let semTotalCredits = 0;
+
+        sem.courses.forEach(course => {
+            const gradeInfo = GRADE_SCALE.find(g => g.grade === course.grade);
+            const gpa = gradeInfo ? gradeInfo.gpa : 0;
+            const credits = parseFloat(course.credits) || 0;
+            
+            semTotalCredits += credits;
+
+            if (gradeInfo) {
+                semGpaPoints += gpa * credits;
+                semGpaCredits += credits;
+            }
+
+            // Cumulative Logic
+            runningTotalPoints += gpa * credits;
+            if (gpa > 0) {
+                runningTotalCredits += credits;
+            }
+
+            // Handle Retake Logic for Cumulative
+            if (course.isRetake) {
+                const oldGradeInfo = GRADE_SCALE.find(g => g.grade === course.oldGrade);
+                const oldGpa = oldGradeInfo ? oldGradeInfo.gpa : 0;
+                
+                runningTotalPoints -= oldGpa * credits;
+                if (oldGpa > 0) {
+                    runningTotalCredits -= credits;
+                }
+            }
+        });
+
+        const semGPA = semGpaCredits > 0 ? (semGpaPoints / semGpaCredits).toFixed(2) : '0.00';
+        const cumGPA = runningTotalCredits > 0 ? (runningTotalPoints / runningTotalCredits).toFixed(2) : '0.00';
+
+        // 2. Update DOM
+        const creditsBadge = document.querySelector(`.semester-total-credits[data-sem-id='${sem.id}']`);
+        if (creditsBadge) creditsBadge.textContent = `${semTotalCredits} TC`;
+
+        const gpaBadge = document.querySelector(`.semester-gpa[data-sem-id='${sem.id}']`);
+        if (gpaBadge) gpaBadge.textContent = `GPA ${semGPA}`;
+
+        const cumGpaBadge = document.querySelector(`.semester-cum-gpa[data-sem-id='${sem.id}']`);
+        if (cumGpaBadge) cumGpaBadge.textContent = `GPA tích lũy ${cumGPA}`;
+    });
+
+    // 3. Update Yearly Stats
+    const yearStats = calculateYearlyStats(manualSemesters);
+    Object.keys(yearStats).forEach(yearId => {
+        const stat = yearStats[yearId];
+        const yearBadge = document.querySelector(`.year-gpa-badge[data-year-id='${yearId}']`);
+        if (yearBadge && stat.credits > 0) {
+            const yearGPA = (stat.points / stat.credits).toFixed(2);
+            yearBadge.textContent = `GPA ${yearGPA}`;
+        }
+    });
 }
 
