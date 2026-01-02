@@ -704,15 +704,43 @@ export function initTargetGPATab() {
                 if (suggestions.length > 0) {
                     targetResultContainer.innerHTML += `
                         <div class="mt-4 border-top pt-3">
-                            <h6 class="text-danger fw-bold mb-3"><i class="bi bi-lightbulb-fill me-2"></i>Gợi ý học cải thiện để đạt mục tiêu:</h6>
+                            <div class="alert alert-warning border-warning-subtle bg-warning-subtle text-dark mb-3">
+                                <div class="d-flex">
+                                    <i class="bi bi-exclamation-triangle-fill text-warning-emphasis me-2 fs-5"></i>
+                                    <div>
+                                        <strong>Mục tiêu hiện tại quá cao!</strong>
+                                        <div class="small mt-1">Ngay cả khi bạn đạt 4.0 cho tất cả các môn còn lại, bạn vẫn thiếu khoảng <strong>${deficitPoints.toFixed(2)}</strong> điểm tích lũy.</div>
+                                        <div class="small mt-1">Dưới đây là các phương án <strong>học cải thiện</strong> các môn điểm thấp trong quá khứ để bù đắp số điểm còn thiếu:</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="text-danger fw-bold mb-3"><i class="bi bi-lightbulb-fill me-2"></i>Gợi ý môn học lại tối ưu:</h6>
                             <div class="list-group">
-                                ${suggestions.map(s => `
-                                    <div class="list-group-item list-group-item-action border-danger-subtle bg-danger-subtle">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1 text-danger fw-bold">Học lại ${s.courses.length} môn</h6>
-                                            <small class="text-danger fw-bold">+${s.totalGain.toFixed(2)} điểm</small>
+                                ${suggestions.map((s, index) => `
+                                    <div class="list-group-item list-group-item-action border-danger-subtle bg-white mb-2 rounded shadow-sm">
+                                        <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+                                            <span class="badge bg-danger text-white rounded-pill">Phương án ${index + 1}</span>
+                                            <span class="text-success fw-bold small"><i class="bi bi-graph-up-arrow me-1"></i>Tăng thêm ${s.totalGain.toFixed(2)} điểm</span>
                                         </div>
-                                        <p class="mb-1 small text-dark">${s.courses.map(c => `${c.name} (${c.grade} -> 4.0)`).join(', ')}</p>
+                                        
+                                        ${s.courses.map(c => `
+                                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2 last-no-border">
+                                                <div>
+                                                    <div class="fw-bold text-dark">${c.name}</div>
+                                                    <div class="small text-muted">${c.semName} • ${c.credits} TC</div>
+                                                </div>
+                                                <div class="d-flex align-items-center bg-light rounded px-2 py-1">
+                                                    <span class="fw-bold text-secondary">${c.grade}</span>
+                                                    <i class="bi bi-arrow-right-short mx-1 text-muted"></i>
+                                                    <span class="fw-bold text-success">A (4.0)</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                        
+                                        <div class="small text-muted fst-italic mt-1">
+                                            <i class="bi bi-info-circle me-1"></i>Tổng tín chỉ học lại: <strong>${s.totalCredits} TC</strong>
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
