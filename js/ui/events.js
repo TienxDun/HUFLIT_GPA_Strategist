@@ -7,19 +7,6 @@ import { parsePortalText } from '../core/utils.js';
 // ==========================================
 // GLOBAL HELPERS
 // ==========================================
-window.adjustManualCredit = function(semId, courseId, delta) {
-    const { semesters } = getManualState();
-    const semester = semesters.find(s => String(s.id) === String(semId));
-    if (semester) {
-        const course = semester.courses.find(c => String(c.id) === String(courseId));
-        if (course) {
-            let val = parseFloat(course.credits) || 0;
-            val += delta;
-            if (val < 0) val = 0;
-            updateManualCourse(semId, courseId, 'credits', val);
-        }
-    }
-};
 
 // ==========================================
 // TAB: TÍNH GPA THỦ CÔNG (MANUAL CALC)
@@ -173,6 +160,28 @@ export function initManualCalcTab() {
     manualSemesterList.addEventListener('click', (e) => {
         const target = e.target;
         
+        // Adjust Credit
+        const adjustBtn = target.closest('.adjust-credit-btn');
+        if (adjustBtn) {
+            const semId = adjustBtn.dataset.semId;
+            const courseId = adjustBtn.dataset.courseId;
+            const action = adjustBtn.dataset.action;
+            const delta = action === 'increase' ? 1 : -1;
+            
+            const { semesters } = getManualState();
+            const semester = semesters.find(s => String(s.id) === String(semId));
+            if (semester) {
+                const course = semester.courses.find(c => String(c.id) === String(courseId));
+                if (course) {
+                    let val = parseFloat(course.credits) || 0;
+                    val += delta;
+                    if (val < 0) val = 0;
+                    updateManualCourse(semId, courseId, 'credits', val);
+                }
+            }
+            return;
+        }
+
         // Delete Semester (Request Confirmation)
         const deleteBtn = target.closest('.delete-semester-btn');
         if (deleteBtn) {

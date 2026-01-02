@@ -99,7 +99,7 @@ graph TD
 ## 🛠 Công nghệ sử dụng
 
 - **Frontend**: HTML5, CSS3 (Bootstrap 5.3)
-- **JavaScript**: Vanilla JS (không framework)
+- **JavaScript**: Vanilla JS (ES6 Modules, Modular Architecture)
 - **Storage**: LocalStorage cho dữ liệu cá nhân
 - **Icons**: Bootstrap Icons
 - **Fonts**: Google Fonts (Inter)
@@ -118,15 +118,22 @@ graph TD
 ```
 HUFLIT_GPA_Strategist/
 ├── index.html          # Giao diện chính
-├── script.js           # Logic ứng dụng
-├── style.css           # Styling tùy chỉnh
-├── constants.js        # Dữ liệu thang điểm
+├── css/                # Stylesheets
+│   ├── main.css        # CSS chính
+│   ├── components/     # CSS cho các component
+│   ├── layouts/        # CSS bố cục
+│   └── themes/         # CSS giao diện (Dark/Light)
+├── js/                 # Mã nguồn JavaScript
+│   ├── main.js         # Entry point
+│   ├── core/           # Logic tính toán & Hằng số
+│   ├── state/          # Quản lý trạng thái (Store)
+│   └── ui/             # Xử lý giao diện & Sự kiện
+├── assets/             # Tài nguyên tĩnh
+│   └── images/         # Hình ảnh
 ├── manifest.json       # PWA manifest
 ├── 404.html            # Trang 404
 ├── LICENSE             # Giấy phép
-├── README.md           # Tài liệu này
-├── images/             # Hình ảnh và icon
-└── favicon.ico         # Icon trang web
+└── README.md           # Tài liệu này
 ```
 
 ## 🤝 Đóng góp

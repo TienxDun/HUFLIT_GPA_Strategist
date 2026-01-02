@@ -170,11 +170,11 @@ export function renderManualSemesters() {
                                     </td>
                                     <td>
                                         <div class="input-group input-group-sm flex-nowrap" style="min-width: 80px;">
-                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="window.adjustManualCredit('${sem.id}', '${course.id}', -1)">-</button>
+                                            <button class="btn btn-outline-secondary px-1 adjust-credit-btn" type="button" data-action="decrease" data-sem-id="${sem.id}" data-course-id="${course.id}">-</button>
                                             <input type="number" class="form-control form-control-sm manual-input text-center px-0" 
                                                 value="${course.credits}" min="0" readonly
                                                 data-sem-id="${sem.id}" data-course-id="${course.id}" data-field="credits">
-                                            <button class="btn btn-outline-secondary px-1" type="button" onclick="window.adjustManualCredit('${sem.id}', '${course.id}', 1)">+</button>
+                                            <button class="btn btn-outline-secondary px-1 adjust-credit-btn" type="button" data-action="increase" data-sem-id="${sem.id}" data-course-id="${course.id}">+</button>
                                         </div>
                                     </td>
                                     <td>
