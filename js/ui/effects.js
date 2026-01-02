@@ -1,4 +1,6 @@
 export function initSnowEffect() {
+    // Disabled
+    /*
     const snowContainer = document.createElement('div');
     snowContainer.id = 'snow-container';
     document.body.appendChild(snowContainer);
@@ -37,9 +39,12 @@ export function initSnowEffect() {
     }
 
     setInterval(createSnowflake, 200);
+    */
 }
 
 export function initChristmasTreeInteraction() {
+    // Disabled
+    /*
     const treeContainer = document.querySelector('.christmas-tree-container');
     const tree = document.querySelector('.christmas-tree');
 
@@ -71,4 +76,5 @@ export function initChristmasTreeInteraction() {
             }
         });
     }
+    */
 }

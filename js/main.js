@@ -13,8 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initThemeToggle();
     initUserGuide();
     fetchVisitCount();
-    initSnowEffect();
-    initChristmasTreeInteraction();
+    // initSnowEffect();
+    // initChristmasTreeInteraction();
 
     // Sync Desktop and Mobile Tabs
     const allNavLinks = document.querySelectorAll('.nav-link[data-bs-toggle="pill"]');
