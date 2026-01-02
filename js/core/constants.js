@@ -1,4 +1,4 @@
-window.HUFLIT_GRADE_SCALE = [
+export const GRADE_SCALE = [
     { grade: 'A', min: 8.5, max: 10.0, gpa: 4.0 },
     { grade: 'B+', min: 8.0, max: 8.4, gpa: 3.5 },
     { grade: 'B', min: 7.0, max: 7.9, gpa: 3.0 },

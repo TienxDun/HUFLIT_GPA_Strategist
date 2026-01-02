@@ -8,12 +8,12 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "images/ava.jpg",
+      "src": "assets/images/ava.jpg",
       "sizes": "192x192",
       "type": "image/jpeg"
     },
     {
-      "src": "images/ava.jpg",
+      "src": "assets/images/ava.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }

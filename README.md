@@ -5,12 +5,15 @@ Công cụ tính toán GPA và lập kế hoạch điểm số dành riêng cho 
 ## ✨ Tính năng chính
 
 ### 1. 🎯 Lộ trình GPA (Target GPA)
-- Dự đoán điểm trung bình cần đạt cho các tín chỉ tiếp theo.
-- Tự động phân tích và **gợi ý các môn cần học lại (Retake)** nếu mục tiêu quá cao so với khả năng của các môn mới.
-- Hỗ trợ tính toán kết hợp giữa học mới và học cải thiện.
-- Chuyển dữ liệu sang tab "Tính GPA Thủ công" để tiếp tục tính toán.
+- **Dự đoán điểm số**: Tính toán chính xác điểm trung bình (GPA) bạn cần đạt được trong các tín chỉ còn lại để chạm tới mục tiêu (ví dụ: từ 3.2 lên 3.6).
+- **Hỗ trợ Học cải thiện**: Tính toán kết hợp giữa việc học các môn mới và học lại các môn điểm thấp.
+- **Kết quả dự báo chi tiết**:
+    -  **Khả thi**: Hiển thị con số GPA cụ thể cần đạt cho mỗi môn học sắp tới.
+    -  **Đã đạt**: Thông báo khi GPA hiện tại của bạn đã đủ để đạt mục tiêu mà không cần áp lực điểm số cao.
+    -  **Cảnh báo**: Tự động phát hiện nếu mục tiêu quá cao (GPA yêu cầu > 4.0) hoặc khi bạn không còn đủ tín chỉ để thay đổi kết quả.
+    -  **Gợi ý thông minh**: Trong trường hợp "bất khả thi", hệ thống sẽ tự động quét lịch sử học tập (từ tab Tính thủ công) và đề xuất danh sách các môn nên học lại để tối ưu hóa điểm số nhanh nhất.
 
-![Lộ trình GPA](images/Tab1.png)
+![Lộ trình GPA](assets/images/Tab1.png)
 *Giao diện nhập liệu và kết quả tính toán*
 
 ### 2. 📝 Tính GPA Thủ công & Import dữ liệu
@@ -18,20 +21,20 @@ Công cụ tính toán GPA và lập kế hoạch điểm số dành riêng cho 
 - **Quản lý chi tiết**: Quản lý điểm số theo từng học kỳ, tính GPA tích lũy và GPA từng kỳ theo thời gian thực.
 - Chuyển dữ liệu sang tab "Lộ trình GPA" để lập kế hoạch.
 
-![Tính GPA thủ công](images/Tab2.2.png)
+![Tính GPA thủ công](assets/images/Tab2.2.png)
 
 #### Hướng dẫn Import từ Portal
 1. Truy cập Portal đào tạo, vào phần Kết quả học tập.
 2. Bôi đen và copy toàn bộ bảng điểm.
 3. Dán vào công cụ để tự động nhập.
 
-![Hướng dẫn Import 1](images/HD1.png)
-![Hướng dẫn Import 2](images/HD2.png)
+![Hướng dẫn Import 1](assets/images/HD1.png)
+![Hướng dẫn Import 2](assets/images/HD2.png)
 
 ### 3. 📊 Tính điểm Môn học (Course Grade)
 Tính toán điểm thi cuối kỳ cần đạt dựa trên điểm quá trình và tỷ lệ phần trăm.
 
-![Tính điểm môn học](images/Tab3.png)
+![Tính điểm môn học](assets/images/Tab3.png)
 
 ### 4. 📋 Thang điểm chuẩn HUFLIT
 - Tích hợp sẵn thang điểm quy đổi (A, B+, B, C+...) theo quy chế mới nhất.
