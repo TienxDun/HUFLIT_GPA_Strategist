@@ -20,23 +20,19 @@ export function initGradeScaleTab() {
         // Modern, minimal row design
         return `
             <tr class="align-middle">
-                <td class="ps-3 py-3">
+                <td class="ps-4 py-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-4 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm ${badgeColor}" 
                              style="width: 40px; height: 40px; font-size: 1.1rem;">
                             ${item.grade}
                         </div>
                         <div class="d-flex flex-column">
-                            <span class="small text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Thang 10</span>
                             <span class="fw-bold text-dark">${item.min.toFixed(1)} - ${item.max.toFixed(1)}</span>
                         </div>
                     </div>
                 </td>
-                <td class="text-end pe-3">
-                    <div class="d-flex flex-column align-items-end">
-                        <span class="small text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">GPA (Hệ 4)</span>
-                        <span class="fw-bold text-primary fs-5">${item.gpa.toFixed(1)}</span>
-                    </div>
+                <td class="text-end pe-4">
+                    <span class="fw-bold text-primary fs-5">${item.gpa.toFixed(1)}</span>
                 </td>
             </tr>
         `;

@@ -452,16 +452,72 @@
             <!-- Tab 4: Thang điểm (Grade Scale) -->
             <div class="tab-pane fade" id="pills-scale" role="tabpanel" tabindex="0">
                 <div class="row g-4">
-                    <!-- Left Column: Grade Scale Table -->
-                    <div class="col-lg-7">
-                        <div class="card shadow-sm border-0 h-100">
+                    <!-- Left Column: Grade Scale & Classification -->
+                    <div class="col-lg-5 d-flex flex-column gap-4">
+                        
+                        <!-- 1. Xếp loại Học lực (Moved to top) -->
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                                <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-award me-2"></i>Xếp loại Học lực</h5>
+                                <p class="text-muted small mt-1 mb-0">Phân loại dựa trên điểm trung bình tích lũy</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="p-2 rounded-3 bg-success-subtle border border-success-subtle text-center">
+                                            <div class="fw-bold text-success small">Xuất sắc</div>
+                                            <div class="small text-success-emphasis fw-bold" style="font-size: 0.75rem;">3.60 - 4.00</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="p-2 rounded-3 bg-primary-subtle border border-primary-subtle text-center">
+                                            <div class="fw-bold text-primary small">Giỏi</div>
+                                            <div class="small text-primary-emphasis fw-bold" style="font-size: 0.75rem;">3.20 - 3.59</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="p-2 rounded-3 bg-info-subtle border border-info-subtle text-center">
+                                            <div class="fw-bold text-info-emphasis small">Khá</div>
+                                            <div class="small text-info-emphasis fw-bold" style="font-size: 0.75rem;">2.50 - 3.19</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="p-2 rounded-3 bg-warning-subtle border border-warning-subtle text-center">
+                                            <div class="fw-bold text-warning-emphasis small">Trung bình</div>
+                                            <div class="small text-warning-emphasis fw-bold" style="font-size: 0.75rem;">2.00 - 2.49</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="p-2 rounded-3 bg-secondary-subtle border border-secondary-subtle text-center">
+                                            <div class="fw-bold text-secondary small">Yếu</div>
+                                            <div class="small text-secondary-emphasis fw-bold" style="font-size: 0.75rem;">1.00 - 1.99</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="p-2 rounded-3 bg-danger-subtle border border-danger-subtle text-center">
+                                            <div class="fw-bold text-danger small">Kém</div>
+                                            <div class="small text-danger-emphasis fw-bold" style="font-size: 0.75rem;">&lt; 1.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Thang điểm Tín chỉ -->
+                        <div class="card shadow-sm border-0 flex-grow-1">
                             <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
                                 <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-table me-2"></i>Thang điểm Tín chỉ</h5>
-                                <p class="text-muted small mt-1 mb-0">Quy đổi điểm số theo quy chế tín chỉ hiện hành</p>
+                                <p class="text-muted small mt-1 mb-0">Quy đổi điểm số theo quy chế tín chỉ</p>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light small text-secondary">
+                                            <tr>
+                                                <th class="ps-4">Điểm chữ</th>
+                                                <th class="text-end pe-4">GPA (Hệ 4)</th>
+                                            </tr>
+                                        </thead>
                                         <tbody id="grade-scale-table-body" class="border-top-0">
                                             <!-- Data will be populated by JS -->
                                         </tbody>
@@ -471,61 +527,9 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: GPA Classification -->
-                    <div class="col-lg-5">
+                    <!-- Right Column: Schedule (Full Height) -->
+                    <div class="col-lg-7">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
-                                <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-award me-2"></i>Xếp loại Học lực</h5>
-                                <p class="text-muted small mt-1 mb-0">Phân loại dựa trên điểm trung bình tích lũy</p>
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-6">
-                                        <div class="p-3 rounded-3 bg-success-subtle border border-success-subtle h-100 text-center">
-                                            <div class="fw-bold text-success mb-1">Xuất sắc</div>
-                                            <div class="small text-success-emphasis fw-bold">3.60 - 4.00</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="p-3 rounded-3 bg-primary-subtle border border-primary-subtle h-100 text-center">
-                                            <div class="fw-bold text-primary mb-1">Giỏi</div>
-                                            <div class="small text-primary-emphasis fw-bold">3.20 - 3.59</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="p-3 rounded-3 bg-info-subtle border border-info-subtle h-100 text-center">
-                                            <div class="fw-bold text-info-emphasis mb-1">Khá</div>
-                                            <div class="small text-info-emphasis fw-bold">2.50 - 3.19</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle h-100 text-center">
-                                            <div class="fw-bold text-warning-emphasis mb-1">Trung bình</div>
-                                            <div class="small text-warning-emphasis fw-bold">2.00 - 2.49</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="p-3 rounded-3 bg-secondary-subtle border border-secondary-subtle h-100 text-center">
-                                            <div class="fw-bold text-secondary mb-1">Yếu</div>
-                                            <div class="small text-secondary-emphasis fw-bold">1.00 - 1.99</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="p-3 rounded-3 bg-danger-subtle border border-danger-subtle h-100 text-center">
-                                            <div class="fw-bold text-danger mb-1">Kém</div>
-                                            <div class="small text-danger-emphasis fw-bold">&lt; 1.00</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Schedule Section -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="card shadow-sm border-0">
                             <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
                                 <h5 class="card-title fw-bold text-primary mb-0"><i class="bi bi-calendar-week me-2"></i>Thời gian biểu</h5>
                                 <p class="text-muted small mt-1 mb-0">Lịch học chi tiết theo tiết</p>
