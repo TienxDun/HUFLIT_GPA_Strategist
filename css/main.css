@@ -882,6 +882,7 @@ body {
     top: -10px;
     z-index: 9999;
     color: #a0c4ff;
+    -webkit-user-select: none;
     user-select: none;
     pointer-events: none;
     animation-name: fall;
