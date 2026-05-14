@@ -1599,7 +1599,6 @@ Năm học: 2023-2024 - Học kỳ: HK01
                         id="theme-toggle" aria-label="Toggle Dark Mode" style="width: 40px; height: 40px;">
                         <i class="bi bi-moon-stars-fill"></i>
                     </button>
-
                     <button type="button" class="btn-close shadow-sm" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
@@ -1623,22 +1622,20 @@ Năm học: 2023-2024 - Học kỳ: HK01
                         đại học tại HUFLIT."
                     </p>
 
-                    <div class="d-grid gap-3 contact-actions pt-2">
-                        <a href="../" class="btn-minimal btn-minimal-new">
-                            <i class="bi bi-lightning-fill"></i>
-                            <span>Trải nghiệm bản mới (Nâng cao)</span>
-                        </a>
+                    <div class="d-grid gap-2 contact-actions">
+                        <button type="button" class="btn btn-outline-primary rounded-pill" data-bs-toggle="modal"
+                            data-bs-target="#userGuideModal">
+                            <i class="bi bi-book-half me-2"></i>Xem hướng dẫn sử dụng
+                        </button>
 
-                        <button type="button" class="btn-minimal btn-minimal-feedback" data-bs-toggle="modal"
+                        <button type="button" class="btn btn-outline-success rounded-pill" data-bs-toggle="modal"
                             data-bs-target="#feedbackModal">
-                            <i class="bi bi-lightbulb-fill"></i>
-                            <span>Góp ý tính năng</span>
+                            <i class="bi bi-lightbulb-fill me-2"></i>Góp ý tính năng
                         </button>
 
                         <a href="https://www.facebook.com/tienxdun/" target="_blank" rel="noopener noreferrer"
-                            class="btn-minimal btn-minimal-facebook">
-                            <i class="bi bi-messenger"></i>
-                            <span>Nhắn tin qua Facebook</span>
+                            class="btn btn-primary rounded-pill shadow-sm">
+                            <i class="bi bi-messenger me-2"></i>Nhắn tin qua Facebook
                         </a>
                     </div>
                 </div>
@@ -1646,7 +1643,273 @@ Năm học: 2023-2024 - Học kỳ: HK01
         </div>
     </div>
 
+    <!-- User Guide Modal -->
+    <div class="modal fade" id="userGuideModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static"
+        data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-book-half me-2 text-primary"></i>Hướng dẫn sử dụng
+                    </h5>
+                    <button type="button" class="btn-close" id="guideHeaderCloseBtn" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-pills mb-3 guide-nav-pills justify-content-center" id="guideTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="guide-target-tab" data-bs-toggle="pill"
+                                data-bs-target="#guide-target" type="button" role="tab">
+                                <i class="bi bi-graph-up-arrow d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Lộ
+                                trình GPA
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="guide-manual-tab" data-bs-toggle="pill"
+                                data-bs-target="#guide-manual" type="button" role="tab">
+                                <i class="bi bi-calculator d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Tính GPA
+                                Thủ công
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="guide-course-tab" data-bs-toggle="pill"
+                                data-bs-target="#guide-course" type="button" role="tab">
+                                <i class="bi bi-journal-check d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Tính
+                                điểm Môn học
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="guide-scale-tab" data-bs-toggle="pill"
+                                data-bs-target="#guide-scale" type="button" role="tab">
+                                <i class="bi bi-table d-block d-sm-inline-block mb-1 mb-sm-0 me-sm-2"></i>Thang điểm
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="guideTabContent">
+                        <div class="tab-pane fade show active" id="guide-target" role="tabpanel">
+                            <h5 class="mb-2 text-primary fw-bold"><i class="bi bi-graph-up-arrow me-2"></i>Lộ trình GPA
+                            </h5>
+                            <p class="text-secondary mb-3">Công cụ giúp bạn tính toán điểm số cần đạt trong các môn học
+                                còn lại để đạt được mục tiêu GPA mong muốn khi ra trường.</p>
 
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">1</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Sao chép bảng điểm</h6>
+                                        <p class="small text-muted mb-0">Truy cập Portal đào tạo -> Kết quả học tập.
+                                            Nhấn <strong>Ctrl + A</strong> để chọn tất cả, sau đó <strong>Ctrl +
+                                                C</strong> để sao chép.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">2</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Nhập dữ liệu</h6>
+                                        <p class="small text-muted mb-0">Dán (<strong>Ctrl + V</strong>) nội dung vừa
+                                            sao chép vào ô nhập liệu trên trang web này và bấm nút <strong>"Phân tích
+                                                bảng điểm"</strong>.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">3</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Đặt mục tiêu GPA</h6>
+                                        <p class="small text-muted mb-0">Hệ thống sẽ hiển thị GPA hiện tại. Hãy nhập mức
+                                            <strong>GPA Mục tiêu</strong> bạn muốn (ví dụ: 3.2, 3.6) để xem cần phấn đấu
+                                            bao nhiêu.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-success rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i
+                                                class="bi bi-check-lg"></i></span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Xem kết quả & Gợi ý</h6>
+                                        <p class="small text-muted mb-0">Nhận kết quả về điểm trung bình cần đạt cho các
+                                            tín chỉ còn lại. Hệ thống cũng sẽ gợi ý các môn điểm thấp nên học cải thiện
+                                            để tối ưu điểm số.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="guide-manual" role="tabpanel">
+                            <h5 class="mb-2 text-primary fw-bold"><i class="bi bi-calculator me-2"></i>Tính GPA Thủ công
+                            </h5>
+                            <p class="text-secondary mb-3">Công cụ linh hoạt cho phép bạn tự nhập điểm để tính toán GPA
+                                cho từng học kỳ hoặc dự tính kết quả học tập.</p>
+
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">1</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Tạo học kỳ & Môn học</h6>
+                                        <p class="small text-muted mb-0">Nhấn nút <strong>"Thêm học kỳ"</strong> để bắt
+                                            đầu. Trong mỗi học kỳ, nhấn <strong>"Thêm môn học"</strong> tương ứng với số
+                                            lượng môn bạn muốn tính.</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">2</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Nhập thông tin chi tiết</h6>
+                                        <p class="small text-muted mb-0">Điền <strong>Số tín chỉ</strong> và
+                                            <strong>Điểm số</strong> cho từng môn. Bạn có thể nhập điểm hệ 10 (ví dụ:
+                                            8.5) hoặc chọn điểm chữ (A, B+...).
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-success rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i
+                                                class="bi bi-check-lg"></i></span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Xem kết quả tức thì</h6>
+                                        <p class="small text-muted mb-0">Hệ thống tự động tính <strong>GPA</strong>
+                                            (điểm TB học kỳ) và <strong>CPA</strong> (điểm TB tích lũy) ngay khi bạn
+                                            nhập liệu.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="guide-course" role="tabpanel">
+                            <h5 class="mb-2 text-primary fw-bold"><i class="bi bi-journal-check me-2"></i>Tính điểm Môn
+                                học</h5>
+                            <p class="text-secondary mb-3">Giúp bạn biết chính xác cần thi bao nhiêu điểm để đạt được
+                                điểm tổng kết mong muốn (A, B, C...).</p>
+
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">1</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Cấu hình trọng số</h6>
+                                        <p class="small text-muted mb-0">Nhập tỷ lệ phần trăm (%) của <strong>Điểm quá
+                                                trình</strong> và <strong>Điểm thi</strong> theo đề cương môn học (ví
+                                            dụ: 40% - 60%).</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-primary rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">2</span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Nhập điểm hiện có</h6>
+                                        <p class="small text-muted mb-0">Nhập điểm quá trình bạn đã đạt được (hoặc dự
+                                            kiến).</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-success rounded-circle p-2"
+                                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i
+                                                class="bi bi-check-lg"></i></span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="fw-bold mb-1">Bảng dự tính điểm thi</h6>
+                                        <p class="small text-muted mb-0">Hệ thống sẽ liệt kê danh sách các điểm số bạn
+                                            cần đạt trong kỳ thi cuối kỳ để đạt được từng mức điểm chữ (A, B+, B...).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="guide-scale" role="tabpanel">
+                            <h5 class="mb-2 text-primary fw-bold"><i class="bi bi-table me-2"></i>Thang điểm HUFLIT</h5>
+                            <p class="text-secondary mb-3">Bảng tra cứu thang điểm chính thức được áp dụng tại HUFLIT,
+                                giúp bạn đối chiếu giữa các hệ điểm.</p>
+
+                            <div class="row g-2">
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary"><i class="bi bi-123 me-2"></i>Hệ 10 & Điểm
+                                                Chữ</h6>
+                                            <p class="small text-muted mb-0">Điểm tổng kết môn học (hệ 10) sẽ được quy
+                                                đổi sang điểm chữ tương ứng. Ví dụ: 8.5 - 10.0 là điểm A.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary"><i class="bi bi-4-square me-2"></i>Quy đổi
+                                                Hệ 4</h6>
+                                            <p class="small text-muted mb-0">Điểm chữ sẽ được quy đổi sang hệ 4 để tính
+                                                GPA. Ví dụ: A = 4.0, B+ = 3.5.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary"><i class="bi bi-star me-2"></i>Điểm Rèn
+                                                luyện</h6>
+                                            <p class="small text-muted mb-0">Đánh giá hoạt động ngoại khóa và rèn luyện.
+                                                Từ 90 điểm trở lên là Xuất sắc, dưới 35 điểm là Kém.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-0"
+                                        role="alert">
+                                        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                                        <div>
+                                            <strong>Lưu ý về điểm đạt:</strong>
+                                            <div class="small">Điểm D (4.0 - 5.4) là điểm đạt tối thiểu. Điểm F (< 4.0)
+                                                    là rớt môn và phải học lại.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <div class="d-flex align-items-center bg-warning-subtle border border-warning rounded p-2"
+                            id="guideCheckContainer">
+                            <input class="form-check-input m-0 me-2" type="checkbox" id="guideUnderstandCheck">
+                            <label class="form-check-label small fw-bold text-dark lh-1" for="guideUnderstandCheck">
+                                Mở lại hướng dẫn này ở nút Liên hệ <i class="bi bi-chat-text-fill text-primary"></i>
+                            </label>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="guideConfirmBtn" data-bs-dismiss="modal">Đã
+                            hiểu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Bootstrap 5.3 JS Bundle -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1681,44 +1944,43 @@ Năm học: 2023-2024 - Học kỳ: HK01
             </div>
         </div>
 
+        <!-- Feedback Modal -->
         <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: 28px; overflow: hidden;">
-                    <div class="modal-header border-bottom-0 pb-0 pt-3 px-3 d-flex justify-content-center position-relative">
-                        <div class="feedback-nav-container">
-                            <ul class="nav nav-pills border-bottom-0 flex-nowrap" id="feedbackTab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="feedback-form-tab" data-bs-toggle="tab"
-                                        data-bs-target="#feedback-form-pane" type="button" role="tab">
-                                        <i class="bi bi-pencil-square me-2"></i>Gửi góp ý
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="feedback-list-tab" data-bs-toggle="tab"
-                                        data-bs-target="#feedback-list-pane" type="button" role="tab">
-                                        <i class="bi bi-chat-quote-fill me-2"></i>Cộng đồng
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-light pb-0 border-bottom-0">
+                        <ul class="nav nav-tabs border-bottom-0" id="feedbackTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active fw-bold" id="feedback-form-tab" data-bs-toggle="tab"
+                                    data-bs-target="#feedback-form-pane" type="button" role="tab">
+                                    <i class="bi bi-pencil-square me-2"></i>Gửi góp ý
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold" id="feedback-list-tab" data-bs-toggle="tab"
+                                    data-bs-target="#feedback-list-pane" type="button" role="tab">
+                                    <i class="bi bi-chat-quote-fill me-2"></i>Cộng đồng
+                                </button>
+                            </li>
+                        </ul>
+                        <button type="button" class="btn-close mb-2 me-2" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                     </div>
-                    <div class="modal-body px-3 pb-3 pt-0">
+                    <div class="modal-body p-4 bg-white rounded-bottom">
                         <div class="tab-content" id="feedbackTabContent">
                             <!-- Tab 1: Form -->
                             <div class="tab-pane fade show active" id="feedback-form-pane" role="tabpanel" tabindex="0">
-                                <form id="feedback-form" class="px-1">
-                                    <div class="mb-3 mt-2">
-                                        <label for="feedback-name" class="form-label fw-bold small text-secondary ms-1 mb-2">Tên
+                                <form id="feedback-form">
+                                    <div class="mb-3">
+                                        <label for="feedback-name" class="form-label fw-medium small text-secondary">Tên
                                             của bạn (Không bắt buộc)</label>
-                                        <input type="text" class="form-control-minimal" id="feedback-name"
+                                        <input type="text" class="form-control" id="feedback-name"
                                             placeholder="Nhập tên của bạn">
                                     </div>
                                     <div class="mb-3">
                                         <label for="feedback-type"
-                                            class="form-label fw-bold small text-secondary ms-1 mb-2">Loại góp ý</label>
-                                        <select class="form-select-minimal" id="feedback-type" required>
+                                            class="form-label fw-medium small text-secondary">Loại góp ý</label>
+                                        <select class="form-select" id="feedback-type" required>
                                             <option value="feature_request">Yêu cầu tính năng mới</option>
                                             <option value="bug_report">Báo lỗi</option>
                                             <option value="improvement">Đề xuất cải tiến</option>
@@ -1727,17 +1989,20 @@ Năm học: 2023-2024 - Học kỳ: HK01
                                     </div>
                                     <div class="mb-3">
                                         <label for="feedback-content"
-                                            class="form-label fw-bold small text-secondary ms-1 mb-2">Nội dung góp ý <span
+                                            class="form-label fw-medium small text-secondary">Nội dung góp ý <span
                                                 class="text-danger">*</span></label>
-                                        <textarea class="form-control-minimal" id="feedback-content" rows="4"
+                                        <textarea class="form-control" id="feedback-content" rows="4"
                                             placeholder="Mô tả chi tiết ý tưởng hoặc vấn đề của bạn..."
                                             required></textarea>
                                     </div>
-
-                                    <div class="d-flex justify-content-end gap-2 pb-1">
-                                        <button type="button" class="btn-minimal btn-minimal-facebook" style="padding: 8px 18px !important;"
+                                    <div class="alert alert-light border small text-muted mb-3">
+                                        <i class="bi bi-shield-check me-1"></i> Ý kiến của bạn sẽ được kiểm duyệt trước
+                                        khi hiển thị công khai.
+                                    </div>
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-secondary btn-sm me-2"
                                             data-bs-dismiss="modal">Đóng</button>
-                                        <button type="submit" class="btn-minimal btn-minimal-new" style="padding: 8px 22px !important;"
+                                        <button type="submit" class="btn btn-success shadow-sm"
                                             id="submit-feedback-btn">
                                             <i class="bi bi-send-fill me-2"></i>Gửi góp ý
                                         </button>
@@ -1747,22 +2012,20 @@ Năm học: 2023-2024 - Học kỳ: HK01
 
                             <!-- Tab 2: List -->
                             <div class="tab-pane fade" id="feedback-list-pane" role="tabpanel" tabindex="0">
-                                <div class="px-1">
-                                    <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
-                                        <h6 class="fw-bold text-dark mb-0 ms-1">Ý kiến từ cộng đồng</h6>
-                                        <button class="btn btn-sm btn-light rounded-circle shadow-sm" id="refresh-feedback-btn"
-                                            style="width: 32px; height: 32px;" title="Làm mới">
-                                            <i class="bi bi-arrow-clockwise"></i>
-                                        </button>
-                                    </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold text-primary mb-0">Ý kiến từ cộng đồng</h6>
+                                    <button class="btn btn-sm btn-outline-secondary" id="refresh-feedback-btn"
+                                        title="Làm mới">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
 
-                                    <div id="feedback-list-container" class="d-flex flex-column gap-3"
-                                        style="max-height: 480px; overflow-y: auto; padding-right: 5px;">
-                                        <!-- Loading State -->
-                                        <div class="text-center py-5 text-muted">
-                                            <div class="spinner-border text-primary mb-2" role="status"></div>
-                                            <p class="small mb-0">Đang tải dữ liệu...</p>
-                                        </div>
+                                <div id="feedback-list-container" class="d-flex flex-column gap-3"
+                                    style="max-height: 400px; overflow-y: auto;">
+                                    <!-- Loading State -->
+                                    <div class="text-center py-5 text-muted">
+                                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                                        <p class="small mb-0">Đang tải dữ liệu...</p>
                                     </div>
                                 </div>
                             </div>

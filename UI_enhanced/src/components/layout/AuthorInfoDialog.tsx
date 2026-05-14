@@ -6,7 +6,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  BookOpen,
+  History,
   Lightbulb,
   MessageCircle,
   Check
@@ -68,11 +68,15 @@ export const AuthorInfoDialog = memo(({ children }: { children: React.ReactEleme
             <div className="flex flex-col gap-3">
               <Button
                 variant="outline"
+                nativeButton={false}
+                render={
+                  <a href={`${basePath}/legacy/index.html`}>
+                    <History className="h-4 w-4" />
+                    Mở trang tính điểm GPA cũ
+                  </a>
+                }
                 className="w-full h-12 rounded-full border-blue-500/30 text-blue-600 font-bold text-sm hover:bg-blue-50 hover:border-blue-500 transition-all gap-2"
-              >
-                <BookOpen className="h-4 w-4" />
-                Xem hướng dẫn sử dụng
-              </Button>
+              />
 
               <Button
                 variant="outline"
