@@ -6,13 +6,35 @@
 
 ## 🚀 Tính năng nổi bật
 
-- **⚡ Tính GPA thần tốc**: Hỗ trợ tính điểm theo từng học kỳ, tự động tính điểm tích lũy (Cumulative GPA).
-- **📥 Portal Import**: Tính năng độc quyền cho phép copy-paste dữ liệu từ Portal HUFLIT để nạp bảng điểm trong 1 giây.
-- **🗺️ Roadmap Planner**: Nhập mục tiêu GPA mong muốn, hệ thống sẽ tính toán chính xác số điểm bạn cần đạt được trong các tín chỉ còn lại.
-- **💡 Gợi ý học lại**: Tự động phân tích các môn điểm thấp và gợi ý kịch bản học cải thiện tối ưu nhất để kéo GPA lên nhanh nhất.
-- **🔗 Shareable Roadmap**: Xuất lộ trình của bạn thành một liên kết ngắn gọn để lưu trữ hoặc chia sẻ với bạn bè.
-- **📱 PWA Ready**: Cài đặt ứng dụng lên màn hình điện thoại và sử dụng mượt mà như app bản địa, hỗ trợ cả khi không có mạng (Offline).
-- **📊 Trực quan hóa**: Biểu đồ theo dõi sự biến động GPA qua từng học kỳ bằng Recharts.
+- **Tính GPA thần tốc**: Hỗ trợ tính điểm theo từng học kỳ, tự động tính điểm tích lũy (Cumulative GPA).
+- **Portal Import**: Tính năng độc quyền cho phép copy-paste dữ liệu từ Portal HUFLIT để nạp bảng điểm trong 1 giây.
+- **Roadmap Planner**: Nhập mục tiêu GPA mong muốn, hệ thống sẽ tính toán chính xác số điểm bạn cần đạt được trong các tín chỉ còn lại.
+- **Gợi ý học lại**: Tự động phân tích các môn điểm thấp và gợi ý kịch bản học cải thiện tối ưu nhất để kéo GPA lên nhanh nhất.
+- **Shareable Roadmap**: Xuất lộ trình của bạn thành một liên kết ngắn gọn để lưu trữ hoặc chia sẻ với bạn bè.
+- **PWA Ready**: Cài đặt ứng dụng lên màn hình điện thoại và sử dụng mượt mà như app bản địa, hỗ trợ cả khi không có mạng (Offline).
+- **Trực quan hóa**: Biểu đồ theo dõi sự biến động GPA qua từng học kỳ bằng Recharts
+
+## 🖼️ Giao diện ứng dụng
+
+<div align="center">
+  <h3>1. Tính GPA thủ công (Nhập điểm)</h3>
+  <img src="UI_enhanced/public/docs/screenshots/manual-gpa.png" alt="Manual GPA Calculator" width="100%">
+  
+  <br/><br/>
+  
+  <h3>2. Lộ trình GPA (Roadmap Planner)</h3>
+  <img src="UI_enhanced/public/docs/screenshots/roadmap.png" alt="GPA Roadmap Planner" width="100%">
+  
+  <br/><br/>
+  
+  <h3>3. Tính điểm môn học (Môn lẻ)</h3>
+  <img src="UI_enhanced/public/docs/screenshots/subject-gpa.png" alt="Subject GPA Calculator" width="100%">
+  
+  <br/><br/>
+  
+  <h3>4. Thang điểm & Tiết học</h3>
+  <img src="UI_enhanced/public/docs/screenshots/grade-scale.png" alt="Grade Scale and Schedule" width="100%">
+</div>
 
 ## 🛠️ Công nghệ sử dụng
 
@@ -31,22 +53,23 @@ Dự án được xây dựng trên những công nghệ tiên phong nhất năm
 Để chạy dự án ở môi trường local, bạn cần máy tính đã cài đặt [Node.js](https://nodejs.org/) (Khuyến nghị bản LTS mới nhất).
 
 1. **Clone repository**:
+
    ```bash
    git clone https://github.com/TienxDun/HUFLIT_GPA_Strategist.git
-   cd next-app
+   cd UI_enhanced
    ```
-
 2. **Cài đặt dependencies**:
+
    ```bash
    npm install
    ```
-
 3. **Chạy môi trường phát triển**:
+
    ```bash
    npm run dev
    ```
-
 4. **Build dự án**:
+
    ```bash
    npm run build
    ```
@@ -70,4 +93,5 @@ src/
 Dự án được phát triển bởi **TienxDun**. Vui lòng ghi nguồn khi sử dụng hoặc tham khảo mã nguồn.
 
 ---
+
 *Developed with ❤️ for HUFLIT Students.*

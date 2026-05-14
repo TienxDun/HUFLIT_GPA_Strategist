@@ -97,6 +97,8 @@ const jsonLd = {
   }
 };
 
+import { ServiceWorkerRegister } from "@/components/layout/ServiceWorkerRegister";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -114,23 +116,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('${withBasePath("/sw.js")}').then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                  }, function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                  });
-                });
-              }
-            `,
-          }}
-        />
       </head>
       <body className="min-h-full flex flex-col font-sans overflow-x-hidden">
+        <ServiceWorkerRegister basePath={basePath} />
         {children}
         <Toaster richColors closeButton position="top-right" />
         <Script

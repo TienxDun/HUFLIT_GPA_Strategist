@@ -160,12 +160,10 @@ export const useManualGPA = () => {
   }, []);
 
   const resetData = useCallback(() => {
-    if (confirm("Bạn có chắc muốn xóa toàn bộ dữ liệu hiện tại?")) {
-      setInitialGPA(0);
-      setInitialCredits(0);
-      setSemesters([]);
-      toast.success("Đã đặt lại dữ liệu.");
-    }
+    setInitialGPA(0);
+    setInitialCredits(0);
+    setSemesters([]);
+    toast.success("Đã đặt lại dữ liệu.");
   }, []);
 
   const importFromPortal = useCallback((text: string) => {

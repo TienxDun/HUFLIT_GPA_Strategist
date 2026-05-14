@@ -2,10 +2,9 @@ const CACHE_NAME = "huflit-gpa-cache-v1";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
-  "./manifest.webmanifest",
   "./icon.svg",
   "./ava.jpg",
-  "./globals.css",
+  "./manifest.webmanifest",
 ];
 
 // Install event - caching assets
@@ -13,7 +12,14 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("Service Worker: Caching Assets");
-      return cache.addAll(ASSETS_TO_CACHE);
+      // Use Promise.allSettled or a simple map to avoid failing everything if one asset is missing
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) => {
+          return cache.add(url).catch((err) => {
+            console.error(`Service Worker: Failed to cache ${url}:`, err);
+          });
+        })
+      );
     })
   );
   self.skipWaiting();

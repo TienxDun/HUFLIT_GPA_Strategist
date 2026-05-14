@@ -20,7 +20,7 @@ Dự án được triển khai trên nền tảng GitHub Pages thông qua tính 
 ## 3. Cấu trúc Thư mục (Directory Structure)
 
 ```
-next-app/
+UI_enhanced/
 ├── src/
 │   ├── app/                # Next.js App Router (Các trang chính)
 │   │   ├── roadmap/        # Tab: Lộ trình GPA
