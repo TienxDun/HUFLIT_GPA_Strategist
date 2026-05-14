@@ -15,30 +15,30 @@
 ## 🖼️ Giao diện ứng dụng
 
 <div align="center">
-  <p><i>Nhấn vào tiêu đề bên dưới để xem chi tiết ảnh chụp màn hình</i></p>
+  <p><i>Click vào tiêu đề để thu gọn hoặc mở rộng hình ảnh</i></p>
 
-  <details>
+  <details open>
     <summary><b>📸 1. Tính GPA thủ công (Nhập điểm)</b></summary>
     <img src="UI_enhanced/public/docs/screenshots/manual-gpa.png" alt="Manual GPA Calculator" width="100%">
   </details>
 
   <br/>
 
-  <details>
+  <details open>
     <summary><b>📊 2. Lộ trình GPA (Roadmap Planner)</b></summary>
     <img src="UI_enhanced/public/docs/screenshots/roadmap.png" alt="GPA Roadmap Planner" width="100%">
   </details>
 
   <br/>
 
-  <details>
+  <details open>
     <summary><b>📝 3. Tính điểm môn học (Môn lẻ)</b></summary>
     <img src="UI_enhanced/public/docs/screenshots/subject-gpa.png" alt="Subject GPA Calculator" width="100%">
   </details>
 
   <br/>
 
-  <details>
+  <details open>
     <summary><b>📅 4. Thang điểm & Tiết học</b></summary>
     <img src="UI_enhanced/public/docs/screenshots/grade-scale.png" alt="Grade Scale and Schedule" width="100%">
   </details>
