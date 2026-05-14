@@ -2,8 +2,6 @@
 
 **HUFLIT GPA Strategist** là một ứng dụng web hiện đại, mạnh mẽ giúp sinh viên HUFLIT (và các trường đại học dùng thang điểm 4) tính toán GPA, quản lý bảng điểm và lập lộ trình học tập để đạt được mục tiêu học thuật mong muốn.
 
-![HUFLIT GPA Strategist Banner](https://huflit-gpa.vercel.app/ava.jpg)
-
 ## 🚀 Tính năng nổi bật
 
 - **Tính GPA thần tốc**: Hỗ trợ tính điểm theo từng học kỳ, tự động tính điểm tích lũy (Cumulative GPA).
@@ -17,23 +15,33 @@
 ## 🖼️ Giao diện ứng dụng
 
 <div align="center">
-  <h3>1. Tính GPA thủ công (Nhập điểm)</h3>
-  <img src="UI_enhanced/public/docs/screenshots/manual-gpa.png" alt="Manual GPA Calculator" width="100%">
-  
-  <br/><br/>
-  
-  <h3>2. Lộ trình GPA (Roadmap Planner)</h3>
-  <img src="UI_enhanced/public/docs/screenshots/roadmap.png" alt="GPA Roadmap Planner" width="100%">
-  
-  <br/><br/>
-  
-  <h3>3. Tính điểm môn học (Môn lẻ)</h3>
-  <img src="UI_enhanced/public/docs/screenshots/subject-gpa.png" alt="Subject GPA Calculator" width="100%">
-  
-  <br/><br/>
-  
-  <h3>4. Thang điểm & Tiết học</h3>
-  <img src="UI_enhanced/public/docs/screenshots/grade-scale.png" alt="Grade Scale and Schedule" width="100%">
+  <p><i>Nhấn vào tiêu đề bên dưới để xem chi tiết ảnh chụp màn hình</i></p>
+
+  <details>
+    <summary><b>📸 1. Tính GPA thủ công (Nhập điểm)</b></summary>
+    <img src="UI_enhanced/public/docs/screenshots/manual-gpa.png" alt="Manual GPA Calculator" width="100%">
+  </details>
+
+  <br/>
+
+  <details>
+    <summary><b>📊 2. Lộ trình GPA (Roadmap Planner)</b></summary>
+    <img src="UI_enhanced/public/docs/screenshots/roadmap.png" alt="GPA Roadmap Planner" width="100%">
+  </details>
+
+  <br/>
+
+  <details>
+    <summary><b>📝 3. Tính điểm môn học (Môn lẻ)</b></summary>
+    <img src="UI_enhanced/public/docs/screenshots/subject-gpa.png" alt="Subject GPA Calculator" width="100%">
+  </details>
+
+  <br/>
+
+  <details>
+    <summary><b>📅 4. Thang điểm & Tiết học</b></summary>
+    <img src="UI_enhanced/public/docs/screenshots/grade-scale.png" alt="Grade Scale and Schedule" width="100%">
+  </details>
 </div>
 
 ## 🛠️ Công nghệ sử dụng
