@@ -25,7 +25,7 @@ const ManualStats = memo(({ result, semesters, onSwitchToRoadmap }: ManualStatsP
               id: Math.random().toString(),
               name: c.name,
               credits: c.credits,
-              oldGrade: oldG?.gpa || 1.0
+              oldGrade: oldG?.gpa ?? 1.0
             });
           } else {
             remainingCredits += c.credits;

@@ -89,7 +89,7 @@ const CourseRow = memo(({
                 <SelectValue placeholder="Cũ" />
               </SelectTrigger>
               <SelectContent>
-                {GRADE_SCALE.filter(g => g.gpa < 2.5).map(g => (
+                {GRADE_SCALE.filter(g => g.gpa < 3.0).map(g => (
                   <SelectItem key={g.grade} value={g.grade} className="text-[10px] font-bold">{g.grade}</SelectItem>
                 ))}
               </SelectContent>

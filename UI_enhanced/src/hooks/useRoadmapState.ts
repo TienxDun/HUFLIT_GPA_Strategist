@@ -291,7 +291,7 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
                 const gInfo = findGradeInfo(c.oldGrade || "D");
                 manualRetakes.push({
                   id: Math.random().toString(),
-                  oldGrade: gInfo?.gpa || 1.0,
+                  oldGrade: gInfo?.gpa ?? 1.0,
                   credits: c.credits,
                   name: c.name,
                 });
@@ -338,7 +338,7 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
   const addRetakesFromSuggestion = useCallback((suggestion: RetakeSuggestion) => {
     const newItems: RetakeItem[] = suggestion.courses.map(c => {
       const gInfo = findGradeInfo(c.grade);
-      return { id: Math.random().toString(), oldGrade: gInfo?.gpa || 1.0, credits: c.credits, name: c.name };
+      return { id: Math.random().toString(), oldGrade: gInfo?.gpa ?? 1.0, credits: c.credits, name: c.name };
     });
     setRetakes(prev => [...prev, ...newItems]);
   }, []);
@@ -351,7 +351,7 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
       const gInfo = findGradeInfo(course.grade);
       setRetakes(prev => [...prev, {
         id: Math.random().toString(),
-        oldGrade: gInfo?.gpa || 1.0,
+        oldGrade: gInfo?.gpa ?? 1.0,
         credits: course.credits,
         name: course.name,
       }]);
