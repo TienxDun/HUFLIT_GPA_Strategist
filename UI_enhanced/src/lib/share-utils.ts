@@ -5,21 +5,26 @@
 
 import { type RoadmapState, type RetakeItem } from "@/hooks/useRoadmapState";
 
-const VERSION = 3;
+const VERSION = 4;
 
 export function encodeRoadmapState(state: RoadmapState): string {
   try {
     const encoder = new TextEncoder();
     const buffers: Uint8Array[] = [];
 
-    // 1. Header (6 bytes)
-    const header = new Uint8Array(6);
+    // 1. Header (8 bytes in v4)
+    const currentGPAPoints = Math.round(state.currentGPA * 100);
+    const targetGPAPoints = Math.round(state.targetGPA * 100);
+
+    const header = new Uint8Array(8);
     header[0] = VERSION;
-    header[1] = Math.round(state.currentGPA * 60);      // 0-4.0 -> 0-240 (fits in 1 byte)
-    header[2] = Math.min(state.currentCredits, 255);   // 0-255 (fits in 1 byte)
-    header[3] = Math.round(state.targetGPA * 60);       // 0-4.0 -> 0-240
-    header[4] = Math.min(state.remainingCredits, 255); // 0-255
-    header[5] = Math.min(state.retakes.length, 255);   // 0-255
+    header[1] = (currentGPAPoints >> 8) & 0xFF;
+    header[2] = currentGPAPoints & 0xFF;
+    header[3] = Math.min(state.currentCredits, 255);
+    header[4] = (targetGPAPoints >> 8) & 0xFF;
+    header[5] = targetGPAPoints & 0xFF;
+    header[6] = Math.min(state.remainingCredits, 255);
+    header[7] = Math.min(state.retakes.length, 255);
     buffers.push(header);
 
     // 2. Retakes data
@@ -63,16 +68,34 @@ export function decodeRoadmapState(encoded: string): RoadmapState | null {
     for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
 
     const version = bytes[0];
-    if (version !== VERSION) return null;
+    let currentGPA = 0;
+    let currentCredits = 0;
+    let targetGPA = 0;
+    let remainingCredits = 0;
+    let retakeCount = 0;
+    let offset = 0;
 
-    const currentGPA = bytes[1] / 60;
-    const currentCredits = bytes[2];
-    const targetGPA = bytes[3] / 60;
-    const remainingCredits = bytes[4];
-    const retakeCount = bytes[5];
+    if (version === 4) {
+      const currentGPAPoints = (bytes[1] << 8) | bytes[2];
+      currentGPA = currentGPAPoints / 100;
+      currentCredits = bytes[3];
+      const targetGPAPoints = (bytes[4] << 8) | bytes[5];
+      targetGPA = targetGPAPoints / 100;
+      remainingCredits = bytes[6];
+      retakeCount = bytes[7];
+      offset = 8;
+    } else if (version === 3) {
+      currentGPA = bytes[1] / 60;
+      currentCredits = bytes[2];
+      targetGPA = bytes[3] / 60;
+      remainingCredits = bytes[4];
+      retakeCount = bytes[5];
+      offset = 6;
+    } else {
+      return null;
+    }
 
     const retakes: RetakeItem[] = [];
-    let offset = 6;
     const decoder = new TextDecoder();
 
     for (let i = 0; i < retakeCount; i++) {

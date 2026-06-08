@@ -362,14 +362,20 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
   const totalVal = currentCredits + remainingCredits;
   const [totalStr, setTotalStr] = useState(totalVal === 0 ? "" : totalVal.toString());
   const [remStr, setRemStr] = useState(remainingCredits === 0 ? "" : remainingCredits.toString());
+  const [isTotalFocused, setIsTotalFocused] = useState(false);
+  const [isRemFocused, setIsRemFocused] = useState(false);
 
   useEffect(() => {
-    if (parseInt(totalStr) !== totalVal) setTotalStr(totalVal === 0 ? "" : totalVal.toString());
-  }, [totalVal, totalStr]);
+    if (!isTotalFocused) {
+      if (parseInt(totalStr) !== totalVal) setTotalStr(totalVal === 0 ? "" : totalVal.toString());
+    }
+  }, [totalVal, totalStr, isTotalFocused]);
 
   useEffect(() => {
-    if (parseInt(remStr) !== remainingCredits) setRemStr(remainingCredits === 0 ? "" : remainingCredits.toString());
-  }, [remainingCredits, remStr]);
+    if (!isRemFocused) {
+      if (parseInt(remStr) !== remainingCredits) setRemStr(remainingCredits === 0 ? "" : remainingCredits.toString());
+    }
+  }, [remainingCredits, remStr, isRemFocused]);
 
   return (
     <div className={`bg-white border border-slate-100 rounded-[1.5rem] shadow-sm relative z-10 transition-all duration-300 overflow-hidden ${isExpanded ? "p-2.5" : "p-2.5"}`}>
@@ -417,12 +423,27 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
                       min={0}
                       max={300}
                       value={totalStr}
+                      onFocus={() => setIsTotalFocused(true)}
+                      onBlur={() => {
+                        setIsTotalFocused(false);
+                        const parsed = parseInt(totalStr);
+                        if (isNaN(parsed) || parsed < currentCredits) {
+                          onRemainingChange(0);
+                        } else {
+                          onTotalChange(Math.min(300, Math.max(0, parsed)));
+                        }
+                      }}
                       onChange={e => {
                         const s = e.target.value;
                         setTotalStr(s);
-                        if (s === "") return onRemainingChange(0);
+                        if (s === "") {
+                          onRemainingChange(0);
+                          return;
+                        }
                         const val = parseInt(s);
-                        if (!isNaN(val)) onTotalChange(Math.min(300, Math.max(0, val)));
+                        if (!isNaN(val)) {
+                          onRemainingChange(Math.max(0, val - currentCredits));
+                        }
                       }}
                       placeholder="Ví dụ: 140"
                       className="text-center text-lg font-black text-blue-700 bg-white border-2 border-blue-100 focus:ring-blue-500/20 rounded-xl h-10 shadow-sm transition-all group-hover:border-blue-200"
@@ -438,11 +459,23 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
                       min={0}
                       max={200}
                       value={remStr}
+                      onFocus={() => setIsRemFocused(true)}
+                      onBlur={() => {
+                        setIsRemFocused(false);
+                        const parsed = parseInt(remStr);
+                        if (isNaN(parsed)) {
+                          onRemainingChange(0);
+                        } else {
+                          onRemainingChange(Math.min(200, Math.max(0, parsed)));
+                        }
+                      }}
                       onChange={e => {
                         const s = e.target.value;
                         setRemStr(s);
                         const val = s === "" ? 0 : parseInt(s);
-                        if (!isNaN(val)) onRemainingChange(Math.min(200, Math.max(0, val)));
+                        if (!isNaN(val)) {
+                          onRemainingChange(val);
+                        }
                       }}
                       placeholder="Ví dụ: 30"
                       className="text-center text-lg font-black text-blue-700 bg-white border-2 border-blue-100 focus:ring-blue-500/20 rounded-xl h-10 shadow-sm transition-all group-hover:border-blue-200"
