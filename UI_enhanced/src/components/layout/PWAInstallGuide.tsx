@@ -26,6 +26,8 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 type Platform = "android" | "ios" | "desktop" | "unknown";
+const CTA_DISMISSED_UNTIL_KEY = "huflit-pwa-cta-dismissed-until";
+const CTA_DISMISS_DURATION_MS = 3 * 24 * 60 * 60 * 1000;
 
 function isStandalone() {
   return (
@@ -48,6 +50,18 @@ function getPlatform(): Platform {
   return "unknown";
 }
 
+function isDismissedWithinCooldown() {
+  const dismissedUntil = Number(localStorage.getItem(CTA_DISMISSED_UNTIL_KEY));
+  return Number.isFinite(dismissedUntil) && Date.now() < dismissedUntil;
+}
+
+function dismissForThreeDays() {
+  localStorage.setItem(
+    CTA_DISMISSED_UNTIL_KEY,
+    String(Date.now() + CTA_DISMISS_DURATION_MS)
+  );
+}
+
 export function PWAInstallGuide() {
   const [platform] = useState<Platform>(() =>
     typeof window === "undefined" ? "unknown" : getPlatform()
@@ -57,7 +71,17 @@ export function PWAInstallGuide() {
   const [guideOpen, setGuideOpen] = useState(false);
 
   useEffect(() => {
-    if (isStandalone()) {
+    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
+    const fullscreenQuery = window.matchMedia("(display-mode: fullscreen)");
+
+    const hideInstallGuide = () => {
+      setVisible(false);
+      setGuideOpen(false);
+      setInstallPrompt(null);
+    };
+
+    if (isStandalone() || isDismissedWithinCooldown()) {
+      hideInstallGuide();
       return;
     }
 
@@ -67,16 +91,33 @@ export function PWAInstallGuide() {
     }, 700);
 
     const handleBeforeInstallPrompt = (event: Event) => {
+      if (isStandalone() || isDismissedWithinCooldown()) {
+        hideInstallGuide();
+        return;
+      }
+
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
       setVisible(true);
     };
 
+    const handleDisplayModeChange = () => {
+      if (isStandalone()) {
+        hideInstallGuide();
+      }
+    };
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", hideInstallGuide);
+    standaloneQuery.addEventListener("change", handleDisplayModeChange);
+    fullscreenQuery.addEventListener("change", handleDisplayModeChange);
 
     return () => {
       window.clearTimeout(openGuideTimer);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", hideInstallGuide);
+      standaloneQuery.removeEventListener("change", handleDisplayModeChange);
+      fullscreenQuery.removeEventListener("change", handleDisplayModeChange);
     };
   }, [platform]);
 
@@ -184,6 +225,12 @@ export function PWAInstallGuide() {
     setGuideOpen(false);
   };
 
+  const handleUnderstand = () => {
+    dismissForThreeDays();
+    setVisible(false);
+    setGuideOpen(false);
+  };
+
   if (!visible) return null;
 
   return (
@@ -261,7 +308,7 @@ export function PWAInstallGuide() {
             <Button
               type="button"
               className="h-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-              onClick={platform === "android" ? handleInstall : () => setGuideOpen(false)}
+              onClick={platform === "android" ? handleInstall : handleUnderstand}
             >
               {platform === "android" ? (
                 <Download className="size-4" />

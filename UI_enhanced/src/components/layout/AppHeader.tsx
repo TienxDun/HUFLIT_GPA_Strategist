@@ -17,7 +17,7 @@ export const AppHeader = memo(({ activeTab, onTabChange }: AppHeaderProps) => {
   const avatarSrc = `${basePath}/ava.jpg`;
 
   return (
-    <header className="sticky top-3 z-50 w-full px-3 sm:px-6 mb-4">
+    <header className="sticky top-safe-sticky z-50 w-full px-3 sm:px-6 mb-4">
       <div className="max-w-[1074px] mx-auto h-13 flex items-center justify-between px-3 bg-white/90 backdrop-blur-2xl border border-slate-200/60 shadow-[0_12px_40px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.05)] rounded-full transition-all duration-500 ring-1 ring-white/50">
         
         {/* Logo Section */}

@@ -36,7 +36,7 @@ export function ScrollToTop() {
           initial={{ opacity: 0, scale: 0.5, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.5, y: 20 }}
-          className="fixed bottom-24 right-6 sm:bottom-10 sm:right-10 z-[60]"
+          className="fixed scroll-to-top-safe right-6 sm:bottom-10 sm:right-10 z-[60]"
         >
           <Button
             onClick={scrollToTop}

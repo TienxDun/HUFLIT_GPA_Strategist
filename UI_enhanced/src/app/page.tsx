@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -12,6 +12,26 @@ import { decodeRoadmapState } from "@/lib/share-utils";
 import { toast } from "sonner";
 import { type InitialRoadmapData } from "@/hooks/useRoadmapState";
 
+const VALID_TABS = ["manual", "roadmap", "subject", "scale", "news"] as const;
+type TabValue = (typeof VALID_TABS)[number];
+
+const DEFAULT_TAB: TabValue = "manual";
+
+const isValidTab = (tab: string | null): tab is TabValue =>
+  Boolean(tab && VALID_TABS.includes(tab as TabValue));
+
+const getTabFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get("tab");
+  return isValidTab(tab) ? tab : DEFAULT_TAB;
+};
+
+const getTabUrl = (tab: TabValue) => {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("s");
+  url.searchParams.set("tab", tab);
+  return `${url.pathname}${url.search}${url.hash}`;
+};
 
 // Dynamic Imports for performance optimization
 const ScaleTab = dynamic(() => import("@/components/features/ScaleTab").then(mod => mod.ScaleTab), {
@@ -35,18 +55,35 @@ const RoadmapTab = dynamic(() => import("@/components/features/RoadmapTab").then
 });
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("manual");
+  const [activeTab, setActiveTab] = useState<TabValue>(DEFAULT_TAB);
   const [roadmapInitialData, setRoadmapInitialData] = useState<InitialRoadmapData | null>(null);
+
+  const handleTabChange = useCallback((tab: string) => {
+    if (!isValidTab(tab)) return;
+
+    setActiveTab(tab);
+    
+    const nextUrl = getTabUrl(tab);
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl !== currentUrl) {
+      window.history.pushState({ tab }, "", nextUrl);
+    }
+
+    // Smooth scroll to top when changing tabs
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   // Preload dynamic components and check for shared data
   useEffect(() => {
     // 1. Xử lý dữ liệu chia sẻ từ URL
     const params = new URLSearchParams(window.location.search);
     const sharedData = params.get("s");
+    let loadedSharedRoadmap = false;
     
     if (sharedData) {
       const decoded = decodeRoadmapState(sharedData);
       if (decoded) {
+        loadedSharedRoadmap = true;
         setRoadmapInitialData({
           gpa: decoded.currentGPA,
           credits: decoded.currentCredits,
@@ -57,8 +94,7 @@ export default function Home() {
         setActiveTab("roadmap");
         
         // Dọn dẹp URL để trông chuyên nghiệp hơn
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, "", newUrl);
+        window.history.replaceState({ tab: "roadmap" }, "", getTabUrl("roadmap"));
         
         // Thông báo cho người dùng
         setTimeout(() => {
@@ -68,6 +104,12 @@ export default function Home() {
           });
         }, 800);
       }
+    }
+
+    if (!loadedSharedRoadmap) {
+      const initialTab = getTabFromUrl();
+      setActiveTab(initialTab);
+      window.history.replaceState({ tab: initialTab }, "", getTabUrl(initialTab));
     }
 
     // 2. Preload heavy components after initial render to make tab switching instant
@@ -84,20 +126,25 @@ export default function Home() {
     preload();
   }, []);
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    // Smooth scroll to top when changing tabs
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveTab(getTabFromUrl());
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   const handleSwitchToRoadmap = (data: InitialRoadmapData) => {
     setRoadmapInitialData(data);
-    setActiveTab("roadmap");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    handleTabChange("roadmap");
   };
 
   return (
-    <main className="relative min-h-screen bg-slate-50/50 text-slate-900 pb-4">
+    <main className="relative min-h-dvh bg-slate-50/50 text-slate-900 pb-4 pt-safe">
       {/* SEO H1 - Visually Hidden */}
       <h1 className="sr-only">HUFLIT GPA Strategist - Công cụ tính điểm GPA và lập lộ trình học tập thông minh cho sinh viên HUFLIT</h1>
       
@@ -115,7 +162,7 @@ export default function Home() {
         <PWAInstallGuide />
 
         {/* Main Content Area */}
-        <div className="max-w-[1074px] mx-auto px-3 sm:px-6 mt-4 w-full pb-24 sm:pb-6">
+        <div className="max-w-[1074px] mx-auto px-3 sm:px-6 mt-4 w-full mobile-content-safe sm:pb-6">
           <TabsContent value="roadmap" className="focus-visible:outline-none focus-visible:ring-0 m-0 w-full">
             <RoadmapTab initialData={roadmapInitialData} onSwitchTab={handleTabChange} />
           </TabsContent>

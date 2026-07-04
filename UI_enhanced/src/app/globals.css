@@ -121,12 +121,16 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-    scrollbar-gutter: stable;
-  }
   html {
     @apply font-sans;
+    min-height: 100%;
+    background: var(--background);
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+    scrollbar-gutter: stable;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -163,12 +167,49 @@
   }
 }
 
-/* iOS safe area support for Bottom Navigation */
+/* iOS safe area support for Safari and standalone PWA */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .bottom-nav-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
   }
+
+  .top-safe-sticky {
+    top: calc(0.75rem + env(safe-area-inset-top));
+  }
+
+  .bottom-nav-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-left: max(0.25rem, env(safe-area-inset-left));
+    padding-right: max(0.25rem, env(safe-area-inset-right));
+  }
+
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  @media (max-width: 639px) {
+    .mobile-content-safe {
+      padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+    }
+
+    .scroll-to-top-safe {
+      bottom: calc(6rem + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+@supports not (padding-bottom: env(safe-area-inset-bottom)) {
+  .top-safe-sticky {
+    top: 0.75rem;
+  }
+
+  @media (max-width: 639px) {
+    .mobile-content-safe {
+      padding-bottom: 6rem;
+    }
+
+    .scroll-to-top-safe {
+      bottom: 6rem;
+    }
   }
 }
