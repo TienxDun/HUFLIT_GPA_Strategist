@@ -22,7 +22,7 @@ export function VisitorCount() {
         if (data && data.count) {
           setCount(data.count.toLocaleString());
         }
-      } catch (err) {
+      } catch {
         // Silent catch to avoid console noise when blocked by AdBlockers
       } finally {
         setLoading(false);

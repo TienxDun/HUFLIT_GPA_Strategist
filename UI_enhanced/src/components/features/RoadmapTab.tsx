@@ -100,7 +100,7 @@ export function RoadmapTab({ initialData, onSwitchTab }: RoadmapTabProps) {
       } else {
         copyToClipboard(shareUrl);
       }
-    } catch (err) {
+    } catch {
       toast.error("Không thể tạo liên kết chia sẻ");
     }
   }, [state, copyToClipboard]);

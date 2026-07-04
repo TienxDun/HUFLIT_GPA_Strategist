@@ -42,7 +42,7 @@ export function useFeedback() {
         toast.error("Có lỗi xảy ra khi gửi góp ý. Vui lòng thử lại sau.");
         return false;
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi kết nối server");
       return false;
     } finally {

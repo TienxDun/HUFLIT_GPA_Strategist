@@ -14,7 +14,7 @@ interface ManualStatsProps {
 const ManualStats = memo(({ result, semesters, onSwitchToRoadmap }: ManualStatsProps) => {
   const handleSwitchToRoadmap = () => {
     let remainingCredits = 0;
-    let pendingRetakes: any[] = [];
+    const pendingRetakes: any[] = [];
 
     semesters.forEach(sem => {
       sem.courses.forEach(c => {

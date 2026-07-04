@@ -575,14 +575,6 @@ describe('Integration - Portal Data Verification', () => {
   it('Semester with F: GPA HK includes F in denominator, cumulative excludes F', () => {
     // Based on FAILED_GRADE_ANALYSIS.md - HK01 2022-2023
     // Passed courses: 15TC, 29.5 points. F course: 2TC, 0 points.
-    const semesters: Semester[] = [{
-      name: 'HK01 2022-2023',
-      courses: [
-        { name: 'Passed courses bundle', credits: 15, grade: 'C' },
-        // C=2.0 → 2.0*15=30. Actual is 29.5 but we can't get exactly 29.5
-        // with a single grade. Let's use exact courses instead:
-      ]
-    }];
     // Simplified: test the PRINCIPLE that semesterGPA counts F, cumulative doesn't
     const semestersWithF: Semester[] = [{
       name: 'HK with F',

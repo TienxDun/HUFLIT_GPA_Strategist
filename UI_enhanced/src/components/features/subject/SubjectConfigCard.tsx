@@ -31,7 +31,6 @@ export function SubjectConfigCard({
 }: SubjectConfigCardProps) {
     const isImpossible = minFinalToPass > 10;
     const isPassed = minFinalToPass <= 0;
-    const isHighEffort = minFinalToPass > 7.5 && !isImpossible;
     const scoreToPassDisplay = isImpossible ? "Không thể" : isPassed ? "Đã đạt" : minFinalToPass.toFixed(1);
 
     return (

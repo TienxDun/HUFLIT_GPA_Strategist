@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, memo } from "react";
-import { Compass, RefreshCcw, BookOpen, GraduationCap, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Compass, RefreshCcw, BookOpen, GraduationCap, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

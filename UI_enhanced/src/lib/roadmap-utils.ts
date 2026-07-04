@@ -9,9 +9,12 @@ export type ResultStatus =
 export function getResultStatus(
   requiredGPA: number,
   totalEffortCredits: number,
-  currentGPA: number,
-  targetGPA: number
+  _currentGPA: number,
+  _targetGPA: number
 ): ResultStatus {
+  void _currentGPA;
+  void _targetGPA;
+
   // 1. Target already met (including improvements from locked retakes)
   if (requiredGPA <= 0) return "achieved";
   

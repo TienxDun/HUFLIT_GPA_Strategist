@@ -62,7 +62,7 @@ export const AuthorInfoDialog = memo(({ children }: { children: React.ReactEleme
             </div>
 
             <p className="text-slate-500 text-[13px] leading-relaxed mb-8 px-4 font-medium">
-              "Mình hy vọng công cụ này sẽ giúp ích được cho mọi người trong hành trình chinh phục tấm bằng đại học tại HUFLIT."
+              &ldquo;Mình hy vọng công cụ này sẽ giúp ích được cho mọi người trong hành trình chinh phục tấm bằng đại học tại HUFLIT.&rdquo;
             </p>
 
             <div className="flex flex-col gap-3">

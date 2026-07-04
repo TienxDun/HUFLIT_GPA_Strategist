@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { GraduationCap, Plus, Trash2, History } from "lucide-react";
+import { GraduationCap, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

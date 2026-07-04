@@ -3,7 +3,6 @@ import { Semester, Course, GradeCombination, RetakeSuggestion } from "./types";
 import { findGradeInfo } from "./calculators";
 
 export function generateGradeCombinations(credits: number, targetPoints: number): GradeCombination[] {
-  const combinations: GradeCombination[] = [];
   const grades = GRADE_SCALE
     .filter(g => g.gpa > 0 && g.grade !== 'A+')
     .map(g => ({ 

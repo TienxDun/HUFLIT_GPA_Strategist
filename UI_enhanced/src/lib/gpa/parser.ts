@@ -39,7 +39,7 @@ export function parsePortalText(text: string): Semester[] {
       if (courseName.includes('*')) continue;
 
       const credits = parseFloat(courseMatch[1]);
-      let gradeChar = courseMatch[4];
+      const gradeChar = courseMatch[4];
 
       const suffix = line.substring(matchIndex + courseMatch[0].length).trim();
       const equivMatch = suffix.match(/(?:Tương đương|Thay thế|Môn thay thế):\s*([^\(]+?)\s*\((\w+)\)/i);

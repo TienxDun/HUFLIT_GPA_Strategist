@@ -3,16 +3,14 @@
 import { 
   Dialog, 
   DialogContent, 
-  DialogHeader,
   DialogTitle,
   DialogClose
 } from "@/components/ui/dialog";
-import { MessageSquare, X, RefreshCw } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
 import { memo } from "react";
 import { FeedbackForm } from "./FeedbackForm";
 import { FeedbackList } from "./FeedbackList";
 import { useFeedback } from "@/hooks/useFeedback";
-import { Button } from "@/components/ui/button";
 
 interface FeedbackDialogProps {
   isOpen: boolean;

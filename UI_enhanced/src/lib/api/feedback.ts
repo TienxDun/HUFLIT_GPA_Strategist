@@ -20,7 +20,7 @@ export async function fetchFeedbacks(): Promise<Feedback[]> {
 
 export async function submitFeedback(feedback: Omit<Feedback, 'timestamp'>): Promise<boolean> {
   try {
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
+    await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: {

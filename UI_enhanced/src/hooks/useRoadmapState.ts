@@ -7,7 +7,6 @@ import {
   generateScenarioText,
   generateRetakeSuggestions,
   calculateManualGPA,
-  GRADE_SCALE,
   findGradeInfo,
   type GradeCombination,
   type RetakeSuggestion,
@@ -325,7 +324,7 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
       const nextTarget = milestones.find(m => m > calcResult.gpa) || 0;
       setTargetGPA(nextTarget);
 
-    } catch (err) {
+    } catch {
       // In case of parsing error, clear the state for safety
       setCurrentGPA(0);
       setCurrentCredits(0);

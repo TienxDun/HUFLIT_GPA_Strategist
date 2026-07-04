@@ -1,6 +1,6 @@
 "use client";
 
-import { X, PlusCircle, Lightbulb } from "lucide-react";
+import { X, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

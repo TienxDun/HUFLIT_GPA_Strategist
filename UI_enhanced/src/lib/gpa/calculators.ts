@@ -1,4 +1,4 @@
-import { GRADE_SCALE, GPA_RANKS, GRADE_MAP } from "./constants";
+import { GPA_RANKS, GRADE_MAP } from "./constants";
 import { Semester, GPAResult } from "./types";
 
 export function findGradeInfo(grade: string) {
