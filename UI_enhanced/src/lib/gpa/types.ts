@@ -1,9 +1,12 @@
 export interface Course {
   name: string;
+  code?: string;
   credits: number;
   grade: string;
   isRetake?: boolean;
   oldGrade?: string;
+  equivalentCode?: string;
+  equivalentName?: string;
 }
 
 export interface Semester {

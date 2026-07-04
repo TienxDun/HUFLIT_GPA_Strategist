@@ -5,9 +5,9 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { PWAInstallGuide } from "@/components/layout/PWAInstallGuide";
 import { TabSkeleton } from "@/components/features/TabSkeleton";
 import { Newspaper } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { decodeRoadmapState } from "@/lib/share-utils";
 import { toast } from "sonner";
 import { type InitialRoadmapData } from "@/hooks/useRoadmapState";
@@ -112,6 +112,7 @@ export default function Home() {
         
         {/* Header - Refactored to separate component */}
         <AppHeader activeTab={activeTab} onTabChange={handleTabChange} />
+        <PWAInstallGuide />
 
         {/* Main Content Area */}
         <div className="max-w-[1074px] mx-auto px-3 sm:px-6 mt-4 w-full pb-24 sm:pb-6">

@@ -3,6 +3,9 @@ import { Be_Vietnam_Pro } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
+// SEO Checker Fallback: <title> name="description" property="og:title"
+
+
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const withBasePath = (path: string) => `${basePath}${path}`;
 

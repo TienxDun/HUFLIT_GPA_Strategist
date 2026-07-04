@@ -226,18 +226,30 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
     if (!saved) return [];
     try {
       const { semesters } = JSON.parse(saved);
-      const candidates: { name: string; credits: number; grade: string; gpa: number }[] = [];
-      const seen = new Set<string>();
+      const latestCourses = new Map<string, { name: string; credits: number; grade: string; gpa: number }>();
 
       semesters.forEach((sem: any) => {
         sem.courses.forEach((c: any) => {
           const gInfo = findGradeInfo(c.grade);
-          if (gInfo && gInfo.gpa < 3.0 && !seen.has(c.name)) {
-            candidates.push({ name: c.name, credits: c.credits, grade: c.grade, gpa: gInfo.gpa });
-            seen.add(c.name);
+          if (gInfo) {
+            const key = c.equivalentName || c.name;
+            latestCourses.set(key, {
+              name: key,
+              credits: c.credits,
+              grade: c.grade,
+              gpa: gInfo.gpa
+            });
           }
         });
       });
+
+      const candidates: { name: string; credits: number; grade: string; gpa: number }[] = [];
+      latestCourses.forEach((value) => {
+        if (value.gpa < 3.0) {
+          candidates.push(value);
+        }
+      });
+
       return candidates.sort((a, b) => a.gpa - b.gpa);
     } catch { return []; }
   }, [manualVersion]);

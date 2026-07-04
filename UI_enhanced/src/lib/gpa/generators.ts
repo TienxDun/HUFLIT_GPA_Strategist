@@ -121,24 +121,31 @@ export function generateScenarioText(combination: GradeCombination | null, total
 }
 
 export function generateRetakeSuggestions(deficitPoints: number, targetGPA: number, semesters: Semester[]): RetakeSuggestion[] {
-  const candidates: any[] = [];
+  const latestCourses = new Map<string, Course>();
   
   for (const sem of semesters) {
     for (const course of sem.courses) {
-      if (NON_IMPROVABLE_GRADES.includes(course.grade)) continue;
-      
-      const gradeInfo = findGradeInfo(course.grade);
-      if (!gradeInfo) continue;
-      
-      const currentGPA = gradeInfo.gpa;
-      const credits = course.credits || 0;
-      
-      if (credits < APP_CONFIG.MIN_CREDITS_FOR_RETAKE) continue;
-      
-      const gain = (APP_CONFIG.MAX_GPA - currentGPA) * credits;
-      
-      candidates.push({ ...course, currentGPA, gain });
+      const key = course.equivalentName || course.name;
+      latestCourses.set(key, course);
     }
+  }
+
+  const candidates: any[] = [];
+  
+  for (const course of latestCourses.values()) {
+    if (NON_IMPROVABLE_GRADES.includes(course.grade)) continue;
+    
+    const gradeInfo = findGradeInfo(course.grade);
+    if (!gradeInfo) continue;
+    
+    const currentGPA = gradeInfo.gpa;
+    const credits = course.credits || 0;
+    
+    if (credits < APP_CONFIG.MIN_CREDITS_FOR_RETAKE) continue;
+    
+    const gain = (APP_CONFIG.MAX_GPA - currentGPA) * credits;
+    
+    candidates.push({ ...course, currentGPA, gain });
   }
   
   candidates.sort((a, b) => (b.gain / b.credits) - (a.gain / a.credits) || b.gain - a.gain);

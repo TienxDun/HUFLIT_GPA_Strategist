@@ -274,7 +274,7 @@ const RescueSuggestions = memo(({ suggestions, hasManualData, missingScenarios, 
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Khoảng cách mục tiêu</span>
               {suggestions.length > 0 ? (
-                <Badge className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-none text-[9px] font-black px-2.5 h-4.5 rounded-full shadow-sm shadow-indigo-200 uppercase tracking-wider">
+                <Badge className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white border-none text-[9px] font-black px-2.5 h-4.5 rounded-full shadow-sm shadow-indigo-200 uppercase tracking-wider">
                   CÓ THỂ CỨU VÃN
                 </Badge>
               ) : (

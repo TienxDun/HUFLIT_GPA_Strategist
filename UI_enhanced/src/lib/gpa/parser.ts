@@ -24,9 +24,16 @@ export function parsePortalText(text: string): Semester[] {
       const matchIndex = courseMatch.index || 0;
       const prefix = line.substring(0, matchIndex).trim();
       let courseName = prefix;
-      const nameMatch = prefix.match(/^\d+\s+\w+\s+(.+)$/);
+      let courseCode = "";
+      const nameMatch = prefix.match(/^\d+\s+(\w+)\s+(.+)$/);
       if (nameMatch) {
-        courseName = nameMatch[1].trim();
+        courseCode = nameMatch[1].trim();
+        courseName = nameMatch[2].trim();
+      } else {
+        const fallbackMatch = prefix.match(/^\d+\s+(.+)$/);
+        if (fallbackMatch) {
+          courseName = fallbackMatch[1].trim();
+        }
       }
 
       if (courseName.includes('*')) continue;
@@ -34,16 +41,27 @@ export function parsePortalText(text: string): Semester[] {
       const credits = parseFloat(courseMatch[1]);
       let gradeChar = courseMatch[4];
 
+      const suffix = line.substring(matchIndex + courseMatch[0].length).trim();
+      const equivMatch = suffix.match(/(?:Tương đương|Thay thế|Môn thay thế):\s*([^\(]+?)\s*\((\w+)\)/i);
+      let equivalentName: string | undefined = undefined;
+      let equivalentCode: string | undefined = undefined;
+      if (equivMatch) {
+        equivalentName = equivMatch[1].trim();
+        equivalentCode = equivMatch[2].trim();
+      }
 
       const isValidGrade = GRADE_SCALE.some(g => g.grade === gradeChar);
 
       if (isValidGrade && credits < 20) {
         currentSemester.courses.push({
           name: courseName,
+          code: courseCode || undefined,
           credits: credits,
           grade: gradeChar,
           isRetake: false,
-          oldGrade: 'D'
+          oldGrade: 'D',
+          equivalentCode,
+          equivalentName
         });
       }
     } else if (ungradedMatch && currentSemester) {
@@ -51,20 +69,39 @@ export function parsePortalText(text: string): Semester[] {
       const matchIndex = ungradedMatch.index || 0;
       const prefix = line.substring(0, matchIndex).trim();
       let courseName = prefix;
-      const nameMatch = prefix.match(/^\d+\s+\w+\s+(.+)$/);
+      let courseCode = "";
+      const nameMatch = prefix.match(/^\d+\s+(\w+)\s+(.+)$/);
       if (nameMatch) {
-        courseName = nameMatch[1].trim();
+        courseCode = nameMatch[1].trim();
+        courseName = nameMatch[2].trim();
+      } else {
+        const fallbackMatch = prefix.match(/^\d+\s+(.+)$/);
+        if (fallbackMatch) {
+          courseName = fallbackMatch[1].trim();
+        }
       }
       
       if (courseName.includes('*')) continue;
       
+      const suffix = line.substring(matchIndex + ungradedMatch[0].length).trim();
+      const equivMatch = suffix.match(/(?:Tương đương|Thay thế|Môn thay thế):\s*([^\(]+?)\s*\((\w+)\)/i);
+      let equivalentName: string | undefined = undefined;
+      let equivalentCode: string | undefined = undefined;
+      if (equivMatch) {
+        equivalentName = equivMatch[1].trim();
+        equivalentCode = equivMatch[2].trim();
+      }
+      
       if (credits < 20) {
         currentSemester.courses.push({
           name: courseName,
+          code: courseCode || undefined,
           credits: credits,
           grade: "",
           isRetake: false,
-          oldGrade: ""
+          oldGrade: "",
+          equivalentCode,
+          equivalentName
         });
       }
     }
@@ -85,15 +122,33 @@ export function parsePortalText(text: string): Semester[] {
   });
 
   allCourses.sort((a, b) => a.semValue - b.semValue);
-  const courseHistory = new Map<string, string>();
+  const gradeHistoryByName = new Map<string, string>();
+  const gradeHistoryByCode = new Map<string, string>();
 
   allCourses.forEach(item => {
-    const name = item.course.name;
-    if (courseHistory.has(name)) {
-      item.course.isRetake = true;
-      item.course.oldGrade = courseHistory.get(name);
+    const course = item.course;
+    let oldGrade: string | undefined = undefined;
+
+    if (course.equivalentCode && gradeHistoryByCode.has(course.equivalentCode)) {
+      oldGrade = gradeHistoryByCode.get(course.equivalentCode);
+    } else if (course.equivalentName && gradeHistoryByName.has(course.equivalentName)) {
+      oldGrade = gradeHistoryByName.get(course.equivalentName);
+    } else if (course.code && gradeHistoryByCode.has(course.code)) {
+      oldGrade = gradeHistoryByCode.get(course.code);
+    } else if (gradeHistoryByName.has(course.name)) {
+      oldGrade = gradeHistoryByName.get(course.name);
     }
-    courseHistory.set(name, item.course.grade);
+
+    if (oldGrade !== undefined) {
+      course.isRetake = true;
+      course.oldGrade = oldGrade;
+    }
+
+    if (course.code) gradeHistoryByCode.set(course.code, course.grade);
+    gradeHistoryByName.set(course.name, course.grade);
+
+    if (course.equivalentCode) gradeHistoryByCode.set(course.equivalentCode, course.grade);
+    if (course.equivalentName) gradeHistoryByName.set(course.equivalentName, course.grade);
   });
 
   return semesters;

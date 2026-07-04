@@ -40,6 +40,11 @@ const CourseRow = memo(({
             className="bg-white border-slate-300 h-8 text-[10px] md:text-[13px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
             aria-label="Tên môn học"
           />
+          {course.equivalentName && (
+            <span className="text-[9px] md:text-[10px] text-slate-400 block mt-0.5 italic font-medium">
+              Tương đương: {course.equivalentName} {course.equivalentCode ? `(${course.equivalentCode})` : ""}
+            </span>
+          )}
       </TableCell>
       <TableCell className="text-center py-1.5">
           <Input
