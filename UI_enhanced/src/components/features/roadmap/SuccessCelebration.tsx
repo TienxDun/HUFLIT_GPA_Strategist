@@ -1,50 +1,74 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import confetti from "canvas-confetti";
 
 interface SuccessCelebrationProps {
   active: boolean;
+}
+
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const MOBILE_QUERY = "(max-width: 640px), (pointer: coarse)";
+
+function matchesMedia(query: string) {
+  return typeof window !== "undefined" && window.matchMedia(query).matches;
+}
+
+function isLowPowerDevice() {
+  if (typeof navigator === "undefined") return false;
+
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  return typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4;
 }
 
 export function SuccessCelebration({ active }: SuccessCelebrationProps) {
   const lastActive = useRef(false);
 
   useEffect(() => {
-    // Chỉ kích hoạt khi chuyển từ không active sang active
-    if (active && !lastActive.current) {
-      const duration = 3 * 1000;
-      const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
-
-      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-      const interval: any = setInterval(() => {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-        
-        // Bắn pháo hoa từ hai bên trái và phải
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-        });
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-        });
-      }, 250);
-
-      return () => clearInterval(interval);
-    }
-    
+    const shouldCelebrate = active && !lastActive.current;
     lastActive.current = active;
+
+    if (!shouldCelebrate || matchesMedia(REDUCED_MOTION_QUERY)) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void import("canvas-confetti").then(({ default: confetti }) => {
+      if (cancelled) return;
+
+      const shouldUseLightMode = matchesMedia(MOBILE_QUERY) || isLowPowerDevice();
+      const defaults = {
+        disableForReducedMotion: true,
+        origin: { y: 0.72 },
+        scalar: shouldUseLightMode ? 0.72 : 0.9,
+        startVelocity: shouldUseLightMode ? 20 : 26,
+        ticks: shouldUseLightMode ? 42 : 56,
+        zIndex: 100,
+      };
+
+      confetti({
+        ...defaults,
+        particleCount: shouldUseLightMode ? 24 : 48,
+        spread: shouldUseLightMode ? 52 : 68,
+      });
+
+      if (!shouldUseLightMode) {
+        window.setTimeout(() => {
+          if (cancelled) return;
+
+          confetti({
+            ...defaults,
+            particleCount: 28,
+            spread: 84,
+            origin: { y: 0.68 },
+          });
+        }, 160);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [active]);
 
   return null; // Không render UI card, chỉ chạy animation
