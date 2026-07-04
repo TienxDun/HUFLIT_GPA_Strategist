@@ -27,6 +27,10 @@ type BeforeInstallPromptEvent = Event & {
 
 type Platform = "android" | "ios" | "desktop" | "unknown";
 
+function isMobileInstallPlatform(platform: Platform) {
+  return platform === "android" || platform === "ios";
+}
+
 function isStandalone() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
@@ -66,7 +70,7 @@ export function PWAInstallGuide() {
       setInstallPrompt(null);
     };
 
-    if (isStandalone()) {
+    if (!isMobileInstallPlatform(platform) || isStandalone()) {
       hideInstallGuide();
       return;
     }
@@ -77,7 +81,7 @@ export function PWAInstallGuide() {
     }, 700);
 
     const handleBeforeInstallPrompt = (event: Event) => {
-      if (isStandalone()) {
+      if (!isMobileInstallPlatform(platform) || isStandalone()) {
         hideInstallGuide();
         return;
       }
