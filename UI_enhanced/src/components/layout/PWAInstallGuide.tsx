@@ -26,8 +26,6 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 type Platform = "android" | "ios" | "desktop" | "unknown";
-const CTA_DISMISSED_UNTIL_KEY = "huflit-pwa-cta-dismissed-until";
-const CTA_DISMISS_DURATION_MS = 3 * 24 * 60 * 60 * 1000;
 
 function isStandalone() {
   return (
@@ -50,18 +48,6 @@ function getPlatform(): Platform {
   return "unknown";
 }
 
-function isDismissedWithinCooldown() {
-  const dismissedUntil = Number(localStorage.getItem(CTA_DISMISSED_UNTIL_KEY));
-  return Number.isFinite(dismissedUntil) && Date.now() < dismissedUntil;
-}
-
-function dismissForThreeDays() {
-  localStorage.setItem(
-    CTA_DISMISSED_UNTIL_KEY,
-    String(Date.now() + CTA_DISMISS_DURATION_MS)
-  );
-}
-
 export function PWAInstallGuide() {
   const [platform] = useState<Platform>(() =>
     typeof window === "undefined" ? "unknown" : getPlatform()
@@ -80,7 +66,7 @@ export function PWAInstallGuide() {
       setInstallPrompt(null);
     };
 
-    if (isStandalone() || isDismissedWithinCooldown()) {
+    if (isStandalone()) {
       hideInstallGuide();
       return;
     }
@@ -91,7 +77,7 @@ export function PWAInstallGuide() {
     }, 700);
 
     const handleBeforeInstallPrompt = (event: Event) => {
-      if (isStandalone() || isDismissedWithinCooldown()) {
+      if (isStandalone()) {
         hideInstallGuide();
         return;
       }
@@ -225,12 +211,6 @@ export function PWAInstallGuide() {
     setGuideOpen(false);
   };
 
-  const handleUnderstand = () => {
-    dismissForThreeDays();
-    setVisible(false);
-    setGuideOpen(false);
-  };
-
   if (!visible) return null;
 
   return (
@@ -305,18 +285,16 @@ export function PWAInstallGuide() {
             >
               Để sau
             </Button>
-            <Button
-              type="button"
-              className="h-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-              onClick={platform === "android" ? handleInstall : handleUnderstand}
-            >
-              {platform === "android" ? (
+            {platform === "android" && (
+              <Button
+                type="button"
+                className="h-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+                onClick={handleInstall}
+              >
                 <Download className="size-4" />
-              ) : (
-                <Share className="size-4" />
-              )}
-              {platform === "android" ? "Cài đặt ngay" : "Đã hiểu"}
-            </Button>
+                Cài đặt ngay
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

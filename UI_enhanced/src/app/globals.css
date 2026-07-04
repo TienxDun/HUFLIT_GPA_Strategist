@@ -73,6 +73,12 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
+  --app-safe-top: 0px;
+  --app-safe-bottom: 0px;
+  --app-safe-left: 0px;
+  --app-safe-right: 0px;
+  --mobile-nav-height: 72px;
+  --mobile-nav-safe-gap: 12px;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -169,47 +175,48 @@
 
 /* iOS safe area support for Safari and standalone PWA */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  .top-safe-sticky {
-    top: calc(0.75rem + env(safe-area-inset-top));
-  }
-
-  .bottom-nav-safe {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-    padding-left: max(0.25rem, env(safe-area-inset-left));
-    padding-right: max(0.25rem, env(safe-area-inset-right));
-  }
-
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  @media (max-width: 639px) {
-    .mobile-content-safe {
-      padding-bottom: calc(6rem + env(safe-area-inset-bottom));
-    }
-
-    .scroll-to-top-safe {
-      bottom: calc(6rem + env(safe-area-inset-bottom));
-    }
+  :root {
+    --app-safe-top: env(safe-area-inset-top);
+    --app-safe-bottom: env(safe-area-inset-bottom);
+    --app-safe-left: env(safe-area-inset-left);
+    --app-safe-right: env(safe-area-inset-right);
   }
 }
 
-@supports not (padding-bottom: env(safe-area-inset-bottom)) {
-  .top-safe-sticky {
-    top: 0.75rem;
+.pt-safe {
+  padding-top: var(--app-safe-top);
+}
+
+.top-safe-sticky {
+  top: calc(0.75rem + var(--app-safe-top));
+}
+
+.bottom-nav-safe {
+  padding-bottom: calc(var(--app-safe-bottom) + var(--mobile-nav-safe-gap));
+  padding-left: max(0.25rem, var(--app-safe-left));
+  padding-right: max(0.25rem, var(--app-safe-right));
+}
+
+.bottom-nav-content {
+  min-height: var(--mobile-nav-height);
+}
+
+.pb-safe {
+  padding-bottom: var(--app-safe-bottom);
+}
+
+@media (max-width: 639px) {
+  .mobile-content-safe {
+    padding-bottom: calc(
+      var(--mobile-nav-height) + var(--app-safe-bottom) +
+        var(--mobile-nav-safe-gap) + 1rem
+    );
   }
 
-  @media (max-width: 639px) {
-    .mobile-content-safe {
-      padding-bottom: 6rem;
-    }
-
-    .scroll-to-top-safe {
-      bottom: 6rem;
-    }
+  .scroll-to-top-safe {
+    bottom: calc(
+      var(--mobile-nav-height) + var(--app-safe-bottom) +
+        var(--mobile-nav-safe-gap) + 1rem
+    );
   }
 }
