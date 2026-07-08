@@ -12,7 +12,9 @@ import {
   Calendar, 
   Tag, 
   Loader2, 
-  RefreshCw 
+  RefreshCw,
+  Edit2,
+  Trash2
 } from "lucide-react";
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -31,7 +33,7 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 import { useNewsState } from "@/hooks/useNewsState";
-import { type NewsItem } from "@/lib/api/news";
+import { type NewsItem, type FanpageItem } from "@/lib/api/news";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -69,21 +71,36 @@ const PRESET_THUMBNAILS = [
 ];
 
 const CATEGORY_MAP = {
-  announcement: { label: "Thông báo", color: "bg-red-50 text-red-600 border-red-200/60" },
-  scholarship: { label: "Học bổng", color: "bg-amber-50 text-amber-600 border-amber-200/60" },
-  activity: { label: "Hoạt động", color: "bg-sky-50 text-sky-600 border-sky-200/60" },
-  other: { label: "Tin tức khác", color: "bg-slate-50 text-slate-600 border-slate-200/60" },
+  announcement: { label: "Thông báo", color: "bg-rose-50/90 text-rose-600 border-rose-200/80 hover:bg-rose-100/90" },
+  scholarship: { label: "Học bổng", color: "bg-amber-50/90 text-amber-600 border-amber-200/80 hover:bg-amber-100/90" },
+  activity: { label: "Hoạt động", color: "bg-sky-50/90 text-sky-600 border-sky-200/80 hover:bg-sky-100/90" },
+  other: { label: "Tin tức khác", color: "bg-slate-50/90 text-slate-600 border-slate-200/80 hover:bg-slate-100/90" },
+};
+
+const FANPAGE_CATEGORY_MAP = {
+  school: { label: "Trường", color: "bg-blue-50/90 text-blue-600 border-blue-200/80 hover:bg-blue-100/90" },
+  union: { label: "Đoàn - Hội", color: "bg-purple-50/90 text-purple-600 border-purple-200/80 hover:bg-purple-100/90" },
+  faculty: { label: "Khoa", color: "bg-emerald-50/90 text-emerald-600 border-emerald-200/80 hover:bg-emerald-100/90" },
+  club: { label: "CLB", color: "bg-pink-50/90 text-pink-600 border-pink-200/80 hover:bg-pink-100/90" },
+  other: { label: "Khác", color: "bg-slate-50/90 text-slate-600 border-slate-200/80 hover:bg-slate-100/90" },
 };
 
 export const NewsTab = memo(() => {
   const {
     newsItems,
+    fanpageItems,
     isLoading,
+    isLoadingFanpages,
     isSubmitting,
     isAdmin,
     checkPassword,
     logoutAdmin,
     publishNews,
+    editNewsItem,
+    removeNewsItem,
+    publishFanpage,
+    editFanpageItem,
+    removeFanpageItem,
     refreshNews,
   } = useNewsState();
 
@@ -95,13 +112,46 @@ export const NewsTab = memo(() => {
   const [passwordInput, setPasswordInput] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Form inputs
+  // Switch form type & Edit tracking
+  const [formType, setFormType] = useState<"news" | "fanpage">("news");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Form inputs for News
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [fbUrl, setFbUrl] = useState("");
   const [category, setCategory] = useState<"announcement" | "scholarship" | "activity" | "other">("announcement");
   const [thumbType, setThumbType] = useState<string>("announcement");
   const [customThumbUrl, setCustomThumbUrl] = useState("");
+
+  // Form inputs for Fanpage
+  const [fanpageName, setFanpageName] = useState("");
+  const [fanpageUrl, setFanpageUrl] = useState("");
+  const [fanpageCategory, setFanpageCategory] = useState<"school" | "union" | "faculty" | "club" | "other">("school");
+  const [fanpageDescription, setFanpageDescription] = useState("");
+
+  // Search & Filter state for Fanpage
+  const [fanpageSearch, setFanpageSearch] = useState("");
+  const [activeFanpageCategory, setActiveFanpageCategory] = useState<string>("all");
+
+  // Search state for News
+  const [newsSearch, setNewsSearch] = useState("");
+
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setEditingId(null);
+    // Reset News Form
+    setTitle("");
+    setDescription("");
+    setFbUrl("");
+    setCustomThumbUrl("");
+    setThumbType("announcement");
+    // Reset Fanpage Form
+    setFanpageName("");
+    setFanpageUrl("");
+    setFanpageDescription("");
+    setFanpageCategory("school");
+  };
 
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,21 +175,97 @@ export const NewsTab = memo(() => {
       thumbnailUrl = selectedPreset ? selectedPreset.url : PRESET_THUMBNAILS[0].url;
     }
 
-    const success = await publishNews({
-      title,
-      description,
-      facebookUrl: fbUrl,
-      category,
-      thumbnailUrl,
-    });
+    let success = false;
+    if (editingId) {
+      success = await editNewsItem(editingId, {
+        title,
+        description,
+        facebookUrl: fbUrl,
+        category,
+        thumbnailUrl,
+      });
+    } else {
+      success = await publishNews({
+        title,
+        description,
+        facebookUrl: fbUrl,
+        category,
+        thumbnailUrl,
+      });
+    }
 
     if (success) {
-      // Clear inputs
-      setTitle("");
-      setDescription("");
-      setFbUrl("");
+      handleCloseForm();
+    }
+  };
+
+  const handlePublishFanpage = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    let success = false;
+    if (editingId) {
+      success = await editFanpageItem(editingId, {
+        name: fanpageName,
+        url: fanpageUrl,
+        category: fanpageCategory,
+        description: fanpageDescription,
+      });
+    } else {
+      success = await publishFanpage({
+        name: fanpageName,
+        url: fanpageUrl,
+        category: fanpageCategory,
+        description: fanpageDescription,
+      });
+    }
+
+    if (success) {
+      handleCloseForm();
+    }
+  };
+
+  const handleEditNewsClick = (item: NewsItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFormType("news");
+    setEditingId(item.id);
+    setTitle(item.title);
+    setDescription(item.description);
+    setFbUrl(item.facebookUrl);
+    setCategory(item.category);
+
+    const matchedPreset = PRESET_THUMBNAILS.find(p => p.url === item.thumbnailUrl);
+    if (matchedPreset) {
+      setThumbType(matchedPreset.id);
       setCustomThumbUrl("");
-      setIsFormOpen(false);
+    } else {
+      setThumbType("custom");
+      setCustomThumbUrl(item.thumbnailUrl);
+    }
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteNewsClick = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Bạn có chắc chắn muốn xóa bản tin này không?")) {
+      await removeNewsItem(id);
+    }
+  };
+
+  const handleEditFanpageClick = (page: FanpageItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFormType("fanpage");
+    setEditingId(page.id);
+    setFanpageName(page.name);
+    setFanpageUrl(page.url);
+    setFanpageCategory(page.category);
+    setFanpageDescription(page.description);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteFanpageClick = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Bạn có chắc chắn muốn xóa kênh thông tin này không?")) {
+      await removeFanpageItem(id);
     }
   };
 
@@ -152,10 +278,21 @@ export const NewsTab = memo(() => {
     return `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(cleanUrl)}&show_text=true&width=500`;
   };
 
-  // Filter items
-  const filteredNews = newsItems.filter(
-    (item) => activeCategory === "all" || item.category === activeCategory
-  );
+  // Filter news
+  const filteredNews = newsItems.filter((item) => {
+    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
+    const matchesSearch = item.title.toLowerCase().includes(newsSearch.toLowerCase()) ||
+      item.description.toLowerCase().includes(newsSearch.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Filter fanpages
+  const filteredFanpages = fanpageItems.filter((page) => {
+    const matchesCategory = activeFanpageCategory === "all" || page.category === activeFanpageCategory;
+    const matchesSearch = page.name.toLowerCase().includes(fanpageSearch.toLowerCase()) ||
+      (page.description && page.description.toLowerCase().includes(fanpageSearch.toLowerCase()));
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="space-y-6 pb-8 min-w-full">
@@ -172,38 +309,41 @@ export const NewsTab = memo(() => {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center flex-wrap gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto mt-1 md:mt-0">
           <Button
             variant="outline"
             size="sm"
             onClick={refreshNews}
             disabled={isLoading}
-            className="rounded-2xl border-slate-200/80 hover:bg-slate-50 font-semibold text-slate-600 ml-auto md:ml-0 gap-1.5"
+            className="rounded-2xl border-slate-200/80 hover:bg-slate-50 font-semibold text-slate-600 gap-1.5 justify-center py-2.5 h-9 flex-1 md:flex-none"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
             Tải lại
           </Button>
 
           {isAdmin ? (
-            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 flex-1 md:flex-none">
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => setIsFormOpen(true)}
-                className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold flex-1 sm:flex-none gap-1.5 shadow-sm shadow-blue-100"
+                onClick={() => {
+                  setFormType("news");
+                  setIsFormOpen(true);
+                }}
+                className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-1.5 shadow-sm shadow-blue-100 justify-center py-2.5 h-9 flex-1 md:flex-none"
               >
                 <Plus className="h-4 w-4" />
-                Đăng tin mới
+                Đăng tin / Kênh
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={logoutAdmin}
-                className="rounded-2xl hover:bg-red-50 text-red-500 font-semibold gap-1.5 px-3"
+                className="rounded-2xl hover:bg-red-50 text-red-500 font-semibold gap-1.5 px-3 py-2.5 h-9 justify-center shrink-0"
                 title="Đăng xuất quản trị viên"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Thoát Admin</span>
+                <span className="hidden sm:inline">Thoát</span>
               </Button>
             </div>
           ) : (
@@ -211,117 +351,305 @@ export const NewsTab = memo(() => {
               variant="outline"
               size="sm"
               onClick={() => setIsAuthOpen(true)}
-              className="rounded-2xl border-slate-200/80 hover:bg-slate-50 text-slate-600 font-semibold gap-1.5 w-full sm:w-auto"
+              className="rounded-2xl border-slate-200/80 hover:bg-slate-50 text-slate-600 font-semibold gap-1.5 justify-center py-2.5 h-9 flex-1 md:flex-none"
             >
-              <Lock className="h-4 w-4 text-slate-400" />
+              <Lock className="h-3.5 w-3.5 text-slate-400" />
               Quản trị Bản tin
             </Button>
           )}
         </div>
       </div>
 
-      {/* Category filters */}
-      <div className="flex flex-nowrap overflow-x-auto gap-2 py-1 -mx-2 px-2 scrollbar-none">
-        <Button
-          variant={activeCategory === "all" ? "default" : "outline"}
-          onClick={() => setActiveCategory("all")}
-          size="sm"
-          className="rounded-full font-semibold px-4 shrink-0 transition-all duration-300"
-        >
-          Tất cả
-        </Button>
-        {Object.entries(CATEGORY_MAP).map(([key, config]) => (
-          <Button
-            key={key}
-            variant={activeCategory === key ? "default" : "outline"}
-            onClick={() => setActiveCategory(key)}
-            size="sm"
-            className="rounded-full font-semibold px-4 shrink-0 transition-all duration-300"
-          >
-            {config.label}
-          </Button>
-        ))}
-      </div>
+      {/* Main Grid Layout for News and Fanpage Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        
+        {/* Left Column: News (50% width on desktop) */}
+        <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-[28px] p-5 space-y-4 shadow-sm">
+          <div className="flex justify-between items-center pb-2 border-b border-slate-100/80">
+            <div>
+              <h3 className="font-bold text-slate-800 text-sm">Bản tin & Thông báo</h3>
+              <p className="text-[10px] text-slate-400 font-medium">Cập nhật tin tức học vụ và hoạt động mới nhất</p>
+            </div>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFormType("news");
+                  setIsFormOpen(true);
+                }}
+                className="h-7 w-7 rounded-lg p-0 border-slate-200/80 text-blue-600 hover:bg-slate-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
 
-      {/* News Grid */}
-      {isLoading && newsItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-3xl border border-slate-100">
-          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4 opacity-80" />
-          <p className="font-semibold text-slate-600">Đang tải danh sách bản tin...</p>
-          <p className="text-xs mt-1 text-slate-400">Vui lòng chờ trong giây lát</p>
+          {/* Quick Search for News */}
+          <Input
+            type="text"
+            placeholder="Tìm kiếm bản tin..."
+            value={newsSearch}
+            onChange={(e) => setNewsSearch(e.target.value)}
+            className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 h-8.5 text-xs py-1.5 px-3"
+          />
+
+          {/* Category filters */}
+          <div className="flex flex-nowrap overflow-x-auto gap-2 pb-1.5 -mx-1 px-1 scrollbar-none">
+            <button
+              onClick={() => setActiveCategory("all")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+                activeCategory === "all"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
+                  : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
+              }`}
+            >
+              Tất cả
+            </button>
+            {Object.entries(CATEGORY_MAP).map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => setActiveCategory(key)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+                  activeCategory === key
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
+                    : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
+                }`}
+              >
+                {config.label}
+              </button>
+            ))}
+          </div>
+
+          {/* News List */}
+          {isLoading && newsItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-3xl border border-slate-100">
+              <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4 opacity-80" />
+              <p className="font-semibold text-slate-600">Đang tải danh sách bản tin...</p>
+              <p className="text-xs mt-1 text-slate-400">Vui lòng chờ trong giây lát</p>
+            </div>
+          ) : filteredNews.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100">
+              <Newspaper className="h-12 w-12 text-slate-300 mb-4 opacity-50" />
+              <h3 className="font-semibold text-slate-700 text-lg">Không tìm thấy bản tin nào</h3>
+              <p className="text-sm mt-1 text-slate-400 max-w-sm text-center">
+                Hiện chưa có bản tin nào thuộc danh mục này, hoặc kết nối dữ liệu bị gián đoạn.
+              </p>
+            </div>
+          ) : (
+            <motion.div 
+              layout
+              className="grid grid-cols-1 gap-6"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredNews.map((item, index) => {
+                  const catConfig = CATEGORY_MAP[item.category] || CATEGORY_MAP.other;
+                  return (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
+                      className="flex flex-col bg-white border border-slate-100/85 hover:border-blue-500/20 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden group cursor-pointer"
+                      onClick={() => setSelectedNews(item)}
+                    >
+                      {/* Thumbnail Image */}
+                      <div className="relative h-44 w-full overflow-hidden bg-slate-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img 
+                          src={item.thumbnailUrl || PRESET_THUMBNAILS[3].url} 
+                          alt={item.title}
+                          className="object-cover w-full h-full group-hover:scale-106 transition-transform duration-500 ease-out"
+                        />
+                        <div className="absolute top-3 left-3 flex gap-1.5">
+                          <Badge variant="outline" className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wide shadow-sm ${catConfig.color} bg-white/95 backdrop-blur-xs`}>
+                            {catConfig.label}
+                          </Badge>
+                        </div>
+                        {isAdmin && (
+                          <div className="absolute top-3 right-3 flex gap-1.5 z-10" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={(e) => handleEditNewsClick(item, e)}
+                              className="p-1.5 bg-white/90 backdrop-blur-xs border border-slate-200 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                              title="Chỉnh sửa bản tin"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteNewsClick(item.id, e)}
+                              className="p-1.5 bg-white/90 backdrop-blur-xs border border-slate-200 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                              title="Xóa bản tin"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-slate-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+
+                      {/* Card Info */}
+                      <div className="flex-1 flex flex-col p-5 space-y-3">
+                        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 transition-colors duration-300" />
+                          <span>{item.date}</span>
+                        </div>
+
+                        <h3 className="font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors duration-300 text-[14px] tracking-tight">
+                          {item.title}
+                        </h3>
+                        
+                        <p className="text-slate-500 text-[12px] line-clamp-3 leading-relaxed flex-1">
+                          {item.description}
+                        </p>
+
+                        <div className="pt-3 border-t border-slate-100/80 flex items-center justify-between text-blue-600 text-[12px] font-bold mt-auto">
+                          <span className="group-hover:text-blue-700 transition-colors duration-300">Xem thông báo chi tiết</span>
+                          <div className="p-1 bg-blue-50 text-blue-600 rounded-full group-hover:bg-blue-600 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300">
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
-      ) : filteredNews.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100">
-          <Newspaper className="h-12 w-12 text-slate-300 mb-4 opacity-50" />
-          <h3 className="font-semibold text-slate-700 text-lg">Không tìm thấy bản tin nào</h3>
-          <p className="text-sm mt-1 text-slate-400 max-w-sm text-center">
-            Hiện chưa có bản tin nào thuộc danh mục này, hoặc kết nối dữ liệu bị gián đoạn.
-          </p>
-        </div>
-      ) : (
-        <motion.div 
-          layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredNews.map((item, index) => {
-              const catConfig = CATEGORY_MAP[item.category] || CATEGORY_MAP.other;
-              return (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
-                  className="flex flex-col bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group cursor-pointer"
-                  onClick={() => setSelectedNews(item)}
-                >
-                  {/* Thumbnail Image */}
-                  <div className="relative h-48 w-full overflow-hidden bg-slate-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={item.thumbnailUrl || PRESET_THUMBNAILS[3].url} 
-                      alt={item.title}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
-                    />
-                    <div className="absolute top-3 left-3 flex gap-1.5">
-                      <Badge variant="outline" className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wide shadow-sm ${catConfig.color} bg-white/95 backdrop-blur-xs`}>
-                        {catConfig.label}
-                      </Badge>
+
+        {/* Right Column: Fanpage List (50% width on desktop) */}
+        <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-[28px] p-5 space-y-4 shadow-sm sticky top-24">
+          <div className="flex justify-between items-center pb-2 border-b border-slate-100/80">
+            <div>
+              <h3 className="font-bold text-slate-800 text-sm">Kênh thông tin HUFLIT</h3>
+              <p className="text-[10px] text-slate-400 font-medium">Danh sách các Fanpage hữu ích cho sinh viên</p>
+            </div>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFormType("fanpage");
+                  setIsFormOpen(true);
+                }}
+                className="h-7 w-7 rounded-lg p-0 border-slate-200/80 text-blue-600 hover:bg-slate-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+
+          {/* Quick Search */}
+          <Input
+            type="text"
+            placeholder="Tìm kiếm kênh thông tin..."
+            value={fanpageSearch}
+            onChange={(e) => setFanpageSearch(e.target.value)}
+            className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 h-8.5 text-xs py-1.5 px-3"
+          />
+
+          {/* Category Quick Badges */}
+          <div className="flex flex-nowrap overflow-x-auto gap-2 pb-1.5 -mx-1 px-1 scrollbar-none">
+            <button
+              onClick={() => setActiveFanpageCategory("all")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+                activeFanpageCategory === "all"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
+                  : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
+              }`}
+            >
+              Tất cả
+            </button>
+            {Object.entries(FANPAGE_CATEGORY_MAP).map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => setActiveFanpageCategory(key as any)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+                  activeFanpageCategory === key
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
+                    : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
+                }`}
+              >
+                {config.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Fanpage List Items */}
+          {isLoadingFanpages && fanpageItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600 mb-2 opacity-80" />
+              <p className="text-[10px] font-semibold text-slate-500">Đang tải danh sách kênh...</p>
+            </div>
+          ) : filteredFanpages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-center">
+              <p className="text-xs font-semibold text-slate-500">Không tìm thấy kênh nào</p>
+              <p className="text-[10px] mt-0.5 max-w-[200px]">Hãy thử tìm kiếm với từ khóa khác hoặc danh mục khác</p>
+            </div>
+          ) : (
+            <div className="space-y-3.5 max-h-[460px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              {filteredFanpages.map((page) => {
+                const catConfig = FANPAGE_CATEGORY_MAP[page.category] || FANPAGE_CATEGORY_MAP.other;
+                return (
+                  <div
+                    key={page.id}
+                    onClick={() => window.open(page.url, "_blank")}
+                    className="flex flex-col bg-white border border-slate-100/85 hover:border-blue-500/20 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group/item cursor-pointer relative"
+                  >
+                    {/* Admin Action Buttons */}
+                    {isAdmin && (
+                      <div className="absolute top-4 right-4 flex gap-1.5 z-10" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleEditFanpageClick(page, e)}
+                          className="p-1.5 bg-slate-50 border border-slate-200 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          title="Chỉnh sửa kênh thông tin"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteFanpageClick(page.id, e)}
+                          className="p-1.5 bg-slate-50 border border-slate-200 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                          title="Xóa kênh thông tin"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="space-y-2.5 min-w-0 flex-1">
+                      <div className={`flex items-center gap-2 flex-wrap ${isAdmin ? "pr-16" : ""}`}>
+                        <span className="font-bold text-slate-800 text-[14px] leading-tight break-words group-hover/item:text-blue-600 transition-colors duration-200">
+                          {page.name}
+                        </span>
+                        <span className={`px-2 py-0.5 text-[10px] font-bold border rounded-md uppercase tracking-wider ${catConfig.color} bg-white/95 shrink-0`}>
+                          {catConfig.label}
+                        </span>
+                      </div>
+                      <p className="text-[12px] text-slate-500 line-clamp-2 leading-relaxed">
+                        {page.description || "Kênh thông tin chính thức của HUFLIT."}
+                      </p>
                     </div>
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-slate-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
 
-                  {/* Card Info */}
-                  <div className="flex-1 flex flex-col p-5 space-y-3">
-                    <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>{item.date}</span>
-                    </div>
-
-                    <h3 className="font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors text-[15px]">
-                      {item.title}
-                    </h3>
-                    
-                    <p className="text-slate-500 text-xs line-clamp-3 leading-relaxed flex-1">
-                      {item.description}
-                    </p>
-
-                    <div className="pt-3 border-t border-slate-50 flex items-center justify-between text-blue-600 text-xs font-bold mt-auto">
-                      <span className="group-hover:underline">Xem thông báo chi tiết</span>
-                      <div className="p-1.5 bg-blue-50 text-blue-600 rounded-full group-hover:bg-blue-100 transition-colors">
+                    <div className="pt-3 border-t border-slate-100/80 flex items-center justify-between text-blue-600 text-[12px] font-bold mt-2">
+                      <span className="group-hover/item:text-blue-700 transition-colors duration-200">Theo dõi trang trên Facebook</span>
+                      <div className="p-1 bg-blue-50 text-blue-600 rounded-full group-hover/item:bg-blue-600 group-hover/item:text-white group-hover/item:translate-x-0.5 group-hover/item:-translate-y-0.5 transition-all duration-300">
                         <ExternalLink className="h-3.5 w-3.5" />
                       </div>
                     </div>
                   </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </motion.div>
-      )}
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* FB Embed Modal Viewer */}
       <Dialog open={!!selectedNews} onOpenChange={(open) => !open && setSelectedNews(null)}>
@@ -439,157 +767,276 @@ export const NewsTab = memo(() => {
         </DialogContent>
       </Dialog>
 
-      {/* News Creation Form Modal */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      {/* Creation / Edit Form Modal (News / Fanpage) */}
+      <Dialog open={isFormOpen} onOpenChange={(open) => !open && handleCloseForm()}>
         <DialogContent className="max-w-lg rounded-3xl border-slate-100 p-6 bg-white max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="pb-2">
             <DialogTitle className="text-slate-800 font-bold text-lg flex items-center gap-2">
-              <Plus className="h-5 w-5 text-blue-600" />
-              Đăng bản tin mới
+              {editingId ? <Edit2 className="h-5 w-5 text-blue-600" /> : <Plus className="h-5 w-5 text-blue-600" />}
+              {editingId 
+                ? (formType === "news" ? "Chỉnh sửa bản tin" : "Chỉnh sửa kênh thông tin")
+                : (formType === "news" ? "Đăng bản tin mới" : "Thêm Fanpage hữu ích mới")
+              }
             </DialogTitle>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Điền thông tin và nhúng link Facebook để đăng tin tức hiển thị trực tuyến
+              {editingId 
+                ? "Cập nhật lại các thông tin của bản tin hoặc liên kết để hiển thị chính xác nhất"
+                : (formType === "news" 
+                  ? "Điền thông tin và nhúng link Facebook để đăng tin tức hiển thị trực tuyến"
+                  : "Thêm fanpage, liên kết hữu ích để sinh viên mới dễ dàng theo dõi")
+              }
             </p>
           </DialogHeader>
 
-          <form onSubmit={handlePublish} className="space-y-4 pt-3">
-            {/* Title */}
-            <div className="space-y-1.5">
-              <Label htmlFor="news-title" className="text-xs font-bold text-slate-600">Tiêu đề bản tin *</Label>
-              <Input
-                id="news-title"
-                type="text"
-                required
-                placeholder="Nhập tiêu đề tin tức..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
-              />
+          {/* Form Type Switcher - Only show when creating, hide when editing */}
+          {!editingId && (
+            <div className="flex border-b border-slate-100 pb-2.5 mb-4 gap-4">
+              <button
+                type="button"
+                onClick={() => setFormType("news")}
+                className={`flex-1 pb-2 text-xs font-bold text-center border-b-2 transition-all ${
+                  formType === "news"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                Đăng Bản tin
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormType("fanpage")}
+                className={`flex-1 pb-2 text-xs font-bold text-center border-b-2 transition-all ${
+                  formType === "fanpage"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                Thêm Fanpage hữu ích
+              </button>
             </div>
+          )}
 
-            {/* Description */}
-            <div className="space-y-1.5">
-              <Label htmlFor="news-desc" className="text-xs font-bold text-slate-600">Mô tả ngắn *</Label>
-              <textarea
-                id="news-desc"
-                required
-                rows={3}
-                placeholder="Nhập tóm tắt nội dung tin tức..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="flex w-full rounded-xl border border-slate-200/80 bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
-
-            {/* Facebook URL */}
-            <div className="space-y-1.5">
-              <Label htmlFor="news-fb" className="text-xs font-bold text-slate-600">Link bài viết Facebook *</Label>
-              <Input
-                id="news-fb"
-                type="url"
-                required
-                placeholder="Dán link bài viết hoặc ảnh của Facebook tại đây..."
-                value={fbUrl}
-                onChange={(e) => setFbUrl(e.target.value)}
-                className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
-              />
-              <p className="text-[10px] text-slate-400 font-semibold">
-                Hỗ trợ các link dạng: https://www.facebook.com/photo/?fbid=... hoặc link bài viết công khai.
-              </p>
-            </div>
-
-            {/* Category Select */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-600">Danh mục bản tin</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {Object.entries(CATEGORY_MAP).map(([key, config]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setCategory(key as any)}
-                    className={`px-3 py-2 border rounded-xl font-semibold text-xs text-center transition-all ${
-                      category === key
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                    }`}
-                  >
-                    {config.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Thumbnail Select */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-slate-600">Hình ảnh đại diện</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PRESET_THUMBNAILS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setThumbType(p.id)}
-                    className={`relative h-16 rounded-xl border overflow-hidden transition-all text-left ${
-                      thumbType === p.id 
-                        ? "ring-2 ring-blue-600 border-blue-600" 
-                        : "border-slate-200 opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.url} alt={p.label} className="object-cover w-full h-full" />
-                    <div className="absolute inset-0 bg-slate-950/40 p-1.5 flex items-end">
-                      <span className="text-[9px] font-bold text-white leading-none line-clamp-1">{p.label}</span>
-                    </div>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setThumbType("custom")}
-                  className={`h-16 rounded-xl border flex flex-col items-center justify-center transition-all font-bold text-xs ${
-                    thumbType === "custom"
-                      ? "ring-2 ring-blue-600 border-blue-600 bg-blue-50 text-blue-600"
-                      : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"
-                  }`}
-                >
-                  <Tag className="h-4 w-4 mb-1" />
-                  <span>Link ảnh tự do</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Custom Thumbnail URL Input */}
-            {thumbType === "custom" && (
+          {formType === "news" ? (
+            /* Form News */
+            <form onSubmit={handlePublish} className="space-y-4">
+              {/* Title */}
               <div className="space-y-1.5">
-                <Label htmlFor="custom-thumb" className="text-xs font-bold text-slate-600">Link hình ảnh đại diện</Label>
+                <Label htmlFor="news-title" className="text-xs font-bold text-slate-600">Tiêu đề bản tin *</Label>
                 <Input
-                  id="custom-thumb"
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={customThumbUrl}
-                  onChange={(e) => setCustomThumbUrl(e.target.value)}
+                  id="news-title"
+                  type="text"
+                  required
+                  placeholder="Nhập tiêu đề tin tức..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
                 />
               </div>
-            )}
 
-            <DialogFooter className="pt-3">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-2.5 shadow-sm shadow-blue-100 flex items-center justify-center gap-1.5"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Đang đăng tin tức...
-                  </>
-                ) : (
-                  <>
-                    Đăng bản tin
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
+              {/* Description */}
+              <div className="space-y-1.5">
+                <Label htmlFor="news-desc" className="text-xs font-bold text-slate-600">Mô tả ngắn *</Label>
+                <textarea
+                  id="news-desc"
+                  required
+                  rows={3}
+                  placeholder="Nhập tóm tắt nội dung tin tức..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="flex w-full rounded-xl border border-slate-200/80 bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              {/* Facebook URL */}
+              <div className="space-y-1.5">
+                <Label htmlFor="news-fb" className="text-xs font-bold text-slate-600">Link bài viết Facebook *</Label>
+                <Input
+                  id="news-fb"
+                  type="url"
+                  required
+                  placeholder="Dán link bài viết hoặc ảnh của Facebook tại đây..."
+                  value={fbUrl}
+                  onChange={(e) => setFbUrl(e.target.value)}
+                  className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
+                />
+                <p className="text-[10px] text-slate-400 font-semibold">
+                  Hỗ trợ các link dạng: https://www.facebook.com/photo/?fbid=... hoặc link bài viết công khai.
+                </p>
+              </div>
+
+              {/* Category Select */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-600">Danh mục bản tin</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {Object.entries(CATEGORY_MAP).map(([key, config]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setCategory(key as any)}
+                      className={`px-3 py-2 border rounded-xl font-semibold text-xs text-center transition-all ${
+                        category === key
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Thumbnail Select */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-600">Hình ảnh đại diện</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {PRESET_THUMBNAILS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setThumbType(p.id)}
+                      className={`relative h-16 rounded-xl border overflow-hidden transition-all text-left ${
+                        thumbType === p.id 
+                          ? "ring-2 ring-blue-600 border-blue-600" 
+                          : "border-slate-200 opacity-60 hover:opacity-100"
+                      }`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.url} alt={p.label} className="object-cover w-full h-full" />
+                      <div className="absolute inset-0 bg-slate-950/40 p-1.5 flex items-end">
+                        <span className="text-[9px] font-bold text-white leading-none line-clamp-1">{p.label}</span>
+                      </div>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setThumbType("custom")}
+                    className={`h-16 rounded-xl border flex flex-col items-center justify-center transition-all font-bold text-xs ${
+                      thumbType === "custom"
+                        ? "ring-2 ring-blue-600 border-blue-600 bg-blue-50 text-blue-600"
+                        : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Tag className="h-4 w-4 mb-1" />
+                    <span>Link ảnh tự do</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Custom Thumbnail URL Input */}
+              {thumbType === "custom" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="custom-thumb" className="text-xs font-bold text-slate-600">Link hình ảnh đại diện</Label>
+                  <Input
+                    id="custom-thumb"
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    value={customThumbUrl}
+                    onChange={(e) => setCustomThumbUrl(e.target.value)}
+                    className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
+                  />
+                </div>
+              )}
+
+              <DialogFooter className="pt-3">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-2.5 shadow-sm shadow-blue-100 flex items-center justify-center gap-1.5"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {editingId ? "Đang cập nhật..." : "Đang đăng bản tin..."}
+                    </>
+                  ) : (
+                    <>{editingId ? "Cập nhật bản tin" : "Đăng bản tin"}</>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            /* Form Fanpage */
+            <form onSubmit={handlePublishFanpage} className="space-y-4">
+              {/* Fanpage Name */}
+              <div className="space-y-1.5">
+                <Label htmlFor="page-name" className="text-xs font-bold text-slate-600">Tên Fanpage / Liên kết *</Label>
+                <Input
+                  id="page-name"
+                  type="text"
+                  required
+                  placeholder="Ví dụ: Đoàn - Hội Khoa Công nghệ thông tin..."
+                  value={fanpageName}
+                  onChange={(e) => setFanpageName(e.target.value)}
+                  className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
+                />
+              </div>
+
+              {/* Fanpage URL */}
+              <div className="space-y-1.5">
+                <Label htmlFor="page-url" className="text-xs font-bold text-slate-600">Đường dẫn liên kết (Facebook URL) *</Label>
+                <Input
+                  id="page-url"
+                  type="url"
+                  required
+                  placeholder="https://www.facebook.com/..."
+                  value={fanpageUrl}
+                  onChange={(e) => setFanpageUrl(e.target.value)}
+                  className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
+                />
+              </div>
+
+              {/* Fanpage Category */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-600">Phân loại liên kết</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                  {Object.entries(FANPAGE_CATEGORY_MAP).map(([key, config]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setFanpageCategory(key as any)}
+                      className={`px-1.5 py-2 border rounded-xl font-bold text-[10px] text-center transition-all ${
+                        fanpageCategory === key
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fanpage Description */}
+              <div className="space-y-1.5">
+                <Label htmlFor="page-desc" className="text-xs font-bold text-slate-600">Mô tả ngắn</Label>
+                <textarea
+                  id="page-desc"
+                  rows={2}
+                  placeholder="Nhập mô tả ngắn về kênh thông tin này..."
+                  value={fanpageDescription}
+                  onChange={(e) => setFanpageDescription(e.target.value)}
+                  className="flex w-full rounded-xl border border-slate-200/80 bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                />
+              </div>
+
+              <DialogFooter className="pt-3">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-2.5 shadow-sm shadow-blue-100 flex items-center justify-center gap-1.5"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {editingId ? "Đang cập nhật..." : "Đang lưu liên kết..."}
+                    </>
+                  ) : (
+                    <>{editingId ? "Cập nhật liên kết" : "Lưu liên kết"}</>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>
