@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchNews,
   addNews,
@@ -15,6 +15,21 @@ import {
 } from "@/lib/api/news";
 import { toast } from "sonner";
 
+const SYNC_AFTER_CREATE_MS = 1500;
+
+function syncWithOptimisticItems<T extends { id: string }>(
+  freshItems: T[],
+  optimisticItems: T[]
+) {
+  const freshIds = new Set(freshItems.map((item) => item.id));
+  const pendingItems = optimisticItems.filter((item) => !freshIds.has(item.id));
+
+  return {
+    items: [...pendingItems, ...freshItems],
+    pendingItems,
+  };
+}
+
 export function useNewsState() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [fanpageItems, setFanpageItems] = useState<FanpageItem[]>([]);
@@ -22,6 +37,8 @@ export function useNewsState() {
   const [isLoadingFanpages, setIsLoadingFanpages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const optimisticNewsItems = useRef<NewsItem[]>([]);
+  const optimisticFanpageItems = useRef<FanpageItem[]>([]);
 
   // ── Loaders ────────────────────────────────────────────────────────────────
 
@@ -29,7 +46,9 @@ export function useNewsState() {
     setIsLoading(true);
     try {
       const data = await fetchNews();
-      setNewsItems(data);
+      const synced = syncWithOptimisticItems(data, optimisticNewsItems.current);
+      optimisticNewsItems.current = synced.pendingItems;
+      setNewsItems(synced.items);
     } catch {
       toast.error("Không thể tải bản tin từ hệ thống.");
     } finally {
@@ -41,7 +60,9 @@ export function useNewsState() {
     setIsLoadingFanpages(true);
     try {
       const data = await fetchFanpages();
-      setFanpageItems(data);
+      const synced = syncWithOptimisticItems(data, optimisticFanpageItems.current);
+      optimisticFanpageItems.current = synced.pendingItems;
+      setFanpageItems(synced.items);
     } catch {
       toast.error("Không thể tải danh sách Fanpage từ hệ thống.");
     } finally {
@@ -85,10 +106,19 @@ export function useNewsState() {
 
     setIsSubmitting(true);
     try {
-      await addNews(news);
+      const createdNews = await addNews(news);
+      if (!createdNews) throw new Error("Failed to create news");
+
+      optimisticNewsItems.current = [
+        createdNews,
+        ...optimisticNewsItems.current.filter((item) => item.id !== createdNews.id),
+      ];
+      setNewsItems((prev) => [
+        createdNews,
+        ...prev.filter((item) => item.id !== createdNews.id),
+      ]);
       toast.success("Đã đăng bản tin thành công!");
-      // Reload after a short delay to let Apps Script commit the new row
-      setTimeout(loadNews, 1500);
+      setTimeout(loadNews, SYNC_AFTER_CREATE_MS);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi đăng bản tin. Vui lòng thử lại sau.");
@@ -112,7 +142,18 @@ export function useNewsState() {
     try {
       await updateNews(id, news);
       toast.success("Cập nhật bản tin thành công!");
-      // Optimistic update — reflect change immediately in UI
+      optimisticNewsItems.current = optimisticNewsItems.current.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              title: news.title,
+              description: news.description,
+              facebookUrl: news.facebookUrl,
+              thumbnailUrl: news.thumbnailUrl,
+              category: news.category,
+            }
+          : item
+      );
       setNewsItems((prev) =>
         prev.map((item) =>
           item.id === id
@@ -141,7 +182,9 @@ export function useNewsState() {
     try {
       await deleteNews(id);
       toast.success("Đã xóa bản tin thành công!");
-      // Optimistic remove — remove immediately from UI
+      optimisticNewsItems.current = optimisticNewsItems.current.filter(
+        (item) => item.id !== id
+      );
       setNewsItems((prev) => prev.filter((item) => item.id !== id));
       return true;
     } catch {
@@ -166,9 +209,21 @@ export function useNewsState() {
 
     setIsSubmitting(true);
     try {
-      await addFanpage(fanpage);
+      const createdFanpage = await addFanpage(fanpage);
+      if (!createdFanpage) throw new Error("Failed to create fanpage");
+
+      optimisticFanpageItems.current = [
+        createdFanpage,
+        ...optimisticFanpageItems.current.filter(
+          (item) => item.id !== createdFanpage.id
+        ),
+      ];
+      setFanpageItems((prev) => [
+        createdFanpage,
+        ...prev.filter((item) => item.id !== createdFanpage.id),
+      ]);
       toast.success("Đã thêm Fanpage thành công!");
-      setTimeout(loadFanpages, 1500);
+      setTimeout(loadFanpages, SYNC_AFTER_CREATE_MS);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi thêm Fanpage. Vui lòng thử lại sau.");
@@ -192,7 +247,17 @@ export function useNewsState() {
     try {
       await updateFanpage(id, fanpage);
       toast.success("Cập nhật Fanpage thành công!");
-      // Optimistic update
+      optimisticFanpageItems.current = optimisticFanpageItems.current.map((page) =>
+        page.id === id
+          ? {
+              ...page,
+              name: fanpage.name,
+              url: fanpage.url,
+              category: fanpage.category,
+              description: fanpage.description,
+            }
+          : page
+      );
       setFanpageItems((prev) =>
         prev.map((page) =>
           page.id === id
@@ -220,7 +285,9 @@ export function useNewsState() {
     try {
       await deleteFanpage(id);
       toast.success("Đã xóa Fanpage thành công!");
-      // Optimistic remove
+      optimisticFanpageItems.current = optimisticFanpageItems.current.filter(
+        (page) => page.id !== id
+      );
       setFanpageItems((prev) => prev.filter((page) => page.id !== id));
       return true;
     } catch {

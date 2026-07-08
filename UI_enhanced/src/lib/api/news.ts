@@ -107,22 +107,27 @@ export async function fetchNews(): Promise<NewsItem[]> {
 
 export async function addNews(
   item: Omit<NewsItem, "id" | "date">
-): Promise<boolean> {
+): Promise<NewsItem | null> {
   try {
-    return apiPost({
+    const id = generateId("news");
+    const createdAt = new Date().toLocaleString("vi-VN");
+
+    await apiPost({
       sheet: "news",
       action: "create",
-      id: generateId("news"),
+      id,
       title: item.title,
       description: item.description,
       facebook_url: item.facebookUrl,
       thumbnail_url: item.thumbnailUrl,
       category: item.category,
-      created_at: new Date().toLocaleString("vi-VN"),
+      created_at: createdAt,
     });
+
+    return { ...item, id, date: createdAt };
   } catch (error) {
     console.error("addNews error:", error);
-    return false;
+    return null;
   }
 }
 
@@ -181,21 +186,26 @@ export async function fetchFanpages(): Promise<FanpageItem[]> {
 
 export async function addFanpage(
   item: Omit<FanpageItem, "id" | "date">
-): Promise<boolean> {
+): Promise<FanpageItem | null> {
   try {
-    return apiPost({
+    const id = generateId("page");
+    const createdAt = new Date().toLocaleString("vi-VN");
+
+    await apiPost({
       sheet: "fanpages",
       action: "create",
-      id: generateId("page"),
+      id,
       name: item.name,
       url: item.url,
       category: item.category,
       description: item.description,
-      created_at: new Date().toLocaleString("vi-VN"),
+      created_at: createdAt,
     });
+
+    return { ...item, id, date: createdAt };
   } catch (error) {
     console.error("addFanpage error:", error);
-    return false;
+    return null;
   }
 }
 
