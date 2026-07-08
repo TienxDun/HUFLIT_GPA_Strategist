@@ -13,7 +13,9 @@ export function useFeedback() {
     setIsLoading(true);
     try {
       const data = await fetchFeedbacks();
-      setFeedbacks(data);
+      // Filter out news type items
+      const filtered = data.filter((item) => item.type !== "news");
+      setFeedbacks(filtered);
     } catch (error) {
       console.error("Failed to load feedbacks", error);
     } finally {

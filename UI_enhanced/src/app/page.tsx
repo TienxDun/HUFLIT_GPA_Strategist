@@ -8,7 +8,6 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { PWAInstallGuide } from "@/components/layout/PWAInstallGuide";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { TabSkeleton } from "@/components/features/TabSkeleton";
-import { Newspaper } from "lucide-react";
 import { decodeRoadmapState } from "@/lib/share-utils";
 import { toast } from "sonner";
 import { type InitialRoadmapData } from "@/hooks/useRoadmapState";
@@ -51,6 +50,11 @@ const ManualTab = dynamic(() => import("@/components/features/ManualTab").then(m
 });
 
 const RoadmapTab = dynamic(() => import("@/components/features/RoadmapTab").then(mod => mod.RoadmapTab), {
+  loading: () => <TabSkeleton />,
+  ssr: false
+});
+
+const NewsTab = dynamic(() => import("@/components/features/NewsTab").then(mod => mod.NewsTab), {
   loading: () => <TabSkeleton />,
   ssr: false
 });
@@ -181,11 +185,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="news" className="focus-visible:outline-none focus-visible:ring-0 m-0 w-full">
-            <div className="text-center py-20 text-slate-500 bg-white rounded-3xl border border-slate-200">
-              <Newspaper className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <h3 className="font-medium text-lg">Bản tin Sinh viên</h3>
-              <p className="text-sm mt-1 italic opacity-60">Tính năng đang được cập nhật dữ liệu...</p>
-            </div>
+            <NewsTab />
           </TabsContent>
 
           {/* Footer chân trang */}

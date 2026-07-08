@@ -1,6 +1,6 @@
 export interface Feedback {
   name: string;
-  type: 'feature_request' | 'bug_report' | 'improvement' | 'other';
+  type: 'feature_request' | 'bug_report' | 'improvement' | 'other' | 'news';
   content: string;
   timestamp: string;
 }
