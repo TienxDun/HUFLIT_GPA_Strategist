@@ -22,6 +22,7 @@ export interface FanpageItem {
   url: string;
   category: "school" | "union" | "faculty" | "club" | "other";
   description: string;
+  date: string; // display-ready created_at string
 }
 
 // ── Internal raw shapes (mirror Google Sheet column order) ────────────────────
@@ -42,6 +43,7 @@ interface RawFanpageRow {
   url: string;
   category: string;
   description: string;
+  created_at?: string;
 }
 
 // ── Transport helpers ─────────────────────────────────────────────────────────
@@ -68,6 +70,18 @@ function generateId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`;
 }
 
+function getCreatedAt(rawDate: string | undefined, id: string): string {
+  if (rawDate) return rawDate;
+
+  const timestamp = id.match(/^[a-z]+_(\d+)_/)?.[1];
+  if (!timestamp) return "";
+
+  const date = new Date(Number(timestamp));
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleString("vi-VN", { hour12: false });
+}
+
 // ── News CRUD ─────────────────────────────────────────────────────────────────
 
 export async function fetchNews(): Promise<NewsItem[]> {
@@ -82,7 +96,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
         facebookUrl: r.facebook_url || "",
         thumbnailUrl: r.thumbnail_url || "",
         category: (r.category as NewsItem["category"]) || "other",
-        date: r.created_at || "",
+        date: getCreatedAt(r.created_at, r.id),
       }))
       .reverse();
   } catch (error) {
@@ -155,6 +169,7 @@ export async function fetchFanpages(): Promise<FanpageItem[]> {
         url: r.url || "",
         category: (r.category as FanpageItem["category"]) || "other",
         description: r.description || "",
+        date: getCreatedAt(r.created_at, r.id),
       }))
       .reverse();
   } catch (error) {
@@ -165,7 +180,7 @@ export async function fetchFanpages(): Promise<FanpageItem[]> {
 
 
 export async function addFanpage(
-  item: Omit<FanpageItem, "id">
+  item: Omit<FanpageItem, "id" | "date">
 ): Promise<boolean> {
   try {
     return apiPost({
@@ -186,7 +201,7 @@ export async function addFanpage(
 
 export async function updateFanpage(
   id: string,
-  item: Omit<FanpageItem, "id">
+  item: Omit<FanpageItem, "id" | "date">
 ): Promise<boolean> {
   try {
     return apiPost({

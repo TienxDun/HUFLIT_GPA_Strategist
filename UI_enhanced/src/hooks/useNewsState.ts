@@ -79,7 +79,7 @@ export function useNewsState() {
       return false;
     }
     if (!news.facebookUrl?.trim().startsWith("http")) {
-      toast.error("Vui lòng nhập link Facebook hợp lệ (bắt đầu bằng http)");
+      toast.error("Vui lòng nhập đường dẫn nguồn hợp lệ (bắt đầu bằng http)");
       return false;
     }
 
@@ -104,7 +104,7 @@ export function useNewsState() {
       return false;
     }
     if (!news.facebookUrl?.trim().startsWith("http")) {
-      toast.error("Vui lòng nhập link Facebook hợp lệ (bắt đầu bằng http)");
+      toast.error("Vui lòng nhập đường dẫn nguồn hợp lệ (bắt đầu bằng http)");
       return false;
     }
 
@@ -154,7 +154,7 @@ export function useNewsState() {
 
   // ── Fanpage actions ───────────────────────────────────────────────────────
 
-  const publishFanpage = async (fanpage: Omit<FanpageItem, "id">) => {
+  const publishFanpage = async (fanpage: Omit<FanpageItem, "id" | "date">) => {
     if (!fanpage.name || fanpage.name.trim().length < 5) {
       toast.error("Tên fanpage phải có ít nhất 5 ký tự");
       return false;
@@ -178,7 +178,7 @@ export function useNewsState() {
     }
   };
 
-  const editFanpageItem = async (id: string, fanpage: Omit<FanpageItem, "id">) => {
+  const editFanpageItem = async (id: string, fanpage: Omit<FanpageItem, "id" | "date">) => {
     if (!fanpage.name || fanpage.name.trim().length < 5) {
       toast.error("Tên fanpage phải có ít nhất 5 ký tự");
       return false;

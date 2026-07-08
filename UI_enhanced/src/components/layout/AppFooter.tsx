@@ -3,7 +3,7 @@ import { BookOpen, ExternalLink } from "lucide-react";
 
 export const AppFooter = memo(() => {
   const regulationUrl =
-    "https://hufliteduvn-my.sharepoint.com/personal/dt_huflit_edu_vn/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fdt%5Fhuflit%5Fedu%5Fvn%2FDocuments%2FPORTAL%20UPLOAD%2FQUY%20DINH%20%2D%20QUY%20CHE%2FQuy%20ch%E1%BA%BF%20%C4%91%C3%A0o%20t%E1%BA%A1o%2DQD476%2Dngay%2D30122021%2Epdf&parent=%2Fpersonal%2Fdt%5Fhuflit%5Fedu%5Fvn%2FDocuments%2FPORTAL%20UPLOAD%2FQUY%20DINH%20%2D%20QUY%20CHE&ga=1";
+    "https://portal.huflit.edu.vn/News/Detail/3208/Quy-che-dao-tao";
 
   return (
     <footer className="w-full mt-6 border-t border-slate-200/60 py-2.5 text-center px-4">

@@ -8,34 +8,18 @@ import {
   Plus, 
   LogOut, 
   ExternalLink, 
-  Info, 
   Calendar, 
   Tag, 
   Loader2, 
   RefreshCw,
   Edit2,
-  Trash2
+  Trash2,
+  Globe2
 } from "lucide-react";
 
-const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    width="24"
-    height="24"
-    stroke="currentColor"
-    strokeWidth="2"
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-  </svg>
-);
 import { useNewsState } from "@/hooks/useNewsState";
 import { type NewsItem, type FanpageItem } from "@/lib/api/news";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
@@ -77,6 +61,91 @@ const CATEGORY_MAP = {
   other: { label: "Tin tức khác", color: "bg-slate-50/90 text-slate-600 border-slate-200/80 hover:bg-slate-100/90" },
 };
 
+const URL_PREVIEW_STYLES = [
+  {
+    match: ["facebook.com", "fb.watch"],
+    label: "Facebook",
+    tone: "bg-blue-50 text-blue-700 border-blue-100",
+    accent: "from-blue-600/85 to-sky-500/70",
+  },
+  {
+    match: ["portal.huflit.edu.vn"],
+    label: "Portal",
+    tone: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    accent: "from-emerald-600/85 to-teal-500/70",
+  },
+  {
+    match: ["huflit.edu.vn"],
+    label: "HUFLIT",
+    tone: "bg-red-50 text-red-700 border-red-100",
+    accent: "from-red-600/85 to-rose-500/70",
+  },
+  {
+    match: ["docs.google.com", "drive.google.com", "forms.gle"],
+    label: "Google",
+    tone: "bg-amber-50 text-amber-700 border-amber-100",
+    accent: "from-amber-500/85 to-yellow-500/70",
+  },
+  {
+    match: ["youtube.com", "youtu.be"],
+    label: "Video",
+    tone: "bg-rose-50 text-rose-700 border-rose-100",
+    accent: "from-rose-600/85 to-orange-500/70",
+  },
+];
+
+function getUrlPreview(url: string) {
+  const fallback = {
+    host: "liên kết nguồn",
+    label: "Website",
+    tone: "bg-slate-50 text-slate-600 border-slate-200",
+    accent: "from-slate-700/80 to-slate-500/65",
+  };
+
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const style = URL_PREVIEW_STYLES.find((item) =>
+      item.match.some((domain) => host.includes(domain))
+    );
+
+    return {
+      host,
+      label: style?.label || "Website",
+      tone: style?.tone || fallback.tone,
+      accent: style?.accent || fallback.accent,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function getEmbeddedImageUrl(url: string, fallbackUrl?: string) {
+  const fallback = fallbackUrl || PRESET_THUMBNAILS[3].url;
+
+  try {
+    const parsed = new URL(url);
+    const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
+
+    if (imageExtension.test(parsed.pathname)) {
+      return url;
+    }
+
+    const youtubeId =
+      parsed.hostname.includes("youtu.be")
+        ? parsed.pathname.split("/").filter(Boolean)[0]
+        : parsed.searchParams.get("v");
+
+    if (youtubeId) {
+      return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+    }
+
+    return `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=900`;
+  } catch {
+    return fallback;
+  }
+}
+
 const FANPAGE_CATEGORY_MAP = {
   school: { label: "Trường", color: "bg-blue-50/90 text-blue-600 border-blue-200/80 hover:bg-blue-100/90" },
   union: { label: "Đoàn - Hội", color: "bg-purple-50/90 text-purple-600 border-purple-200/80 hover:bg-purple-100/90" },
@@ -105,10 +174,6 @@ export const NewsTab = memo(() => {
   } = useNewsState();
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-  const [showNewsEmbed, setShowNewsEmbed] = useState(false);
-  const [selectedFanpage, setSelectedFanpage] = useState<FanpageItem | null>(null);
-  
   // Dialog controls
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
@@ -271,22 +336,6 @@ export const NewsTab = memo(() => {
     }
   };
 
-  // Facebook post embed URL
-  const getEmbedUrl = (url: string) => {
-    let cleanUrl = url.trim();
-    cleanUrl = cleanUrl.replace("m.facebook.com", "www.facebook.com");
-    cleanUrl = cleanUrl.replace("mobile.facebook.com", "www.facebook.com");
-    return `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(cleanUrl)}&show_text=true&width=500`;
-  };
-
-  // Facebook page plugin embed URL
-  const getFanpageEmbedUrl = (url: string) => {
-    let cleanUrl = url.trim();
-    cleanUrl = cleanUrl.replace("m.facebook.com", "www.facebook.com");
-    cleanUrl = cleanUrl.replace("mobile.facebook.com", "www.facebook.com");
-    return `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(cleanUrl)}&tabs=timeline&width=500&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true`;
-  };
-
   // Filter news
   const filteredNews = newsItems.filter((item) => {
     const matchesCategory = activeCategory === "all" || item.category === activeCategory;
@@ -446,13 +495,15 @@ export const NewsTab = memo(() => {
               </p>
             </div>
           ) : (
-            <motion.div 
+            <motion.div
               layout
-              className="grid grid-cols-1 gap-6"
+              className="grid grid-cols-1 gap-4"
             >
               <AnimatePresence mode="popLayout">
                 {filteredNews.map((item, index) => {
                   const catConfig = CATEGORY_MAP[item.category] || CATEGORY_MAP.other;
+                  const sourcePreview = getUrlPreview(item.facebookUrl);
+                  const embeddedImageUrl = getEmbeddedImageUrl(item.facebookUrl, item.thumbnailUrl);
                   return (
                     <motion.div
                       key={item.id}
@@ -461,66 +512,82 @@ export const NewsTab = memo(() => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
-                      className="flex flex-col bg-white border border-slate-100/85 hover:border-blue-500/20 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden group cursor-pointer"
-                      onClick={() => setSelectedNews(item)}
+                      className="group/item relative flex h-[352px] flex-col overflow-hidden rounded-2xl border border-slate-200/75 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.55)]"
                     >
-                      {/* Thumbnail Image */}
-                      <div className="relative h-44 w-full overflow-hidden bg-slate-50">
+                      <div className="relative h-32 shrink-0 overflow-hidden bg-slate-100">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={item.thumbnailUrl || PRESET_THUMBNAILS[3].url} 
+                        <img
+                          src={embeddedImageUrl}
                           alt={item.title}
-                          className="object-cover w-full h-full group-hover:scale-106 transition-transform duration-500 ease-out"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover/item:scale-105"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
                         />
-                        <div className="absolute top-3 left-3 flex gap-1.5">
-                          <Badge variant="outline" className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wide shadow-sm ${catConfig.color} bg-white/95 backdrop-blur-xs`}>
-                            {catConfig.label}
-                          </Badge>
-                        </div>
-                        {isAdmin && (
-                          <div className="absolute top-3 right-3 flex gap-1.5 z-10" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              onClick={(e) => handleEditNewsClick(item, e)}
-                              className="p-1.5 bg-white/90 backdrop-blur-xs border border-slate-200 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                              title="Chỉnh sửa bản tin"
-                            >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => handleDeleteNewsClick(item.id, e)}
-                              className="p-1.5 bg-white/90 backdrop-blur-xs border border-slate-200 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm"
-                              title="Xóa bản tin"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/5 to-transparent" />
+                        <div className="absolute bottom-3 left-3 right-3 flex min-w-0 items-center justify-between gap-2">
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${catConfig.color} bg-white/95 backdrop-blur`}>
+                              {catConfig.label}
+                            </span>
+                            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${sourcePreview.tone} bg-white/95 backdrop-blur`}>
+                              {sourcePreview.label}
+                            </span>
                           </div>
-                        )}
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-slate-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
                       </div>
 
-                      {/* Card Info */}
-                      <div className="flex-1 flex flex-col p-5 space-y-3">
-                        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold">
-                          <Calendar className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 transition-colors duration-300" />
-                          <span>{item.date}</span>
+                      {isAdmin && (
+                        <div className="absolute top-4 right-4 z-10 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => handleEditNewsClick(item, e)}
+                            className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                            title="Chỉnh sửa bản tin"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteNewsClick(item.id, e)}
+                            className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-rose-600 shadow-sm transition-all hover:border-rose-600 hover:bg-rose-600 hover:text-white"
+                            title="Xóa bản tin"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex h-[168px] min-w-0 shrink-0 flex-col overflow-hidden p-4">
+                        <h4 className="line-clamp-2 h-[42px] text-[15px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
+                          {item.title}
+                        </h4>
+
+                        <div className="mt-2 flex h-5 shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                          <span className="truncate">{item.date}</span>
                         </div>
 
-                        <h3 className="font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors duration-300 text-[14px] tracking-tight">
-                          {item.title}
-                        </h3>
-                        
-                        <p className="text-slate-500 text-[12px] line-clamp-3 leading-relaxed flex-1">
+                        <p className="mt-3 line-clamp-2 h-[54px] shrink-0 rounded-xl bg-slate-50/80 px-3 py-2 text-[12px] leading-relaxed text-slate-600">
                           {item.description}
                         </p>
+                      </div>
 
-                        <div className="pt-3 border-t border-slate-100/80 flex items-center justify-between text-blue-600 text-[12px] font-bold mt-auto">
-                          <span className="group-hover:text-blue-700 transition-colors duration-300">Xem thông báo chi tiết</span>
-                          <div className="p-1 bg-blue-50 text-blue-600 rounded-full group-hover:bg-blue-600 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300">
+                      <div className="mx-4 flex h-14 shrink-0 items-center justify-between border-t border-slate-100">
+                        <div className="flex min-w-0 items-center gap-2 text-[12px] font-bold text-slate-500">
+                          <Globe2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                          <span className="truncate">{sourcePreview.host}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <a
+                            href={item.facebookUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                            title={`Mở ${sourcePreview.host}`}
+                          >
                             <ExternalLink className="h-3.5 w-3.5" />
-                          </div>
+                          </a>
                         </div>
                       </div>
                     </motion.div>
@@ -601,23 +668,44 @@ export const NewsTab = memo(() => {
               <p className="text-[10px] mt-0.5 max-w-[200px]">Hãy thử tìm kiếm với từ khóa khác hoặc danh mục khác</p>
             </div>
           ) : (
-            <div className="space-y-3.5 max-h-[460px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+            <div className="space-y-3.5 max-h-[520px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
               {filteredFanpages.map((page) => {
                 const catConfig = FANPAGE_CATEGORY_MAP[page.category] || FANPAGE_CATEGORY_MAP.other;
-                const isFacebookUrl = page.url?.includes("facebook.com");
+                const sourcePreview = getUrlPreview(page.url);
+                const embeddedImageUrl = getEmbeddedImageUrl(page.url);
                 return (
                   <div
                     key={page.id}
-                    onClick={() => setSelectedFanpage(page)}
-                    className="flex flex-col bg-white border border-slate-100/85 hover:border-blue-500/20 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group/item cursor-pointer relative"
+                    className="group/item relative flex h-[352px] flex-col overflow-hidden rounded-2xl border border-slate-200/75 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.55)]"
                   >
+                    <div className="relative h-32 shrink-0 overflow-hidden bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={embeddedImageUrl}
+                        alt={page.name}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover/item:scale-105"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/5 to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3 flex min-w-0 items-center justify-between gap-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${catConfig.color} bg-white/95 backdrop-blur`}>
+                            {catConfig.label}
+                          </span>
+                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${sourcePreview.tone} bg-white/95 backdrop-blur`}>
+                            {sourcePreview.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                     {/* Admin Action Buttons */}
                     {isAdmin && (
-                      <div className="absolute top-4 right-4 flex gap-1.5 z-10" onClick={(e) => e.stopPropagation()}>
+                      <div className="absolute top-4 right-4 z-10 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={(e) => handleEditFanpageClick(page, e)}
-                          className="p-1.5 bg-slate-50 border border-slate-200 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
                           title="Chỉnh sửa kênh thông tin"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
@@ -625,7 +713,7 @@ export const NewsTab = memo(() => {
                         <button
                           type="button"
                           onClick={(e) => handleDeleteFanpageClick(page.id, e)}
-                          className="p-1.5 bg-slate-50 border border-slate-200 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                          className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-rose-600 shadow-sm transition-all hover:border-rose-600 hover:bg-rose-600 hover:text-white"
                           title="Xóa kênh thông tin"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -633,24 +721,26 @@ export const NewsTab = memo(() => {
                       </div>
                     )}
 
-                    <div className="space-y-2.5 min-w-0 flex-1">
-                      <div className={`flex items-center gap-2 flex-wrap ${isAdmin ? "pr-16" : ""}`}>
-                        <span className="font-bold text-slate-800 text-[14px] leading-tight break-words group-hover/item:text-blue-600 transition-colors duration-200">
-                          {page.name}
-                        </span>
-                        <span className={`px-2 py-0.5 text-[10px] font-bold border rounded-md uppercase tracking-wider ${catConfig.color} bg-white/95 shrink-0`}>
-                          {catConfig.label}
-                        </span>
+                    <div className="flex h-[168px] min-w-0 shrink-0 flex-col overflow-hidden p-4">
+                      <h4 className="line-clamp-2 h-[42px] text-[15px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
+                        {page.name}
+                      </h4>
+
+                      <div className="mt-2 flex h-5 shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+                        <Calendar className={`h-3.5 w-3.5 text-slate-400 ${page.date ? "" : "invisible"}`} />
+                        <span className="truncate">{page.date || "\u00a0"}</span>
                       </div>
-                      <p className="text-[12px] text-slate-500 line-clamp-2 leading-relaxed">
+
+                      <p className="mt-3 line-clamp-2 h-[54px] shrink-0 rounded-xl bg-slate-50/80 px-3 py-2 text-[12px] leading-relaxed text-slate-600">
                         {page.description || "Kênh thông tin chính thức của HUFLIT."}
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100/80 flex items-center justify-between mt-2">
-                      <span className="text-blue-600 text-[12px] font-bold group-hover/item:text-blue-700 transition-colors duration-200">
-                        {isFacebookUrl ? "Xem trước trang Facebook" : "Xem liên kết"}
-                      </span>
+                    <div className="mx-4 flex h-14 shrink-0 items-center justify-between border-t border-slate-100">
+                      <div className="flex min-w-0 items-center gap-2 text-[12px] font-bold text-slate-500">
+                        <Globe2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <span className="truncate">{sourcePreview.host}</span>
+                      </div>
                       <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                         {/* Direct open button */}
                         <a
@@ -658,8 +748,8 @@ export const NewsTab = memo(() => {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 bg-slate-50 border border-slate-200 text-slate-500 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm"
-                          title="Mở Facebook trực tiếp"
+                          className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                          title={`Mở ${sourcePreview.host}`}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
@@ -672,196 +762,6 @@ export const NewsTab = memo(() => {
           )}
         </div>
       </div>
-
-      {/* Fanpage Preview Modal */}
-      <Dialog open={!!selectedFanpage} onOpenChange={(open) => !open && setSelectedFanpage(null)}>
-        <DialogContent className="max-w-xl p-0 overflow-hidden bg-slate-950/40 border-none backdrop-blur-lg rounded-2xl flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
-          {selectedFanpage && (
-            <>
-              <DialogHeader className="p-4 bg-white border-b border-slate-100 shrink-0">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-50 rounded-xl text-blue-600 shrink-0 mt-0.5">
-                    <FacebookIcon className="h-5 w-5 fill-current" />
-                  </div>
-                  <div className="pr-6 min-w-0">
-                    <DialogTitle className="text-slate-800 font-bold text-sm line-clamp-1">
-                      {selectedFanpage.name}
-                    </DialogTitle>
-                    <p className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5 truncate">
-                      <span className="text-blue-500 font-bold">Facebook Page</span>
-                      <span>&bull;</span>
-                      <span className="truncate">{selectedFanpage.url}</span>
-                    </p>
-                  </div>
-                </div>
-              </DialogHeader>
-
-              <div className="flex-1 overflow-y-auto bg-slate-100 flex items-start justify-center p-3 sm:p-4 min-h-[400px]">
-                {selectedFanpage.url?.includes("facebook.com") ? (
-                  <div className="w-full max-w-[500px] bg-white rounded-2xl border border-slate-200/60 shadow-md overflow-hidden flex flex-col items-center">
-                    <iframe
-                      src={getFanpageEmbedUrl(selectedFanpage.url)}
-                      width="500"
-                      height="500"
-                      style={{ border: "none", overflow: "hidden" }}
-                      scrolling="no"
-                      frameBorder="0"
-                      allowFullScreen={true}
-                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                      className="w-full"
-                    />
-                    <div className="bg-slate-50 border-t border-slate-100 px-4 py-3 w-full flex items-center justify-between text-xs text-slate-500 font-medium">
-                      <span>Nhúng từ Facebook Page Plugin</span>
-                      <a
-                        href={selectedFanpage.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 font-bold hover:underline inline-flex items-center gap-1"
-                      >
-                        Mở Facebook
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="max-w-md w-full bg-white rounded-3xl p-6 text-center shadow-lg border border-slate-100">
-                    <Info className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                    <h3 className="font-bold text-slate-800 mb-2">{selectedFanpage.name}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                      {selectedFanpage.description || "Nhấn bên dưới để mở liên kết này."}
-                    </p>
-                    <a
-                      href={selectedFanpage.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-colors shadow-sm"
-                    >
-                      Truy cập trang nguồn
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* News Article Modal */}
-      <Dialog
-        open={!!selectedNews}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedNews(null);
-            setShowNewsEmbed(false);
-          }
-        }}
-      >
-        <DialogContent className="max-w-xl p-0 overflow-hidden bg-slate-950/40 border-none backdrop-blur-lg rounded-2xl flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
-          {selectedNews && (
-            <>
-              {/* Header */}
-              <DialogHeader className="p-4 bg-white border-b border-slate-100 shrink-0">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-50 rounded-xl text-blue-600 shrink-0 mt-0.5">
-                    <FacebookIcon className="h-5 w-5 fill-current" />
-                  </div>
-                  <div className="pr-6 min-w-0">
-                    <DialogTitle className="text-slate-800 font-bold text-sm line-clamp-2 leading-snug">
-                      {selectedNews.title}
-                    </DialogTitle>
-                    <p className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5 mt-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{selectedNews.date}</span>
-                      <span>&bull;</span>
-                      <span className={`font-bold ${
-                        ({
-                          announcement: "text-rose-500",
-                          scholarship: "text-amber-500",
-                          activity: "text-sky-500",
-                          other: "text-slate-400",
-                        } as Record<string, string>)[selectedNews.category] || "text-slate-400"
-                      }`}>
-                        {CATEGORY_MAP[selectedNews.category]?.label || "Tin tức"}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </DialogHeader>
-
-              {/* Body */}
-              <div className="flex-1 overflow-y-auto bg-slate-50">
-                {/* Thumbnail */}
-                {selectedNews.thumbnailUrl && (
-                  <div className="relative h-48 w-full overflow-hidden bg-slate-200">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={selectedNews.thumbnailUrl}
-                      alt={selectedNews.title}
-                      className="object-cover w-full h-full"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
-                  </div>
-                )}
-
-                {/* Description card */}
-                <div className="p-5 space-y-4">
-                  <p className="text-slate-700 text-sm leading-relaxed">
-                    {selectedNews.description || "Nhấn nút bên dưới để xem bài viết gốc trên Facebook."}
-                  </p>
-
-                  {/* Primary CTA */}
-                  <a
-                    href={selectedNews.facebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-colors shadow-sm shadow-blue-100 text-sm"
-                  >
-                    <FacebookIcon className="h-4 w-4 fill-current" />
-                    Xem bài viết trên Facebook
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-
-                  {/* Optional: embed toggle — only for FB posts */}
-                  {selectedNews.facebookUrl?.includes("facebook.com") && (
-                    <div className="pt-1">
-                      {!showNewsEmbed ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowNewsEmbed(true)}
-                          className="w-full py-2.5 px-4 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 font-semibold rounded-xl transition-all text-xs flex items-center justify-center gap-1.5"
-                        >
-                          <Info className="h-3.5 w-3.5" />
-                          Nhúng bài viết Facebook (tuỳ chọn)
-                        </button>
-                      ) : (
-                        <div className="rounded-2xl border border-slate-200/60 bg-white overflow-hidden shadow-sm">
-                          <div className="px-3 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-1.5">
-                            <Info className="h-3 w-3 text-amber-500 shrink-0" />
-                            <p className="text-[10px] text-amber-700 font-semibold">
-                              Nếu hiện lỗi &ldquo;post no longer available&rdquo;, bài viết đã bị xóa hoặc đổi quyền riêng tư trên Facebook.
-                            </p>
-                          </div>
-                          <iframe
-                            src={getEmbedUrl(selectedNews.facebookUrl)}
-                            width="100%"
-                            height="480"
-                            style={{ border: "none", overflow: "hidden" }}
-                            scrolling="no"
-                            frameBorder="0"
-                            allowFullScreen={true}
-                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Admin Auth Modal */}
       <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
@@ -982,20 +882,20 @@ export const NewsTab = memo(() => {
                 />
               </div>
 
-              {/* Facebook URL */}
+              {/* Source URL */}
               <div className="space-y-1.5">
-                <Label htmlFor="news-fb" className="text-xs font-bold text-slate-600">Link bài viết Facebook *</Label>
+                <Label htmlFor="news-fb" className="text-xs font-bold text-slate-600">Đường dẫn nguồn bản tin *</Label>
                 <Input
                   id="news-fb"
                   type="url"
                   required
-                  placeholder="Dán link bài viết hoặc ảnh của Facebook tại đây..."
+                  placeholder="https://huflit.edu.vn/... hoặc https://www.facebook.com/..."
                   value={fbUrl}
                   onChange={(e) => setFbUrl(e.target.value)}
                   className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 text-xs"
                 />
                 <p className="text-[10px] text-slate-400 font-semibold">
-                  Hỗ trợ các link dạng: https://www.facebook.com/photo/?fbid=... hoặc link bài viết công khai.
+                  Hỗ trợ URL đa dạng: website HUFLIT, Portal, Facebook, Google Form/Drive, YouTube hoặc trang thông báo khác.
                 </p>
               </div>
 

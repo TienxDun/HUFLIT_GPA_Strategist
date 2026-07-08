@@ -131,12 +131,14 @@ export default function RootLayout({
         <ServiceWorkerRegister basePath={basePath} />
         {children}
         <Toaster richColors closeButton position="top-right" />
-        <Script
-          data-goatcounter="https://tienxdun.goatcounter.com/count"
-          async
-          src="//gc.zgo.at/count.js"
-          strategy="afterInteractive"
-        />
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            data-goatcounter="https://tienxdun.goatcounter.com/count"
+            async
+            src="//gc.zgo.at/count.js"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
