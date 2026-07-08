@@ -24,31 +24,30 @@ export const FeedbackDialog = memo(({ isOpen, onClose }: FeedbackDialogProps) =>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
         showCloseButton={false} 
-        className="max-w-[550px] w-[95vw] p-0 overflow-hidden border border-slate-200/50 bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0"
+        className="flex h-[min(92dvh,760px)] w-[95vw] max-w-[960px] flex-col gap-0 overflow-hidden rounded-[28px] border border-slate-200/50 bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.1)]"
       >
-        {/* Header - Compact & Light */}
-        <div className="bg-slate-50 border-b border-slate-100 px-6 py-5 relative">
+        <div className="relative shrink-0 border-b border-slate-100 bg-slate-50 px-5 py-4 sm:px-6">
           <DialogClose 
             render={
               <button 
-                className="absolute top-1/2 -translate-y-1/2 right-4 w-9 h-9 rounded-full bg-white hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-all border border-slate-200 cursor-pointer active:scale-90 z-20"
+                className="absolute right-4 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all hover:bg-slate-100 active:scale-90"
               />
             }
           >
             <X className="h-4 w-4" />
           </DialogClose>
           
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-100">
+          <div className="relative z-10 flex items-center gap-3 pr-12">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-100 bg-blue-500/10">
               <MessageSquare className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-black text-slate-800 tracking-tight leading-tight">
+              <DialogTitle className="text-lg font-black leading-tight tracking-tight text-slate-800">
                 Góp ý & Cộng đồng
               </DialogTitle>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="mt-0.5 flex items-center gap-1.5">
                 <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   HUFLIT GPA Strategist
                 </p>
               </div>
@@ -56,10 +55,8 @@ export const FeedbackDialog = memo(({ isOpen, onClose }: FeedbackDialogProps) =>
           </div>
         </div>
 
-        {/* Content Area - Scrollable */}
-        <div className="px-6 py-6 overflow-y-auto max-h-[70vh] sm:max-h-[60vh] space-y-8 scrollbar-hide">
-          {/* Form Section */}
-          <section className="space-y-4">
+        <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto px-5 py-4 sm:px-6 lg:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.18fr)] lg:grid-rows-1 lg:overflow-hidden">
+          <section className="shrink-0 space-y-3 lg:min-h-0">
             <div className="flex items-center gap-2">
               <div className="h-4 w-1 rounded-full bg-blue-500" />
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
@@ -69,8 +66,7 @@ export const FeedbackDialog = memo(({ isOpen, onClose }: FeedbackDialogProps) =>
             <FeedbackForm onSend={sendFeedback} isSubmitting={isSubmitting} />
           </section>
 
-          {/* List Section */}
-          <section className="relative">
+          <section className="relative min-h-0 lg:overflow-hidden">
             <FeedbackList 
               feedbacks={feedbacks} 
               isLoading={isLoading} 
@@ -79,8 +75,7 @@ export const FeedbackDialog = memo(({ isOpen, onClose }: FeedbackDialogProps) =>
           </section>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-center">
+        <div className="flex shrink-0 items-center justify-center border-t border-slate-100 bg-slate-50/50 px-5 py-2.5 sm:px-6">
           <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">
             Phát triển bởi <span className="text-slate-400">Tiến Dũng (TienxDun)</span>
           </span>

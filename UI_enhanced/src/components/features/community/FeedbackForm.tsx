@@ -26,9 +26,8 @@ export const FeedbackForm = memo(({ onSend, isSubmitting }: FeedbackFormProps) =
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-2.5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Tên */}
         <div className="group relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors">
             <User className="h-3.5 w-3.5" />
@@ -38,16 +37,15 @@ export const FeedbackForm = memo(({ onSend, isSubmitting }: FeedbackFormProps) =
             placeholder="Tên (Ẩn danh)"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full h-10 bg-slate-50 border border-slate-200/60 rounded-xl pl-9 pr-3 text-[13px] font-bold text-slate-700 placeholder:text-slate-300 focus:bg-white focus:border-blue-300 outline-none transition-all shadow-sm"
+            className="h-9 w-full rounded-xl border border-slate-200/60 bg-slate-50 pl-9 pr-3 text-[13px] font-bold text-slate-700 shadow-sm outline-none transition-all placeholder:text-slate-300 focus:border-blue-300 focus:bg-white"
           />
         </div>
 
-        {/* Loại */}
         <div className="group relative">
           <select
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-            className="w-full h-10 bg-slate-50 border border-slate-200/60 rounded-xl px-3 text-[13px] font-bold text-slate-700 appearance-none focus:bg-white focus:border-blue-300 outline-none transition-all cursor-pointer shadow-sm"
+            className="h-9 w-full cursor-pointer appearance-none rounded-xl border border-slate-200/60 bg-slate-50 px-3 text-[13px] font-bold text-slate-700 shadow-sm outline-none transition-all focus:border-blue-300 focus:bg-white"
           >
             <option value="improvement">Cải tiến</option>
             <option value="feature_request">Tính năng mới</option>
@@ -60,21 +58,20 @@ export const FeedbackForm = memo(({ onSend, isSubmitting }: FeedbackFormProps) =
         </div>
       </div>
 
-      {/* Nội dung */}
       <div className="relative group">
         <textarea
           placeholder="Nội dung đóng góp (tối thiểu 10 ký tự)..."
           value={formData.content}
           onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-          rows={3}
-          className="w-full bg-slate-50 border border-slate-200/60 rounded-xl p-3 text-[13px] font-medium text-slate-600 placeholder:text-slate-300 focus:bg-white focus:border-blue-300 outline-none transition-all resize-none shadow-sm"
+          rows={2}
+          className="max-h-28 min-h-[72px] w-full resize-y rounded-xl border border-slate-200/60 bg-slate-50 p-3 text-[13px] font-medium text-slate-600 shadow-sm outline-none transition-all placeholder:text-slate-300 focus:border-blue-300 focus:bg-white"
         />
       </div>
 
       <Button
         type="submit"
         disabled={isSubmitting || formData.content.length < 10}
-        className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-[12px] uppercase tracking-wider transition-all gap-2 active:scale-[0.98] disabled:opacity-30 disabled:active:scale-100"
+        className="h-10 w-full gap-2 rounded-xl bg-slate-900 text-[12px] font-bold uppercase tracking-wider text-white transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-30 disabled:active:scale-100"
       >
         {isSubmitting ? (
           <div className="flex items-center gap-2">

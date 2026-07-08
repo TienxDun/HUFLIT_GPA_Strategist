@@ -36,8 +36,8 @@ export const FeedbackList = memo(({ feedbacks, isLoading, onRefresh }: FeedbackL
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between px-1">
+    <div className="flex min-h-0 flex-col gap-3 lg:h-full">
+      <div className="flex shrink-0 items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <div className="h-1 w-1 rounded-full bg-slate-300" />
           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
@@ -60,7 +60,7 @@ export const FeedbackList = memo(({ feedbacks, isLoading, onRefresh }: FeedbackL
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 overflow-y-auto max-h-[400px] pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+      <div className="pr-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-track-transparent lg:scrollbar-thumb-slate-200">
         <AnimatePresence mode="popLayout">
           {feedbacks.map((fb, idx) => (
             <motion.div
@@ -72,6 +72,7 @@ export const FeedbackList = memo(({ feedbacks, isLoading, onRefresh }: FeedbackL
                 duration: 0.2,
                 delay: Math.min(idx * 0.03, 0.2) 
               }}
+              className="mb-3 last:mb-0"
             >
               <FeedbackCard feedback={fb} />
             </motion.div>
