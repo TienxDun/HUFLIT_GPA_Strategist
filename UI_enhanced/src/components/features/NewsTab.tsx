@@ -4,17 +4,14 @@ import React, { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Newspaper, 
-  Lock, 
   Plus, 
-  LogOut, 
-  ExternalLink, 
   Calendar, 
   Tag, 
   Loader2, 
   RefreshCw,
   Edit2,
-  Trash2,
-  Globe2
+  Search,
+  X
 } from "lucide-react";
 
 import { useNewsState } from "@/hooks/useNewsState";
@@ -154,6 +151,116 @@ const FANPAGE_CATEGORY_MAP = {
   other: { label: "Khác", color: "bg-slate-50/90 text-slate-600 border-slate-200/80 hover:bg-slate-100/90" },
 };
 
+function parseVietnameseDate(value: string) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(?:(\d{1,2}):(\d{2})(?::(\d{2}))?\s+)?(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if (match) {
+    const [, hour = "0", minute = "0", second = "0", day, month, year] = match;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    );
+  }
+
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatDisplayDate(value?: string) {
+  if (!value) return "";
+
+  const parsed = parseVietnameseDate(value);
+  if (!parsed) return value;
+
+  const diffMs = Date.now() - parsed.getTime();
+  if (diffMs >= 0) {
+    const diffMinutes = Math.floor(diffMs / 60000);
+    if (diffMinutes < 1) return "Vừa cập nhật";
+    if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+  }
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(parsed);
+}
+
+function SearchField({
+  value,
+  onChange,
+  placeholder,
+  label,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  label: string;
+}) {
+  return (
+    <div className="relative">
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+      <Input
+        type="search"
+        name={label}
+        aria-label={label}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 rounded-xl border-slate-200/80 bg-white pl-9 pr-9 text-sm focus-visible:ring-blue-500"
+      />
+      {value && (
+        <button
+          type="button"
+          aria-label={`Xóa ${label.toLowerCase()}`}
+          onClick={() => onChange("")}
+          className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SectionLoadingSkeleton({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={compact ? "space-y-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+      {Array.from({ length: compact ? 3 : 4 }).map((_, index) => (
+        <div
+          key={index}
+          className={`overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm ${compact ? "h-[142px]" : "h-[260px]"}`}
+        >
+          <div className={`animate-pulse bg-slate-100 ${compact ? "hidden" : "h-28"}`} />
+          <div className="space-y-3 p-4">
+            <div className="flex gap-2">
+              <div className="h-5 w-16 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-5 w-20 animate-pulse rounded-full bg-slate-100" />
+            </div>
+            <div className="h-4 w-4/5 animate-pulse rounded bg-slate-100" />
+            <div className="h-4 w-2/3 animate-pulse rounded bg-slate-100" />
+            <div className="h-12 w-full animate-pulse rounded-xl bg-slate-50" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export const NewsTab = memo(() => {
   const {
     newsItems,
@@ -161,22 +268,14 @@ export const NewsTab = memo(() => {
     isLoading,
     isLoadingFanpages,
     isSubmitting,
-    isAdmin,
-    checkPassword,
-    logoutAdmin,
     publishNews,
     editNewsItem,
-    removeNewsItem,
     publishFanpage,
     editFanpageItem,
-    removeFanpageItem,
     refreshNews,
   } = useNewsState();
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  // Dialog controls
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Switch form type & Edit tracking
@@ -218,16 +317,6 @@ export const NewsTab = memo(() => {
     setFanpageUrl("");
     setFanpageDescription("");
     setFanpageCategory("school");
-  };
-
-  const handleAuthSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = checkPassword(passwordInput);
-    if (success) {
-      setPasswordInput("");
-      setIsAuthOpen(false);
-      setIsFormOpen(true);
-    }
   };
 
   const handlePublish = async (e: React.FormEvent) => {
@@ -311,13 +400,6 @@ export const NewsTab = memo(() => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteNewsClick = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm("Bạn có chắc chắn muốn xóa bản tin này không?")) {
-      await removeNewsItem(id);
-    }
-  };
-
   const handleEditFanpageClick = (page: FanpageItem, e: React.MouseEvent) => {
     e.stopPropagation();
     setFormType("fanpage");
@@ -329,39 +411,52 @@ export const NewsTab = memo(() => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteFanpageClick = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm("Bạn có chắc chắn muốn xóa kênh thông tin này không?")) {
-      await removeFanpageItem(id);
-    }
-  };
-
   // Filter news
   const filteredNews = newsItems.filter((item) => {
+    const query = newsSearch.trim().toLowerCase();
     const matchesCategory = activeCategory === "all" || item.category === activeCategory;
-    const matchesSearch = item.title.toLowerCase().includes(newsSearch.toLowerCase()) ||
-      item.description.toLowerCase().includes(newsSearch.toLowerCase());
+    const matchesSearch = !query ||
+      item.title.toLowerCase().includes(query) ||
+      item.description.toLowerCase().includes(query);
     return matchesCategory && matchesSearch;
   });
 
   // Filter fanpages
   const filteredFanpages = fanpageItems.filter((page) => {
+    const query = fanpageSearch.trim().toLowerCase();
     const matchesCategory = activeFanpageCategory === "all" || page.category === activeFanpageCategory;
-    const matchesSearch = page.name.toLowerCase().includes(fanpageSearch.toLowerCase()) ||
-      (page.description && page.description.toLowerCase().includes(fanpageSearch.toLowerCase()));
+    const matchesSearch = !query ||
+      page.name.toLowerCase().includes(query) ||
+      (page.description && page.description.toLowerCase().includes(query));
     return matchesCategory && matchesSearch;
   });
 
+  const newsCategoryCounts = newsItems.reduce<Record<string, number>>(
+    (acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + 1;
+      return acc;
+    },
+    { all: newsItems.length }
+  );
+
+  const fanpageCategoryCounts = fanpageItems.reduce<Record<string, number>>(
+    (acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + 1;
+      return acc;
+    },
+    { all: fanpageItems.length }
+  );
+
   return (
-    <div className="space-y-6 pb-8 min-w-full">
+    <div className="min-w-full space-y-4 pb-8">
       {/* Header section with Filter Controls and Admin button */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/70 backdrop-blur-md p-4 rounded-3xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-slate-100 bg-white/80 p-3 shadow-sm backdrop-blur-md md:flex-row md:items-center">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-50 rounded-2xl text-blue-600">
-            <Newspaper className="h-6 w-6" />
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600">
+            <Newspaper className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Bản tin Sinh viên</h2>
+            <h2 className="text-lg font-bold text-slate-800">Bản tin Sinh viên</h2>
             <p className="text-xs text-slate-500 font-medium">Cập nhật thông báo và các hoạt động của trường</p>
           </div>
         </div>
@@ -373,131 +468,113 @@ export const NewsTab = memo(() => {
             size="sm"
             onClick={refreshNews}
             disabled={isLoading}
-            className="rounded-2xl border-slate-200/80 hover:bg-slate-50 font-semibold text-slate-600 gap-1.5 justify-center py-2.5 h-9 flex-1 md:flex-none"
+            className="h-9 flex-1 justify-center gap-1.5 rounded-xl border-slate-200/80 py-2.5 font-semibold text-slate-600 hover:bg-slate-50 md:flex-none"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
             Tải lại
           </Button>
 
-          {isAdmin ? (
-            <div className="flex items-center gap-1.5 flex-1 md:flex-none">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => {
-                  setFormType("news");
-                  setIsFormOpen(true);
-                }}
-                className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-1.5 shadow-sm shadow-blue-100 justify-center py-2.5 h-9 flex-1 md:flex-none"
-              >
-                <Plus className="h-4 w-4" />
-                Đăng tin / Kênh
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={logoutAdmin}
-                className="rounded-2xl hover:bg-red-50 text-red-500 font-semibold gap-1.5 px-3 py-2.5 h-9 justify-center shrink-0"
-                title="Đăng xuất quản trị viên"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Thoát</span>
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAuthOpen(true)}
-              className="rounded-2xl border-slate-200/80 hover:bg-slate-50 text-slate-600 font-semibold gap-1.5 justify-center py-2.5 h-9 flex-1 md:flex-none"
-            >
-              <Lock className="h-3.5 w-3.5 text-slate-400" />
-              Quản trị Bản tin
-            </Button>
-          )}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              setFormType("news");
+              setIsFormOpen(true);
+            }}
+            className="h-9 flex-1 justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 font-semibold text-white shadow-sm shadow-blue-100 hover:bg-blue-700 md:flex-none"
+          >
+            <Plus className="h-4 w-4" />
+            Đóng góp tin / Kênh
+          </Button>
         </div>
       </div>
 
       {/* Main Grid Layout for News and Fanpage Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
         
-        {/* Left Column: News (50% width on desktop) */}
-        <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-[28px] p-5 space-y-4 shadow-sm">
-          <div className="flex justify-between items-center pb-2 border-b border-slate-100/80">
+        {/* Left Column: News */}
+        <section className="space-y-3" aria-labelledby="news-section-title">
+          <div className="flex items-center justify-between border-b border-slate-100/80 pb-2">
             <div>
-              <h3 className="font-bold text-slate-800 text-sm">Bản tin & Thông báo</h3>
+              <h3 id="news-section-title" className="text-sm font-bold text-slate-800">Bản tin & Thông báo</h3>
               <p className="text-[10px] text-slate-400 font-medium">Cập nhật tin tức học vụ và hoạt động mới nhất</p>
             </div>
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFormType("news");
-                  setIsFormOpen(true);
-                }}
-                className="h-7 w-7 rounded-lg p-0 border-slate-200/80 text-blue-600 hover:bg-slate-50"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFormType("news");
+                setIsFormOpen(true);
+              }}
+              aria-label="Đăng bản tin mới"
+              className="h-7 w-7 rounded-lg p-0 border-slate-200/80 text-blue-600 hover:bg-slate-50"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           {/* Quick Search for News */}
-          <Input
-            type="text"
-            placeholder="Tìm kiếm bản tin..."
+          <SearchField
+            label="Tìm kiếm bản tin"
+            placeholder="Tìm kiếm bản tin…"
             value={newsSearch}
-            onChange={(e) => setNewsSearch(e.target.value)}
-            className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 h-8.5 text-xs py-1.5 px-3"
+            onChange={setNewsSearch}
           />
 
           {/* Category filters */}
           <div className="flex flex-nowrap overflow-x-auto gap-2 pb-1.5 -mx-1 px-1 scrollbar-none">
             <button
+              type="button"
               onClick={() => setActiveCategory("all")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+              className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 activeCategory === "all"
                   ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
                   : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
               }`}
             >
-              Tất cả
+              Tất cả <span className="ml-1 font-semibold opacity-75">{newsCategoryCounts.all}</span>
             </button>
             {Object.entries(CATEGORY_MAP).map(([key, config]) => (
               <button
                 key={key}
+                type="button"
                 onClick={() => setActiveCategory(key)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   activeCategory === key
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
                     : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
                 }`}
               >
-                {config.label}
+                {config.label} <span className="ml-1 font-semibold opacity-75">{newsCategoryCounts[key] || 0}</span>
               </button>
             ))}
           </div>
 
           {/* News List */}
           {isLoading && newsItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-3xl border border-slate-100">
-              <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4 opacity-80" />
-              <p className="font-semibold text-slate-600">Đang tải danh sách bản tin...</p>
-              <p className="text-xs mt-1 text-slate-400">Vui lòng chờ trong giây lát</p>
-            </div>
+            <SectionLoadingSkeleton />
           ) : filteredNews.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-100">
-              <Newspaper className="h-12 w-12 text-slate-300 mb-4 opacity-50" />
-              <h3 className="font-semibold text-slate-700 text-lg">Không tìm thấy bản tin nào</h3>
-              <p className="text-sm mt-1 text-slate-400 max-w-sm text-center">
-                Hiện chưa có bản tin nào thuộc danh mục này, hoặc kết nối dữ liệu bị gián đoạn.
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white px-5 py-14 text-center text-slate-400">
+              <Newspaper className="mb-3 h-10 w-10 text-slate-300 opacity-60" />
+              <h3 className="text-base font-semibold text-slate-700">Không tìm thấy bản tin nào</h3>
+              <p className="mt-1 max-w-sm text-sm text-slate-400">
+                Hãy thử từ khóa khác, đổi danh mục, hoặc tải lại dữ liệu nếu danh sách chưa cập nhật.
               </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={refreshNews}
+                className="mt-4 h-9 rounded-xl border-slate-200/80 text-slate-600 hover:bg-slate-50"
+              >
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                Tải lại
+              </Button>
             </div>
           ) : (
             <motion.div
               layout
-              className="grid grid-cols-1 gap-4"
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2"
             >
               <AnimatePresence mode="popLayout">
                 {filteredNews.map((item, index) => {
@@ -508,13 +585,22 @@ export const NewsTab = memo(() => {
                     <motion.div
                       key={item.id}
                       layout
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => window.open(item.facebookUrl, "_blank", "noopener,noreferrer")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          window.open(item.facebookUrl, "_blank", "noopener,noreferrer");
+                        }
+                      }}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
-                      className="group/item relative flex h-[352px] flex-col overflow-hidden rounded-2xl border border-slate-200/75 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.55)]"
+                      className="group/item relative flex h-[260px] cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200/75 bg-white shadow-sm transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     >
-                      <div className="relative h-32 shrink-0 overflow-hidden bg-slate-100">
+                      <div className="relative h-28 shrink-0 overflow-hidden bg-slate-100">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={embeddedImageUrl}
@@ -523,72 +609,44 @@ export const NewsTab = memo(() => {
                           loading="lazy"
                           referrerPolicy="no-referrer"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/5 to-transparent" />
-                        <div className="absolute bottom-3 left-3 right-3 flex min-w-0 items-center justify-between gap-2">
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
+                        <div className="absolute bottom-2 left-2 right-2 flex min-w-0 items-center justify-between gap-2">
                           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${catConfig.color} bg-white/95 backdrop-blur`}>
+                            <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase shadow-sm ${catConfig.color} bg-white/95 backdrop-blur`}>
                               {catConfig.label}
                             </span>
-                            <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${sourcePreview.tone} bg-white/95 backdrop-blur`}>
+                            <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase shadow-sm ${sourcePreview.tone} bg-white/95 backdrop-blur`}>
                               {sourcePreview.label}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {isAdmin && (
-                        <div className="absolute top-4 right-4 z-10 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={(e) => handleEditNewsClick(item, e)}
-                            className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
-                            title="Chỉnh sửa bản tin"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteNewsClick(item.id, e)}
-                            className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-rose-600 shadow-sm transition-all hover:border-rose-600 hover:bg-rose-600 hover:text-white"
-                            title="Xóa bản tin"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
+                      <div className="absolute top-4 right-4 z-10 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleEditNewsClick(item, e)}
+                          aria-label="Chỉnh sửa bản tin"
+                          className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-sm transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          title="Chỉnh sửa bản tin"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
 
-                      <div className="flex h-[168px] min-w-0 shrink-0 flex-col overflow-hidden p-4">
-                        <h4 className="line-clamp-2 h-[42px] text-[15px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
+                      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+                        <h4 className="line-clamp-2 min-h-[40px] text-[15px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
                           {item.title}
                         </h4>
 
                         <div className="mt-2 flex h-5 shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-400">
                           <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                          <span className="truncate">{item.date}</span>
+                          <span className="truncate">{formatDisplayDate(item.date)}</span>
                         </div>
 
-                        <p className="mt-3 line-clamp-2 h-[54px] shrink-0 rounded-xl bg-slate-50/80 px-3 py-2 text-[12px] leading-relaxed text-slate-600">
+                        <p className="mt-3 line-clamp-2 min-h-[44px] shrink-0 rounded-xl bg-slate-50/80 px-3 py-2 text-[12px] leading-relaxed text-slate-600">
                           {item.description}
                         </p>
-                      </div>
-
-                      <div className="mx-4 flex h-14 shrink-0 items-center justify-between border-t border-slate-100">
-                        <div className="flex min-w-0 items-center gap-2 text-[12px] font-bold text-slate-500">
-                          <Globe2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                          <span className="truncate">{sourcePreview.host}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <a
-                            href={item.facebookUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
-                            title={`Mở ${sourcePreview.host}`}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        </div>
                       </div>
                     </motion.div>
                   );
@@ -596,79 +654,86 @@ export const NewsTab = memo(() => {
               </AnimatePresence>
             </motion.div>
           )}
-        </div>
+        </section>
 
-        {/* Right Column: Fanpage List (50% width on desktop) */}
-        <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-[28px] p-5 space-y-4 shadow-sm sticky top-24">
-          <div className="flex justify-between items-center pb-2 border-b border-slate-100/80">
+        {/* Right Column: Fanpage List */}
+        <section className="space-y-3 lg:sticky lg:top-24 lg:border-l lg:border-slate-200/80 lg:pl-5" aria-labelledby="fanpage-section-title">
+          <div className="flex items-center justify-between border-b border-slate-100/80 pb-2">
             <div>
-              <h3 className="font-bold text-slate-800 text-sm">Kênh thông tin HUFLIT</h3>
+              <h3 id="fanpage-section-title" className="text-sm font-bold text-slate-800">Kênh thông tin HUFLIT</h3>
               <p className="text-[10px] text-slate-400 font-medium">Danh sách các Fanpage hữu ích cho sinh viên</p>
             </div>
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFormType("fanpage");
-                  setIsFormOpen(true);
-                }}
-                className="h-7 w-7 rounded-lg p-0 border-slate-200/80 text-blue-600 hover:bg-slate-50"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFormType("fanpage");
+                setIsFormOpen(true);
+              }}
+              aria-label="Thêm kênh thông tin"
+              className="h-7 w-7 rounded-lg p-0 border-slate-200/80 text-blue-600 hover:bg-slate-50"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           {/* Quick Search */}
-          <Input
-            type="text"
-            placeholder="Tìm kiếm kênh thông tin..."
+          <SearchField
+            label="Tìm kiếm kênh thông tin"
+            placeholder="Tìm kiếm kênh thông tin…"
             value={fanpageSearch}
-            onChange={(e) => setFanpageSearch(e.target.value)}
-            className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500 h-8.5 text-xs py-1.5 px-3"
+            onChange={setFanpageSearch}
           />
 
           {/* Category Quick Badges */}
           <div className="flex flex-nowrap overflow-x-auto gap-2 pb-1.5 -mx-1 px-1 scrollbar-none">
             <button
+              type="button"
               onClick={() => setActiveFanpageCategory("all")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+              className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 activeFanpageCategory === "all"
                   ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
                   : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
               }`}
             >
-              Tất cả
+              Tất cả <span className="ml-1 font-semibold opacity-75">{fanpageCategoryCounts.all}</span>
             </button>
             {Object.entries(FANPAGE_CATEGORY_MAP).map(([key, config]) => (
               <button
                 key={key}
-                onClick={() => setActiveFanpageCategory(key as any)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all shrink-0 whitespace-nowrap ${
+                type="button"
+                onClick={() => setActiveFanpageCategory(key)}
+                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   activeFanpageCategory === key
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100/50"
                     : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
                 }`}
               >
-                {config.label}
+                {config.label} <span className="ml-1 font-semibold opacity-75">{fanpageCategoryCounts[key] || 0}</span>
               </button>
             ))}
           </div>
 
           {/* Fanpage List Items */}
           {isLoadingFanpages && fanpageItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600 mb-2 opacity-80" />
-              <p className="text-[10px] font-semibold text-slate-500">Đang tải danh sách kênh...</p>
-            </div>
+            <SectionLoadingSkeleton compact />
           ) : filteredFanpages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-center">
-              <p className="text-xs font-semibold text-slate-500">Không tìm thấy kênh nào</p>
-              <p className="text-[10px] mt-0.5 max-w-[200px]">Hãy thử tìm kiếm với từ khóa khác hoặc danh mục khác</p>
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white px-5 py-10 text-center text-slate-400">
+              <p className="text-sm font-semibold text-slate-600">Không tìm thấy kênh nào</p>
+              <p className="mt-1 max-w-[240px] text-xs">Hãy thử tìm kiếm với từ khóa khác hoặc đổi danh mục.</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={refreshNews}
+                className="mt-4 h-8 rounded-xl border-slate-200/80 text-xs text-slate-600 hover:bg-slate-50"
+              >
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                Tải lại
+              </Button>
             </div>
           ) : (
-            <div className="space-y-3.5 max-h-[520px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+            <div className="max-h-[560px] space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
               {filteredFanpages.map((page) => {
                 const catConfig = FANPAGE_CATEGORY_MAP[page.category] || FANPAGE_CATEGORY_MAP.other;
                 const sourcePreview = getUrlPreview(page.url);
@@ -676,9 +741,18 @@ export const NewsTab = memo(() => {
                 return (
                   <div
                     key={page.id}
-                    className="group/item relative flex h-[352px] flex-col overflow-hidden rounded-2xl border border-slate-200/75 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.55)]"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => window.open(page.url, "_blank", "noopener,noreferrer")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        window.open(page.url, "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                    className="group/item relative grid h-[142px] cursor-pointer grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-slate-200/75 bg-white shadow-sm transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:grid-cols-[128px_minmax(0,1fr)]"
                   >
-                    <div className="relative h-32 shrink-0 overflow-hidden bg-slate-100">
+                    <div className="relative h-full overflow-hidden bg-slate-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={embeddedImageUrl}
@@ -687,120 +761,50 @@ export const NewsTab = memo(() => {
                         loading="lazy"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/5 to-transparent" />
-                      <div className="absolute bottom-3 left-3 right-3 flex min-w-0 items-center justify-between gap-2">
-                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${catConfig.color} bg-white/95 backdrop-blur`}>
-                            {catConfig.label}
-                          </span>
-                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase shadow-sm ${sourcePreview.tone} bg-white/95 backdrop-blur`}>
-                            {sourcePreview.label}
-                          </span>
-                        </div>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
                     </div>
-                    {/* Admin Action Buttons */}
-                    {isAdmin && (
-                      <div className="absolute top-4 right-4 z-10 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={(e) => handleEditFanpageClick(page, e)}
-                          className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
-                          title="Chỉnh sửa kênh thông tin"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteFanpageClick(page.id, e)}
-                          className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-rose-600 shadow-sm transition-all hover:border-rose-600 hover:bg-rose-600 hover:text-white"
-                          title="Xóa kênh thông tin"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    )}
+                    <div className="absolute right-3 top-3 z-10 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={(e) => handleEditFanpageClick(page, e)}
+                        aria-label="Chỉnh sửa kênh thông tin"
+                        className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-sm transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        title="Chỉnh sửa kênh thông tin"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
 
-                    <div className="flex h-[168px] min-w-0 shrink-0 flex-col overflow-hidden p-4">
-                      <h4 className="line-clamp-2 h-[42px] text-[15px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
+                    <div className="flex min-w-0 flex-col overflow-hidden p-3.5">
+                      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5 pr-16">
+                        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase ${catConfig.color}`}>
+                          {catConfig.label}
+                        </span>
+                        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase ${sourcePreview.tone}`}>
+                          {sourcePreview.label}
+                        </span>
+                      </div>
+
+                      <h4 className="line-clamp-2 min-h-[38px] text-[14px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
                         {page.name}
                       </h4>
 
-                      <div className="mt-2 flex h-5 shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+                      <div className="mt-1.5 flex h-5 shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-400">
                         <Calendar className={`h-3.5 w-3.5 text-slate-400 ${page.date ? "" : "invisible"}`} />
-                        <span className="truncate">{page.date || "\u00a0"}</span>
+                        <span className="truncate">{formatDisplayDate(page.date) || "\u00a0"}</span>
                       </div>
 
-                      <p className="mt-3 line-clamp-2 h-[54px] shrink-0 rounded-xl bg-slate-50/80 px-3 py-2 text-[12px] leading-relaxed text-slate-600">
+                      <p className="mt-1.5 line-clamp-2 text-[12px] leading-relaxed text-slate-600">
                         {page.description || "Kênh thông tin chính thức của HUFLIT."}
                       </p>
-                    </div>
-
-                    <div className="mx-4 flex h-14 shrink-0 items-center justify-between border-t border-slate-100">
-                      <div className="flex min-w-0 items-center gap-2 text-[12px] font-bold text-slate-500">
-                        <Globe2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                        <span className="truncate">{sourcePreview.host}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        {/* Direct open button */}
-                        <a
-                          href={page.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-600 hover:bg-blue-600 hover:text-white"
-                          title={`Mở ${sourcePreview.host}`}
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
+        </section>
       </div>
-
-      {/* Admin Auth Modal */}
-      <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
-        <DialogContent className="max-w-sm rounded-2xl border-slate-100 p-5 bg-white">
-          <DialogHeader>
-            <DialogTitle className="text-slate-800 font-bold text-base flex items-center gap-2">
-              <Lock className="h-5 w-5 text-slate-400" />
-              Xác thực Quản trị viên
-            </DialogTitle>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Vui lòng nhập mật khẩu quản trị để thực hiện chỉnh sửa bản tin
-            </p>
-          </DialogHeader>
-
-          <form onSubmit={handleAuthSubmit} className="space-y-4 pt-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="auth-password" className="text-xs font-bold text-slate-600">Mật khẩu</Label>
-              <Input
-                id="auth-password"
-                type="password"
-                placeholder="Nhập pass admin..."
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                className="rounded-xl border-slate-200/80 focus-visible:ring-blue-500"
-                autoFocus
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="submit"
-                className="w-full bg-slate-900 hover:bg-slate-850 text-white font-bold rounded-xl py-2.5"
-              >
-                Xác nhận
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Creation / Edit Form Modal (News / Fanpage) */}
       <Dialog open={isFormOpen} onOpenChange={(open) => !open && handleCloseForm()}>
