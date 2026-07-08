@@ -6,6 +6,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PWAInstallGuide } from "@/components/layout/PWAInstallGuide";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { TabSkeleton } from "@/components/features/TabSkeleton";
 import { Newspaper } from "lucide-react";
 import { decodeRoadmapState } from "@/lib/share-utils";
@@ -144,7 +145,7 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-dvh bg-slate-50/50 text-slate-900 pb-4 pt-safe">
+    <main className="relative min-h-dvh bg-slate-50/50 text-slate-900 pt-safe flex flex-col">
       {/* SEO H1 - Visually Hidden */}
       <h1 className="sr-only">HUFLIT GPA Strategist - Công cụ tính điểm GPA và lập lộ trình học tập thông minh cho sinh viên HUFLIT</h1>
       
@@ -155,14 +156,14 @@ export default function Home() {
         <div className="absolute top-[20%] right-[10%] w-[25%] h-[25%] rounded-full bg-sky-100/30 blur-[80px]"></div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full relative z-10">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full relative z-10 flex-1 flex flex-col">
         
         {/* Header - Refactored to separate component */}
         <AppHeader activeTab={activeTab} onTabChange={handleTabChange} />
         <PWAInstallGuide />
 
         {/* Main Content Area */}
-        <div className="max-w-[1074px] mx-auto px-3 sm:px-6 mt-4 w-full mobile-content-safe sm:pb-6">
+        <div className="max-w-[1074px] mx-auto px-3 sm:px-6 mt-4 w-full mobile-content-safe flex-1 flex flex-col">
           <TabsContent value="roadmap" className="focus-visible:outline-none focus-visible:ring-0 m-0 w-full">
             <RoadmapTab initialData={roadmapInitialData} onSwitchTab={handleTabChange} />
           </TabsContent>
@@ -186,6 +187,9 @@ export default function Home() {
               <p className="text-sm mt-1 italic opacity-60">Tính năng đang được cập nhật dữ liệu...</p>
             </div>
           </TabsContent>
+
+          {/* Footer chân trang */}
+          <AppFooter />
         </div>
       </Tabs>
 
