@@ -94,6 +94,31 @@ export function CategoryFilters<T extends string>({
       return;
     }
     onChange(key);
+
+    // Tự động cuộn trang để đưa thanh bộ lọc lên sát dưới header trên thiết bị di động
+    if (typeof window !== "undefined" && window.innerWidth < 640 && containerRef.current) {
+      setTimeout(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const rect = container.getBoundingClientRect();
+        const header = document.querySelector("header");
+        // Chiều cao thực tế của sticky header, mặc định là 64px
+        const stickyHeaderBottom = header ? header.getBoundingClientRect().bottom : 64;
+
+        // Nếu thanh bộ lọc chưa thẳng hàng sát dưới header (sai lệch > 5px)
+        const offset = 8; // Khoảng đệm bên dưới header
+        const currentDiff = rect.top - stickyHeaderBottom - offset;
+
+        if (Math.abs(currentDiff) > 5) {
+          const targetScrollY = window.scrollY + currentDiff;
+          window.scrollTo({
+            top: targetScrollY,
+            behavior: "smooth",
+          });
+        }
+      }, 150);
+    }
   };
 
   return (

@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -116,7 +117,7 @@ export function PWAInstallGuide() {
       return {
         title: "Cài app vào màn hình chính",
         description: "Mở nhanh như app, dùng ổn hơn khi cần xem lại GPA.",
-        action: "Xem cách cài",
+        action: "Thêm app",
       };
     }
 
@@ -215,49 +216,64 @@ export function PWAInstallGuide() {
     setGuideOpen(false);
   };
 
-  if (!visible) return null;
-
   return (
     <>
-      <section
-        className="mx-auto mb-4 mt-1 w-full max-w-[1074px] px-3 sm:px-6"
-        aria-label="Hướng dẫn cài đặt ứng dụng"
-      >
-        <div className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:items-center sm:p-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-            <MonitorSmartphone className="size-5" aria-hidden="true" />
-          </div>
+      <AnimatePresence>
+        {visible && (
+          <motion.section
+            className="mx-auto mb-4 mt-1 w-full max-w-[1074px] px-3 sm:px-6"
+            aria-label="Hướng dẫn cài đặt ứng dụng"
+            initial={{ opacity: 0, y: -15, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 350, damping: 26 }}
+          >
+            <div className="flex items-center gap-3 rounded-[20px] border border-slate-200 bg-white py-3 pl-5 pr-2.5 shadow-[0_12px_32px_-4px_rgba(59,130,246,0.08),0_4px_12px_-2px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_16px_36px_-4px_rgba(59,130,246,0.12)] sm:py-3.5 sm:pl-6 sm:pr-3">
+              
+              {/* Title & Description */}
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xs sm:text-sm font-extrabold text-slate-800 tracking-tight leading-snug">{content.title}</h2>
+                <p className="mt-0.5 text-[10px] sm:text-xs font-semibold leading-relaxed text-slate-500">
+                  {content.description}
+                </p>
+              </div>
 
-          <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-black leading-tight text-slate-900">{content.title}</h2>
-            <p className="mt-1 text-xs font-medium leading-5 text-slate-500 sm:text-sm">
-              {content.description}
-            </p>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-1.5">
-            <Button
-              type="button"
-              size="sm"
-              className="h-9 rounded-xl bg-blue-600 px-3 text-white hover:bg-blue-700"
-              onClick={platform === "android" ? handleInstall : () => setGuideOpen(true)}
-            >
-              {platform === "ios" ? <Share className="size-4" /> : <Download className="size-4" />}
-              <span className="hidden sm:inline">{content.action}</span>
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="rounded-xl text-slate-500"
-              onClick={handleDismiss}
-              aria-label="Ẩn hướng dẫn cài đặt"
-            >
-              <X className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </section>
+              {/* Right Action buttons */}
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                <Button
+                  type="button"
+                  className="relative overflow-hidden h-8 sm:h-9 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 shadow-[0_4px_10px_rgba(37,99,235,0.15)] hover:shadow-[0_6px_16px_rgba(37,99,235,0.25)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.97] flex items-center gap-1 border-none shrink-0"
+                  onClick={platform === "android" ? handleInstall : () => setGuideOpen(true)}
+                >
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/25 to-transparent pointer-events-none"
+                    animate={{
+                      x: ['-100%', '100%']
+                    }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 2.5,
+                      ease: "easeInOut"
+                    }}
+                  />
+                  {platform === "ios" ? <Share className="relative z-10 size-3.5" /> : <Download className="relative z-10 size-3.5" />}
+                  <span className="relative z-10 inline-block">{content.action}</span>
+                </Button>
+                
+                {/* Close button - always in the flex flow, vertically centered */}
+                <button
+                  type="button"
+                  className="flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors active:scale-90"
+                  onClick={handleDismiss}
+                  aria-label="Ẩn hướng dẫn cài đặt"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       <Dialog open={guideOpen} onOpenChange={setGuideOpen}>
         <DialogContent className="max-w-md rounded-2xl p-5 sm:p-6">
