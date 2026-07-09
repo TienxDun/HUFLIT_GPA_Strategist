@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { cn } from "@/lib/utils";
 
 import { type CategoryMap } from "./news-types";
@@ -53,8 +55,21 @@ function CategoryFilterButton({
   label: string;
   onClick: () => void;
 }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isActive && buttonRef.current) {
+      buttonRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [isActive]);
+
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       className={cn(FILTER_BUTTON_BASE, isActive ? FILTER_BUTTON_ACTIVE : FILTER_BUTTON_IDLE)}
@@ -63,3 +78,4 @@ function CategoryFilterButton({
     </button>
   );
 }
+

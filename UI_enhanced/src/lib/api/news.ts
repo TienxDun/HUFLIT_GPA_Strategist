@@ -3,7 +3,7 @@
 // Real UPDATE/DELETE by ID via Apps Script. No JSON blobs, no action-replay.
 
 const GOOGLE_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyFR94GwrdhHVLXwue8sRI9JgfslRzfdVtoTK6jVzS1Rw3CKz9ICirH1-mtRRUCvzgV/exec";
+  "https://script.google.com/macros/s/AKfycbz0PMdbHYh8obBIQ0EtuOWncVgUBteStWSSnqd68gMFP-VOvU-eN7i3zNafhkXuU8Y9/exec";
 // ── Public types ──────────────────────────────────────────────────────────────
 
 export interface NewsItem {
@@ -56,7 +56,23 @@ async function apiFetch<T>(sheet: string): Promise<T[]> {
 }
 
 async function apiPost(body: Record<string, unknown>): Promise<boolean> {
-  // mode:'no-cors' — response is opaque; treat every call as success
+  try {
+    // Attempt standard CORS POST request to read success response
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return !!(data && data.success);
+    }
+  } catch (error) {
+    console.warn("CORS/network error on POST. Falling back to opaque request:", error);
+  }
+
+  // Fallback for older Google Apps Script deployments without CORS headers:
+  // Send with mode: 'no-cors' so the database write still succeeds in background
   await fetch(GOOGLE_SCRIPT_URL, {
     method: "POST",
     mode: "no-cors",

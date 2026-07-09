@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
@@ -17,6 +17,9 @@ import { toast } from "sonner";
 
 const SYNC_AFTER_CREATE_MS = 1500;
 
+let cacheNewsItems: NewsItem[] | null = null;
+let cacheFanpageItems: FanpageItem[] | null = null;
+
 function syncWithOptimisticItems<T extends { id: string }>(
   freshItems: T[],
   optimisticItems: T[]
@@ -31,10 +34,10 @@ function syncWithOptimisticItems<T extends { id: string }>(
 }
 
 export function useNewsState() {
-  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
-  const [fanpageItems, setFanpageItems] = useState<FanpageItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingFanpages, setIsLoadingFanpages] = useState(false);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>(cacheNewsItems || []);
+  const [fanpageItems, setFanpageItems] = useState<FanpageItem[]>(cacheFanpageItems || []);
+  const [isLoading, setIsLoading] = useState(!cacheNewsItems);
+  const [isLoadingFanpages, setIsLoadingFanpages] = useState(!cacheFanpageItems);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const optimisticNewsItems = useRef<NewsItem[]>([]);
@@ -42,12 +45,17 @@ export function useNewsState() {
 
   // ── Loaders ────────────────────────────────────────────────────────────────
 
-  const loadNews = useCallback(async () => {
+  const loadNews = useCallback(async (force = false) => {
+    if (cacheNewsItems && !force) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const data = await fetchNews();
       const synced = syncWithOptimisticItems(data, optimisticNewsItems.current);
       optimisticNewsItems.current = synced.pendingItems;
+      cacheNewsItems = synced.items;
       setNewsItems(synced.items);
     } catch {
       toast.error("Không thể tải bản tin từ hệ thống.");
@@ -56,12 +64,17 @@ export function useNewsState() {
     }
   }, []);
 
-  const loadFanpages = useCallback(async () => {
+  const loadFanpages = useCallback(async (force = false) => {
+    if (cacheFanpageItems && !force) {
+      setIsLoadingFanpages(false);
+      return;
+    }
     setIsLoadingFanpages(true);
     try {
       const data = await fetchFanpages();
       const synced = syncWithOptimisticItems(data, optimisticFanpageItems.current);
       optimisticFanpageItems.current = synced.pendingItems;
+      cacheFanpageItems = synced.items;
       setFanpageItems(synced.items);
     } catch {
       toast.error("Không thể tải danh sách Fanpage từ hệ thống.");
@@ -113,12 +126,14 @@ export function useNewsState() {
         createdNews,
         ...optimisticNewsItems.current.filter((item) => item.id !== createdNews.id),
       ];
-      setNewsItems((prev) => [
+      const updated = [
         createdNews,
-        ...prev.filter((item) => item.id !== createdNews.id),
-      ]);
+        ...newsItems.filter((item) => item.id !== createdNews.id),
+      ];
+      cacheNewsItems = updated;
+      setNewsItems(updated);
       toast.success("Đã đăng bản tin thành công!");
-      setTimeout(loadNews, SYNC_AFTER_CREATE_MS);
+      setTimeout(() => loadNews(true), SYNC_AFTER_CREATE_MS);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi đăng bản tin. Vui lòng thử lại sau.");
@@ -154,20 +169,20 @@ export function useNewsState() {
             }
           : item
       );
-      setNewsItems((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                title: news.title,
-                description: news.description,
-                facebookUrl: news.facebookUrl,
-                thumbnailUrl: news.thumbnailUrl,
-                category: news.category,
-              }
-            : item
-        )
+      const updated = newsItems.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              title: news.title,
+              description: news.description,
+              facebookUrl: news.facebookUrl,
+              thumbnailUrl: news.thumbnailUrl,
+              category: news.category,
+            }
+          : item
       );
+      cacheNewsItems = updated;
+      setNewsItems(updated);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi cập nhật bản tin.");
@@ -185,7 +200,9 @@ export function useNewsState() {
       optimisticNewsItems.current = optimisticNewsItems.current.filter(
         (item) => item.id !== id
       );
-      setNewsItems((prev) => prev.filter((item) => item.id !== id));
+      const updated = newsItems.filter((item) => item.id !== id);
+      cacheNewsItems = updated;
+      setNewsItems(updated);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi xóa bản tin.");
@@ -218,12 +235,14 @@ export function useNewsState() {
           (item) => item.id !== createdFanpage.id
         ),
       ];
-      setFanpageItems((prev) => [
+      const updated = [
         createdFanpage,
-        ...prev.filter((item) => item.id !== createdFanpage.id),
-      ]);
+        ...fanpageItems.filter((item) => item.id !== createdFanpage.id),
+      ];
+      cacheFanpageItems = updated;
+      setFanpageItems(updated);
       toast.success("Đã thêm Fanpage thành công!");
-      setTimeout(loadFanpages, SYNC_AFTER_CREATE_MS);
+      setTimeout(() => loadFanpages(true), SYNC_AFTER_CREATE_MS);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi thêm Fanpage. Vui lòng thử lại sau.");
@@ -258,19 +277,19 @@ export function useNewsState() {
             }
           : page
       );
-      setFanpageItems((prev) =>
-        prev.map((page) =>
-          page.id === id
-            ? {
-                ...page,
-                name: fanpage.name,
-                url: fanpage.url,
-                category: fanpage.category,
-                description: fanpage.description,
-              }
-            : page
-        )
+      const updated = fanpageItems.map((page) =>
+        page.id === id
+          ? {
+              ...page,
+              name: fanpage.name,
+              url: fanpage.url,
+              category: fanpage.category,
+              description: fanpage.description,
+            }
+          : page
       );
+      cacheFanpageItems = updated;
+      setFanpageItems(updated);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi cập nhật Fanpage.");
@@ -288,7 +307,9 @@ export function useNewsState() {
       optimisticFanpageItems.current = optimisticFanpageItems.current.filter(
         (page) => page.id !== id
       );
-      setFanpageItems((prev) => prev.filter((page) => page.id !== id));
+      const updated = fanpageItems.filter((page) => page.id !== id);
+      cacheFanpageItems = updated;
+      setFanpageItems(updated);
       return true;
     } catch {
       toast.error("Có lỗi xảy ra khi xóa Fanpage.");
@@ -301,7 +322,7 @@ export function useNewsState() {
   // ── Refresh all ───────────────────────────────────────────────────────────
 
   const refreshAll = useCallback(async () => {
-    await Promise.all([loadNews(), loadFanpages()]);
+    await Promise.all([loadNews(true), loadFanpages(true)]);
   }, [loadNews, loadFanpages]);
 
   return {
@@ -321,6 +342,6 @@ export function useNewsState() {
     editFanpageItem,
     removeFanpageItem,
     refreshNews: refreshAll,
-    refreshFanpages: loadFanpages,
+    refreshFanpages: () => loadFanpages(true),
   };
 }
