@@ -61,21 +61,7 @@ export function WelcomeGuide({ onAddSemester, onImportPortal }: WelcomeGuideProp
               </p>
             </div>
 
-            {/* Quick guide list */}
-            <div className="bg-white/80 rounded-2xl border border-slate-100 p-4 space-y-2.5 text-[11.5px] sm:text-[12.5px] text-slate-600 font-semibold shadow-inner leading-relaxed">
-              <div className="flex gap-2">
-                <span className="text-blue-500">1.</span>
-                <span>Bấm nút nhập Portal và mở trang điểm HUFLIT.</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-blue-500">2.</span>
-                <span>Nhấn <kbd className="bg-slate-100 px-1 border rounded text-[10px] font-mono">Ctrl + A</kbd> rồi <kbd className="bg-slate-100 px-1 border rounded text-[10px] font-mono">Ctrl + C</kbd> để copy.</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-blue-500">3.</span>
-                <span>Dán vào ô nhập điểm và bấm &quot;Bắt đầu phân tích&quot;.</span>
-              </div>
-            </div>
+
           </div>
 
           <div className="pt-5 z-10">
@@ -107,20 +93,7 @@ export function WelcomeGuide({ onAddSemester, onImportPortal }: WelcomeGuideProp
               </p>
             </div>
 
-            <div className="bg-white/80 rounded-2xl border border-slate-100 p-4 space-y-2.5 text-[11.5px] sm:text-[12.5px] text-slate-600 font-semibold shadow-inner leading-relaxed">
-              <div className="flex gap-2">
-                <span className="text-slate-500">1.</span>
-                <span>Điền GPA và Tín chỉ tích lũy trước đó ở cột bên trái (nếu có).</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-slate-500">2.</span>
-                <span>Nhấn nút bên dưới để tạo học kỳ mới.</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-slate-500">3.</span>
-                <span>Nhập tên môn học, số tín chỉ và chọn điểm chữ mong muốn.</span>
-              </div>
-            </div>
+
           </div>
 
           <div className="pt-5 z-10">

@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { BookOpen, ExternalLink } from "lucide-react";
+import { VisitorCount } from "./VisitorCount";
 
 export const AppFooter = memo(() => {
   const regulationUrl =
@@ -21,8 +22,8 @@ export const AppFooter = memo(() => {
             <ExternalLink className="h-2.5 w-2.5" />
           </a>
         </p>
-        <p className="text-slate-400 shrink-0">
-          Hoạt động từ 08/12/2025
+        <p className="text-slate-400 shrink-0 inline-flex items-center gap-1 flex-wrap justify-center md:justify-end">
+          <VisitorCount />
         </p>
       </div>
     </footer>

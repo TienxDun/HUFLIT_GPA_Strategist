@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye } from "lucide-react";
+import { Activity } from "lucide-react";
 
 export function VisitorCount() {
   const [count, setCount] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -25,28 +25,30 @@ export function VisitorCount() {
       } catch {
         // Silent catch to avoid console noise when blocked by AdBlockers
       } finally {
-        setLoading(false);
+        setLoaded(true);
       }
     };
 
     fetchCount();
   }, []);
 
-  if (loading) {
+  if (!loaded) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-400 text-[11px] font-bold">
-        <Eye className="h-3 w-3" />
-        <span>...</span>
-      </div>
+      <span className="text-slate-400 flex items-center gap-1.5">
+        <Activity className="h-3.5 w-3.5 text-slate-300 animate-pulse" />
+        <span>Hoạt động từ 08/12/2025</span>
+      </span>
     );
   }
 
   const displayCount = count || "---";
 
   return (
-    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[11px] font-bold shadow-sm border border-blue-100 animate-in fade-in slide-in-from-bottom-1 duration-500">
-      <Eye className="h-3 w-3" />
-      <span>{displayCount}</span>
-    </div>
+    <span className="animate-in fade-in duration-700 text-slate-500 flex items-center gap-1.5">
+      <Activity className="h-3.5 w-3.5 text-blue-500/80" />
+      <span>
+        <strong className="text-blue-600 font-bold">{displayCount}</strong> lượt truy cập từ 08/12/2025
+      </span>
+    </span>
   );
 }
