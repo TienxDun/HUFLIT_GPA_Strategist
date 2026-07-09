@@ -73,7 +73,7 @@ export function WelcomeGuide({ onAddSemester, onImportPortal }: WelcomeGuideProp
               </div>
               <div className="flex gap-2">
                 <span className="text-blue-500">3.</span>
-                <span>Dán vào ô nhập điểm và bấm "Bắt đầu phân tích".</span>
+                <span>Dán vào ô nhập điểm và bấm &quot;Bắt đầu phân tích&quot;.</span>
               </div>
             </div>
           </div>
