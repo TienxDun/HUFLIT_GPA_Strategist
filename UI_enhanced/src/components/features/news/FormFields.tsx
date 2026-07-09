@@ -85,12 +85,14 @@ export function TextareaField({
   rows: number;
   value: string;
 }) {
+  const hasHeight = className?.includes("h-");
+
   return (
-    <div className={cn(FIELD_SHELL_CLASS, className)}>
+    <div className={cn(FIELD_SHELL_CLASS, className, hasHeight && "flex flex-col")}>
       <Label htmlFor={id} className={FIELD_LABEL_CLASS}>
         {label}
       </Label>
-      <div className="relative">
+      <div className={cn("relative", hasHeight && "flex-1")}>
         {icon && (
           <span className="pointer-events-none absolute left-3 top-3 flex h-4 w-4 items-center justify-center text-slate-400">
             {icon}
@@ -106,7 +108,8 @@ export function TextareaField({
           className={cn(
             "flex w-full resize-none border py-3 leading-relaxed outline-none disabled:cursor-not-allowed disabled:opacity-50",
             FIELD_CONTROL_CLASS,
-            icon && "pl-10"
+            icon && "pl-10",
+            hasHeight && "h-full"
           )}
         />
       </div>

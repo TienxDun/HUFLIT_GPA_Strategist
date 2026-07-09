@@ -31,12 +31,12 @@ export function NewsForm({
         onChange={form.setTitle}
       />
       <TextareaField
-        className="md:row-span-2"
+        className="md:row-span-2 md:h-full"
         id="news-desc"
         label="Mô tả ngắn *"
         icon={<AlignLeft className="h-4 w-4" />}
         required
-        rows={2}
+        rows={6}
         placeholder="Nhập tóm tắt nội dung tin tức..."
         value={form.description}
         onChange={form.setDescription}
@@ -133,7 +133,7 @@ export function FanpageForm({
         id="page-desc"
         label="Mô tả ngắn"
         icon={<AlignLeft className="h-4 w-4" />}
-        rows={2}
+        rows={3}
         placeholder="Nhập mô tả ngắn về kênh thông tin này..."
         value={form.description}
         onChange={form.setDescription}

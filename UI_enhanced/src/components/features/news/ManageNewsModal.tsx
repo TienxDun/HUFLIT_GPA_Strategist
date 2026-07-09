@@ -82,9 +82,13 @@ export function ManageNewsModal({
                       size="sm"
                       disabled={isSubmitting}
                       onClick={() => {
-                        if (confirm(`Bạn có chắc chắn muốn xóa bản tin "${item.title}" không?`)) {
-                          onDelete(item.id);
+                        const password = prompt(`Nhập mật khẩu để xác nhận xóa bản tin "${item.title}":`);
+                        if (password === null) return; // User cancelled
+                        if (password !== "adminne") {
+                          alert("Mật khẩu không chính xác! Không thể thực hiện xóa.");
+                          return;
                         }
+                        onDelete(item.id);
                       }}
                       className="h-7 w-7 rounded-lg border-slate-200/80 p-0 text-rose-600 hover:bg-rose-50 hover:border-rose-200"
                       title="Xóa"
