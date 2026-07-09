@@ -28,7 +28,12 @@ export function SearchField({
         placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 rounded-xl border-slate-200/80 bg-white pl-9 pr-9 text-sm focus-visible:ring-blue-500"
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            (event.target as HTMLInputElement).blur();
+          }
+        }}
+        className="h-10 rounded-xl border-slate-200/80 bg-white pl-9 pr-9 text-sm focus-visible:ring-blue-500 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden"
       />
       {value && (
         <button

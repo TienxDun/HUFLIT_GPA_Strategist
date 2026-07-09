@@ -85,14 +85,14 @@ export function NewsForm({
         <TextInputField
           className="md:col-span-2"
           id="news-pin"
-          label="Mật mã chỉnh sửa bài viết (PIN tự chọn) *"
+          label="Mật mã chỉnh sửa bài viết *"
           icon={<KeyRound className="h-4 w-4" />}
           type="password"
           required
-          placeholder="Nhập 4-8 số để chỉnh sửa hoặc xóa bài viết này sau này..."
+          placeholder="Nhập 4-8 ký tự (chữ hoặc số) để chỉnh sửa hoặc xóa bài viết này sau này..."
           value={pin}
           onChange={setPin}
-          helpText="Mật mã này dùng để bảo vệ bài đăng của bạn khỏi bị người khác tùy tiện sửa/xóa."
+          helpText="Mật mã dùng để bảo vệ bài đăng. Bạn có thể sử dụng cả chữ và số (4-8 ký tự)."
         />
       )}
       <SubmitButton
@@ -164,14 +164,14 @@ export function FanpageForm({
         <TextInputField
           className="md:col-span-2"
           id="page-pin"
-          label="Mật mã chỉnh sửa liên kết (PIN tự chọn) *"
+          label="Mật mã chỉnh sửa liên kết *"
           icon={<KeyRound className="h-4 w-4" />}
           type="password"
           required
-          placeholder="Nhập 4-8 số để chỉnh sửa hoặc xóa liên kết này sau này..."
+          placeholder="Nhập 4-8 ký tự (chữ hoặc số) để chỉnh sửa hoặc xóa liên kết này sau này..."
           value={pin}
           onChange={setPin}
-          helpText="Mật mã này dùng để bảo vệ liên kết của bạn khỏi bị người khác tùy tiện sửa/xóa."
+          helpText="Mật mã dùng để bảo vệ liên kết. Bạn có thể sử dụng cả chữ và số (4-8 ký tự)."
         />
       )}
       <SubmitButton
