@@ -12,6 +12,7 @@ import { ManageNewsModal } from "./news/ManageNewsModal";
 import { NewsSection } from "./news/NewsSection";
 import { countByCategory, getThumbnailUrl } from "./news/news-utils";
 import { useNewsForm } from "./news/useNewsForm";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 
 export const NewsTab = memo(() => {
   const [isManageFanpagesOpen, setIsManageFanpagesOpen] = useState(false);
@@ -159,6 +160,7 @@ export const NewsTab = memo(() => {
         onDelete={removeNewsItem}
         isSubmitting={isSubmitting}
       />
+      <ScrollToTop />
     </div>
   );
 });

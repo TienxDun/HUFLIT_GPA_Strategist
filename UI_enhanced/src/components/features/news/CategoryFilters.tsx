@@ -29,6 +29,30 @@ export function CategoryFilters<T extends string>({
   const scrollLeft = useRef(0);
   const hasMoved = useRef(false);
 
+  // Tự động cuộn ngang nút đang hoạt động vào giữa thanh bộ lọc mà không ảnh hưởng đến thanh cuộn dọc của trang web
+  useEffect(() => {
+    const scrollActiveIntoView = () => {
+      if (!containerRef.current) return;
+      const activeEl = containerRef.current.querySelector(
+        `[data-category="${active}"]`
+      ) as HTMLElement;
+
+      if (activeEl) {
+        const container = containerRef.current;
+        const targetScrollLeft =
+          activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
+        container.scrollTo({
+          left: targetScrollLeft,
+          behavior: "smooth",
+        });
+      }
+    };
+
+    // Sử dụng timeout 100ms để đợi layout ổn định trước khi tính toán vị trí cuộn
+    const timer = setTimeout(scrollActiveIntoView, 100);
+    return () => clearTimeout(timer);
+  }, [active]);
+
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     isDown.current = true;
     startX.current = e.pageX - (containerRef.current?.offsetLeft || 0);
@@ -85,6 +109,7 @@ export function CategoryFilters<T extends string>({
         label="Tất cả"
         count={counts.all}
         isActive={active === "all"}
+        categoryKey="all"
         onClick={() => handleClick("all")}
       />
       {Object.entries(categories).map(([key, config]) => (
@@ -93,6 +118,7 @@ export function CategoryFilters<T extends string>({
           label={(config as { label: string }).label}
           count={counts[key] || 0}
           isActive={active === key}
+          categoryKey={key}
           onClick={() => handleClick(key)}
         />
       ))}
@@ -104,30 +130,20 @@ function CategoryFilterButton({
   count,
   isActive,
   label,
+  categoryKey,
   onClick,
 }: {
   count: number;
   isActive: boolean;
   label: string;
+  categoryKey: string;
   onClick: () => void;
 }) {
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (isActive && buttonRef.current) {
-      buttonRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
-    }
-  }, [isActive]);
-
   return (
     <button
-      ref={buttonRef}
       type="button"
       onClick={onClick}
+      data-category={categoryKey}
       className={cn(FILTER_BUTTON_BASE, isActive ? FILTER_BUTTON_ACTIVE : FILTER_BUTTON_IDLE)}
     >
       {label} <span className="ml-1 font-semibold opacity-75">{count}</span>
