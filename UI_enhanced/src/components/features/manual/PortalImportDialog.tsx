@@ -15,9 +15,10 @@ import {
 
 interface PortalImportDialogProps {
   onImport: (text: string) => void;
+  triggerVariant?: "default" | "primary";
 }
 
-const PortalImportDialog = ({ onImport }: PortalImportDialogProps) => {
+const PortalImportDialog = ({ onImport, triggerVariant = "default" }: PortalImportDialogProps) => {
   const [importText, setImportText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -29,13 +30,18 @@ const PortalImportDialog = ({ onImport }: PortalImportDialogProps) => {
   };
 
   return (
-    <div className="pt-2">
+    <div className={triggerVariant === "primary" ? "" : "pt-2"}>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger render={
-          <Button variant="outline" className="w-full bg-white border-blue-200 text-blue-700 font-bold shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-all rounded-xl h-10 text-xs gap-2" />
+          triggerVariant === "primary" ? (
+            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/15 transition-all rounded-xl h-11 text-xs sm:text-sm gap-2 cursor-pointer" />
+          ) : (
+            <Button variant="outline" className="w-full bg-white border-blue-200 text-blue-700 font-bold shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-all rounded-xl h-10 text-xs gap-2" />
+          )
         }>
           <CloudUpload className="h-4 w-4" /> Nhập dữ liệu từ Portal
         </DialogTrigger>
+
         <DialogContent className="max-w-3xl bg-white border-slate-200 shadow-2xl p-0 overflow-hidden rounded-3xl">
           <DialogHeader className="p-6 pb-2 border-b border-slate-50">
             <div className="flex items-center gap-4">

@@ -19,6 +19,7 @@ const ManualChart = dynamic(() => import("./manual/ManualChart"), {
 import SemesterCard from "./manual/SemesterCard";
 import YearSummaryCard from "./manual/YearSummaryCard";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { WelcomeGuide } from "./manual/WelcomeGuide";
 
 interface ManualTabProps {
   onSwitchToRoadmap?: (data: InitialRoadmapData) => void;
@@ -44,6 +45,8 @@ const ManualTab = memo(({ onSwitchToRoadmap }: ManualTabProps) => {
     resetData,
     importFromPortal
   } = useManualGPA();
+
+  const isFirstTime = semesters.length === 0;
 
   if (!isLoaded) return null;
 
@@ -82,67 +85,73 @@ const ManualTab = memo(({ onSwitchToRoadmap }: ManualTabProps) => {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="lg:col-span-8 space-y-6"
       >
-        <div className="flex items-center justify-between px-2 mb-2 gap-2">
-          <h2 className="text-[12px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
-            <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0"></span>
-            Chi tiết các học kỳ
-          </h2>
-          <Button
-            onClick={addSemester}
-            variant="ghost"
-            size="sm"
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-bold text-xs gap-1.5 h-8 px-3 rounded-lg shrink-0"
-          >
-            <Plus className="h-3.5 w-3.5" /> 
-            <span className="hidden sm:inline">Thêm học kỳ mới</span>
-            <span className="sm:hidden">Thêm HK</span>
-          </Button>
-        </div>
-
-        {semesters.map((sem, sIdx) => {
-          const currentYearLabel = getYear(sem.name) || `Năm ${Math.floor(sIdx / 3) + 1}`;
-          const nextYearLabel = sIdx < semesters.length - 1 
-            ? (getYear(semesters[sIdx + 1].name) || `Năm ${Math.floor((sIdx + 1) / 3) + 1}`)
-            : null;
-
-          const showSummary = currentYearLabel !== nextYearLabel || sIdx === semesters.length - 1;
-
-          return (
-            <div key={sIdx} className="space-y-6">
-              <SemesterCard
-                sem={sem}
-                sIdx={sIdx}
-                onUpdateName={updateSemesterName}
-                onRemoveSemester={removeSemester}
-                onAddCourse={addCourse}
-                onUpdateCourse={updateCourse}
-                onRemoveCourse={removeCourse}
-                isOnlySemester={semesters.length === 1}
-                semStats={result.semesterStats[sIdx]}
-              />
-              
-              {showSummary && yearlyStats[currentYearLabel] && (
-                <YearSummaryCard 
-                  year={currentYearLabel} 
-                  data={yearlyStats[currentYearLabel]} 
-                />
-              )}
+        {isFirstTime ? (
+          <WelcomeGuide onAddSemester={addSemester} onImportPortal={importFromPortal} />
+        ) : (
+          <>
+            <div className="flex items-center justify-between px-2 mb-2 gap-2">
+              <h2 className="text-[12px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
+                <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0"></span>
+                Chi tiết các học kỳ
+              </h2>
+              <Button
+                onClick={addSemester}
+                variant="ghost"
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-bold text-xs gap-1.5 h-8 px-3 rounded-lg shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5" /> 
+                <span className="hidden sm:inline">Thêm học kỳ mới</span>
+                <span className="sm:hidden">Thêm HK</span>
+              </Button>
             </div>
-          );
-        })}
 
-        <div className="pt-4 flex justify-center">
-          <Button
-            variant="outline"
-            onClick={addSemester}
-            className="group border-dashed border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-500 hover:text-blue-600 font-bold py-8 px-12 rounded-3xl transition-all w-full flex flex-col gap-2 cursor-pointer"
-          >
-            <div className="h-10 w-10 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
-              <Plus className="h-6 w-6 group-hover:rotate-90 transition-transform duration-500" />
+            {semesters.map((sem, sIdx) => {
+              const currentYearLabel = getYear(sem.name) || `Năm ${Math.floor(sIdx / 3) + 1}`;
+              const nextYearLabel = sIdx < semesters.length - 1 
+                ? (getYear(semesters[sIdx + 1].name) || `Năm ${Math.floor((sIdx + 1) / 3) + 1}`)
+                : null;
+
+              const showSummary = currentYearLabel !== nextYearLabel || sIdx === semesters.length - 1;
+
+              return (
+                <div key={sIdx} className="space-y-6">
+                  <SemesterCard
+                    sem={sem}
+                    sIdx={sIdx}
+                    onUpdateName={updateSemesterName}
+                    onRemoveSemester={removeSemester}
+                    onAddCourse={addCourse}
+                    onUpdateCourse={updateCourse}
+                    onRemoveCourse={removeCourse}
+                    isOnlySemester={semesters.length === 1}
+                    semStats={result.semesterStats[sIdx]}
+                  />
+                  
+                  {showSummary && yearlyStats[currentYearLabel] && (
+                    <YearSummaryCard 
+                      year={currentYearLabel} 
+                      data={yearlyStats[currentYearLabel]} 
+                    />
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="pt-4 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={addSemester}
+                className="group border-dashed border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-500 hover:text-blue-600 font-bold py-8 px-12 rounded-3xl transition-all w-full flex flex-col gap-2 cursor-pointer"
+              >
+                <div className="h-10 w-10 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                  <Plus className="h-6 w-6 group-hover:rotate-90 transition-transform duration-500" />
+                </div>
+                <span>Thêm học kỳ mới</span>
+              </Button>
             </div>
-            <span>Thêm học kỳ mới</span>
-          </Button>
-        </div>
+          </>
+        )}
       </motion.div>
       <ScrollToTop />
     </div>

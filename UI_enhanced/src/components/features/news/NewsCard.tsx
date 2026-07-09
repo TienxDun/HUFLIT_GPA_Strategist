@@ -25,6 +25,7 @@ export function NewsCard({
       layout
       role="link"
       tabIndex={0}
+      title={item.title}
       onClick={() => openExternalUrl(item.facebookUrl)}
       onKeyDown={(event) => openOnKeyboard(event, item.facebookUrl)}
       initial={{ opacity: 0, y: 20 }}
@@ -56,7 +57,10 @@ export function NewsCard({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
-        <h4 className="line-clamp-2 min-h-[40px] text-[15px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
+        <h4
+          title={item.title}
+          className="line-clamp-2 min-h-[40px] text-[15px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700"
+        >
           {item.title}
         </h4>
         <p className="mt-2.5 line-clamp-3 flex-1 rounded-xl bg-slate-50/80 px-3 py-2 text-[12px] leading-relaxed text-slate-600">
