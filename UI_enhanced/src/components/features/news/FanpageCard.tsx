@@ -13,8 +13,8 @@ export function FanpageCard({
   page: FanpageItem;
   onEdit: (page: FanpageItem) => void;
 }) {
-  const category = FANPAGE_CATEGORIES[page.category] || FANPAGE_CATEGORIES.other;
   const source = getUrlPreview(page.url);
+  const categories = page.category;
 
   return (
     <div
@@ -40,7 +40,10 @@ export function FanpageCard({
 
       <div className="flex min-w-0 flex-col overflow-hidden p-3.5">
         <div className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5 pr-16">
-          <MetaBadge className={category.color} label={category.label} />
+          {categories.map((catKey) => {
+            const config = FANPAGE_CATEGORIES[catKey] || FANPAGE_CATEGORIES.other;
+            return <MetaBadge key={catKey} className={config.color} label={config.label} />;
+          })}
           <MetaBadge className={source.tone} label={source.label} />
         </div>
         <h4 className="line-clamp-2 min-h-[38px] text-[14px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">

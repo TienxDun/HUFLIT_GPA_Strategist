@@ -3,7 +3,7 @@
 import { AlignLeft, FileText, Link2, Type } from "lucide-react";
 
 import { FANPAGE_CATEGORIES, NEWS_CATEGORIES } from "./news-constants";
-import { ChoiceGrid, SubmitButton, TextareaField, TextInputField } from "./FormFields";
+import { ChoiceGrid, MultiChoiceGrid, SubmitButton, TextareaField, TextInputField } from "./FormFields";
 import { type FanpageCategory, type NewsCategory } from "./news-types";
 import { ThumbnailPicker } from "./ThumbnailPicker";
 import { type NewsFormState } from "./useNewsForm";
@@ -119,14 +119,14 @@ export function FanpageForm({
         value={form.url}
         onChange={form.setUrl}
       />
-      <ChoiceGrid
+      <MultiChoiceGrid
         className="md:col-span-2"
         label="Phân loại liên kết"
         columnsClassName="grid-cols-2 sm:grid-cols-5"
         itemClassName="px-2 text-xs font-bold"
         items={FANPAGE_CATEGORIES}
         selected={form.category}
-        onSelect={(category) => form.setCategory(category as FanpageCategory)}
+        onSelect={(category) => form.setCategory(category as FanpageCategory[])}
       />
       <TextareaField
         className="md:col-span-2"

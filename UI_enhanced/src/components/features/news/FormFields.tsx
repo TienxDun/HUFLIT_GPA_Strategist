@@ -156,6 +156,61 @@ export function ChoiceGrid<T extends string>({
   );
 }
 
+export function MultiChoiceGrid<T extends string>({
+  className,
+  columnsClassName,
+  itemClassName,
+  items,
+  label,
+  onSelect,
+  selected,
+}: {
+  className?: string;
+  columnsClassName: string;
+  itemClassName?: string;
+  items: CategoryMap<T>;
+  label: string;
+  onSelect: (keys: T[]) => void;
+  selected: T[];
+}) {
+  const handleToggle = (key: T) => {
+    if (selected.includes(key)) {
+      if (selected.length > 1) {
+        onSelect(selected.filter((k) => k !== key));
+      }
+    } else {
+      onSelect([...selected, key]);
+    }
+  };
+
+  return (
+    <div className={cn(FIELD_SHELL_CLASS, className)}>
+      <Label className={FIELD_LABEL_CLASS}>{label}</Label>
+      <div className={cn("grid gap-2", columnsClassName)}>
+        {Object.entries(items).map(([key, config]) => {
+          const isSelected = selected.includes(key as T);
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleToggle(key as T)}
+              className={cn(
+                "min-h-9 cursor-pointer rounded-xl border px-3 py-1.5 text-center text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30",
+                isSelected
+                  ? "border-slate-900 bg-slate-900 text-white shadow-sm shadow-slate-200"
+                  : "border-slate-200 bg-white text-slate-600 shadow-sm shadow-slate-100/70 hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-700",
+                itemClassName
+              )}
+            >
+              {(config as { label: string }).label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function SubmitButton({
   className,
   isSubmitting,

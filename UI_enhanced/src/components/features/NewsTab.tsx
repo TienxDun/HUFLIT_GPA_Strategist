@@ -48,7 +48,9 @@ export const NewsTab = memo(() => {
     const query = fanpageSearch.trim().toLowerCase();
 
     return fanpageItems.filter((page) => {
-      const matchesCategory = activeFanpageCategory === "all" || page.category === activeFanpageCategory;
+      const matchesCategory =
+        activeFanpageCategory === "all" ||
+        page.category.includes(activeFanpageCategory as any);
       const matchesSearch =
         !query ||
         page.name.toLowerCase().includes(query) ||

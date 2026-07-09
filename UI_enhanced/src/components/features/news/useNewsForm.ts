@@ -19,7 +19,7 @@ export function useNewsForm() {
   const [customThumbnailUrl, setCustomThumbnailUrl] = useState("");
   const [fanpageName, setFanpageName] = useState("");
   const [fanpageUrl, setFanpageUrl] = useState("");
-  const [fanpageCategory, setFanpageCategory] = useState<FanpageCategory>("school");
+  const [fanpageCategory, setFanpageCategory] = useState<FanpageCategory[]>(["school"]);
   const [fanpageDescription, setFanpageDescription] = useState("");
 
   const close = () => {
@@ -33,7 +33,7 @@ export function useNewsForm() {
     setCustomThumbnailUrl("");
     setFanpageName("");
     setFanpageUrl("");
-    setFanpageCategory("school");
+    setFanpageCategory(["school"]);
     setFanpageDescription("");
   };
 

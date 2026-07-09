@@ -16,11 +16,13 @@ export interface NewsItem {
   date: string; // display-ready created_at string
 }
 
+export type FanpageCategory = "school" | "union" | "faculty" | "club" | "other";
+
 export interface FanpageItem {
   id: string;
   name: string;
   url: string;
-  category: "school" | "union" | "faculty" | "club" | "other";
+  category: FanpageCategory[];
   description: string;
   date: string; // display-ready created_at string
 }
@@ -184,14 +186,27 @@ export async function fetchFanpages(): Promise<FanpageItem[]> {
     const rows = await apiFetch<RawFanpageRow>("fanpages");
     return rows
       .filter((r) => r.id && r.name) // guard: skip invalid/old-format rows
-      .map((r) => ({
-        id: r.id,
-        name: r.name,
-        url: r.url || "",
-        category: (r.category as FanpageItem["category"]) || "other",
-        description: r.description || "",
-        date: getCreatedAt(r.created_at, r.id),
-      }))
+      .map((r) => {
+        let categoriesList: FanpageCategory[] = [];
+        if (r.category) {
+          categoriesList = r.category
+            .split(",")
+            .map((c) => c.trim() as FanpageCategory)
+            .filter((c) => c);
+        }
+        if (categoriesList.length === 0) {
+          categoriesList = ["other"];
+        }
+
+        return {
+          id: r.id,
+          name: r.name,
+          url: r.url || "",
+          category: categoriesList,
+          description: r.description || "",
+          date: getCreatedAt(r.created_at, r.id),
+        };
+      })
       .reverse();
   } catch (error) {
     console.error("fetchFanpages error:", error);
@@ -213,7 +228,7 @@ export async function addFanpage(
       id,
       name: item.name,
       url: item.url,
-      category: item.category,
+      category: item.category.join(","),
       description: item.description,
       created_at: createdAt,
     });
@@ -236,7 +251,7 @@ export async function updateFanpage(
       id,
       name: item.name,
       url: item.url,
-      category: item.category,
+      category: item.category.join(","),
       description: item.description,
     });
   } catch (error) {

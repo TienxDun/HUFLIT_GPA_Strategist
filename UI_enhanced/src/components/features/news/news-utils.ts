@@ -84,14 +84,17 @@ export function formatDisplayDate(value?: string) {
   }).format(parsed);
 }
 
-export function countByCategory<T extends { category: string }>(items: T[]) {
-  return items.reduce<Record<string, number>>(
-    (counts, item) => ({
-      ...counts,
-      [item.category]: (counts[item.category] || 0) + 1,
-    }),
-    { all: items.length }
-  );
+export function countByCategory<T extends { category: string | string[] }>(items: T[]) {
+  const counts: Record<string, number> = { all: items.length };
+  for (const item of items) {
+    const cats = Array.isArray(item.category) ? item.category : [item.category];
+    for (const cat of cats) {
+      if (cat) {
+        counts[cat] = (counts[cat] || 0) + 1;
+      }
+    }
+  }
+  return counts;
 }
 
 export function openExternalUrl(url: string) {
