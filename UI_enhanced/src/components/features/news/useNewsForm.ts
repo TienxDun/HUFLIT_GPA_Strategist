@@ -21,6 +21,7 @@ export function useNewsForm() {
   const [fanpageUrl, setFanpageUrl] = useState("");
   const [fanpageCategory, setFanpageCategory] = useState<FanpageCategory[]>(["school"]);
   const [fanpageDescription, setFanpageDescription] = useState("");
+  const [pin, setPin] = useState("");
 
   const close = () => {
     setIsOpen(false);
@@ -35,6 +36,7 @@ export function useNewsForm() {
     setFanpageUrl("");
     setFanpageCategory(["school"]);
     setFanpageDescription("");
+    setPin("");
   };
 
   const openCreate = (formType: FormType) => {
@@ -71,6 +73,8 @@ export function useNewsForm() {
     type,
     setType,
     editingId,
+    pin,
+    setPin,
     news: {
       title,
       setTitle,

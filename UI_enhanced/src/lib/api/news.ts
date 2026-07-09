@@ -123,11 +123,35 @@ export async function fetchNews(): Promise<NewsItem[]> {
   }
 }
 
+export function encodePin(pin: string): string {
+  try {
+    return btoa(pin).replace(/=/g, "");
+  } catch {
+    return pin;
+  }
+}
+
+export function decodePin(encoded: string): string {
+  try {
+    let padded = encoded;
+    while (padded.length % 4 !== 0) {
+      padded += "=";
+    }
+    return atob(padded);
+  } catch {
+    return encoded;
+  }
+}
+
 export async function addNews(
-  item: Omit<NewsItem, "id" | "date">
+  item: Omit<NewsItem, "id" | "date">,
+  pin?: string
 ): Promise<NewsItem | null> {
   try {
-    const id = generateId("news");
+    let id = generateId("news");
+    if (pin) {
+      id = `${id}_pin_${encodePin(pin)}`;
+    }
     const createdAt = new Date().toLocaleString("vi-VN");
 
     await apiPost({
@@ -216,10 +240,14 @@ export async function fetchFanpages(): Promise<FanpageItem[]> {
 
 
 export async function addFanpage(
-  item: Omit<FanpageItem, "id" | "date">
+  item: Omit<FanpageItem, "id" | "date">,
+  pin?: string
 ): Promise<FanpageItem | null> {
   try {
-    const id = generateId("page");
+    let id = generateId("page");
+    if (pin) {
+      id = `${id}_pin_${encodePin(pin)}`;
+    }
     const createdAt = new Date().toLocaleString("vi-VN");
 
     await apiPost({

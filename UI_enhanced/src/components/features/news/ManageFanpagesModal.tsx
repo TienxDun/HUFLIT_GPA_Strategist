@@ -9,6 +9,48 @@ import { type FanpageItem } from "@/lib/api/news";
 import { MetaBadge } from "./CardMeta";
 import { FANPAGE_CATEGORIES } from "./news-constants";
 
+function handleValidateAction(
+  itemId: string,
+  itemTitle: string,
+  actionName: "sửa" | "xóa",
+  callback: () => void
+) {
+  const hasPin = itemId.includes("_pin_");
+  const promptMessage = hasPin
+    ? `Nhập mã PIN chỉnh sửa (hoặc mật khẩu admin) để xác nhận ${actionName} liên kết "${itemTitle}":`
+    : `Liên kết này không có mã PIN riêng. Nhập mật khẩu admin để xác nhận ${actionName} liên kết "${itemTitle}":`;
+
+  const password = prompt(promptMessage);
+  if (password === null) return; // User cancelled
+
+  if (hasPin) {
+    const match = itemId.match(/_pin_([A-Za-z0-9+/=]+)$/);
+    let decoded = "";
+    if (match) {
+      try {
+        let padded = match[1];
+        while (padded.length % 4 !== 0) {
+          padded += "=";
+        }
+        decoded = atob(padded);
+      } catch {
+        decoded = match[1];
+      }
+    }
+    if (password !== "adminne" && password !== decoded) {
+      alert("Mật mã chỉnh sửa hoặc mật khẩu admin không chính xác! Không thể thực hiện thao tác.");
+      return;
+    }
+  } else {
+    if (password !== "adminne") {
+      alert("Mật khẩu admin không chính xác! Không thể thực hiện thao tác.");
+      return;
+    }
+  }
+
+  callback();
+}
+
 export function ManageFanpagesModal({
   isOpen,
   onClose,
@@ -70,8 +112,10 @@ export function ManageFanpagesModal({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        onClose();
-                        onEdit(page);
+                        handleValidateAction(page.id, page.name, "sửa", () => {
+                          onClose();
+                          onEdit(page);
+                        });
                       }}
                       className="h-7 w-7 rounded-lg border-slate-200/80 p-0 text-blue-600 hover:bg-slate-100"
                       title="Chỉnh sửa"
@@ -83,13 +127,9 @@ export function ManageFanpagesModal({
                       size="sm"
                       disabled={isSubmitting}
                       onClick={() => {
-                        const password = prompt(`Nhập mật khẩu để xác nhận xóa kênh "${page.name}":`);
-                        if (password === null) return; // User cancelled
-                        if (password !== "adminne") {
-                          alert("Mật khẩu không chính xác! Không thể thực hiện xóa.");
-                          return;
-                        }
-                        onDelete(page.id);
+                        handleValidateAction(page.id, page.name, "xóa", () => {
+                          onDelete(page.id);
+                        });
                       }}
                       className="h-7 w-7 rounded-lg border-slate-200/80 p-0 text-rose-600 hover:bg-rose-50 hover:border-rose-200"
                       title="Xóa"
@@ -106,3 +146,4 @@ export function ManageFanpagesModal({
     </Dialog>
   );
 }
+

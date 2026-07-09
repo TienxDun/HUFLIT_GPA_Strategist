@@ -1,6 +1,6 @@
 "use client";
 
-import { AlignLeft, FileText, Link2, Type } from "lucide-react";
+import { AlignLeft, FileText, KeyRound, Link2, Type } from "lucide-react";
 
 import { FANPAGE_CATEGORIES, NEWS_CATEGORIES } from "./news-constants";
 import { ChoiceGrid, MultiChoiceGrid, SubmitButton, TextareaField, TextInputField } from "./FormFields";
@@ -13,11 +13,15 @@ export function NewsForm({
   isEditing,
   isSubmitting,
   onSubmit,
+  pin,
+  setPin,
 }: {
   form: NewsFormState["news"];
   isEditing: boolean;
   isSubmitting: boolean;
   onSubmit: (event: React.FormEvent) => void;
+  pin: string;
+  setPin: (val: string) => void;
 }) {
   return (
     <form onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
@@ -77,6 +81,20 @@ export function NewsForm({
           onChange={form.setCustomThumbnailUrl}
         />
       )}
+      {!isEditing && (
+        <TextInputField
+          className="md:col-span-2"
+          id="news-pin"
+          label="Mật mã chỉnh sửa bài viết (PIN tự chọn) *"
+          icon={<KeyRound className="h-4 w-4" />}
+          type="password"
+          required
+          placeholder="Nhập 4-8 số để chỉnh sửa hoặc xóa bài viết này sau này..."
+          value={pin}
+          onChange={setPin}
+          helpText="Mật mã này dùng để bảo vệ bài đăng của bạn khỏi bị người khác tùy tiện sửa/xóa."
+        />
+      )}
       <SubmitButton
         className="md:col-span-2"
         isSubmitting={isSubmitting}
@@ -92,11 +110,15 @@ export function FanpageForm({
   isEditing,
   isSubmitting,
   onSubmit,
+  pin,
+  setPin,
 }: {
   form: NewsFormState["fanpage"];
   isEditing: boolean;
   isSubmitting: boolean;
   onSubmit: (event: React.FormEvent) => void;
+  pin: string;
+  setPin: (val: string) => void;
 }) {
   return (
     <form onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
@@ -138,6 +160,20 @@ export function FanpageForm({
         value={form.description}
         onChange={form.setDescription}
       />
+      {!isEditing && (
+        <TextInputField
+          className="md:col-span-2"
+          id="page-pin"
+          label="Mật mã chỉnh sửa liên kết (PIN tự chọn) *"
+          icon={<KeyRound className="h-4 w-4" />}
+          type="password"
+          required
+          placeholder="Nhập 4-8 số để chỉnh sửa hoặc xóa liên kết này sau này..."
+          value={pin}
+          onChange={setPin}
+          helpText="Mật mã này dùng để bảo vệ liên kết của bạn khỏi bị người khác tùy tiện sửa/xóa."
+        />
+      )}
       <SubmitButton
         className="md:col-span-2"
         isSubmitting={isSubmitting}

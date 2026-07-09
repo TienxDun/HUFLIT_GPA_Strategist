@@ -107,7 +107,7 @@ export function useNewsState() {
 
   // ── News actions ──────────────────────────────────────────────────────────
 
-  const publishNews = async (news: Omit<NewsItem, "id" | "date">) => {
+  const publishNews = async (news: Omit<NewsItem, "id" | "date">, pin?: string) => {
     if (!news.title || news.title.trim().length < 5) {
       toast.error("Tiêu đề bản tin phải có ít nhất 5 ký tự");
       return false;
@@ -119,7 +119,7 @@ export function useNewsState() {
 
     setIsSubmitting(true);
     try {
-      const createdNews = await addNews(news);
+      const createdNews = await addNews(news, pin);
       if (!createdNews) throw new Error("Failed to create news");
 
       optimisticNewsItems.current = [
@@ -214,7 +214,7 @@ export function useNewsState() {
 
   // ── Fanpage actions ───────────────────────────────────────────────────────
 
-  const publishFanpage = async (fanpage: Omit<FanpageItem, "id" | "date">) => {
+  const publishFanpage = async (fanpage: Omit<FanpageItem, "id" | "date">, pin?: string) => {
     if (!fanpage.name || fanpage.name.trim().length < 5) {
       toast.error("Tên fanpage phải có ít nhất 5 ký tự");
       return false;
@@ -226,7 +226,7 @@ export function useNewsState() {
 
     setIsSubmitting(true);
     try {
-      const createdFanpage = await addFanpage(fanpage);
+      const createdFanpage = await addFanpage(fanpage, pin);
       if (!createdFanpage) throw new Error("Failed to create fanpage");
 
       optimisticFanpageItems.current = [

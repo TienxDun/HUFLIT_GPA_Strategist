@@ -10,6 +10,48 @@ import { MetaBadge } from "./CardMeta";
 import { NEWS_CATEGORIES } from "./news-constants";
 import { formatDisplayDate } from "./news-utils";
 
+function handleValidateAction(
+  itemId: string,
+  itemTitle: string,
+  actionName: "sửa" | "xóa",
+  callback: () => void
+) {
+  const hasPin = itemId.includes("_pin_");
+  const promptMessage = hasPin
+    ? `Nhập mã PIN chỉnh sửa (hoặc mật khẩu admin) để xác nhận ${actionName} bản tin "${itemTitle}":`
+    : `Bản tin này không có mã PIN riêng. Nhập mật khẩu admin để xác nhận ${actionName} bản tin "${itemTitle}":`;
+
+  const password = prompt(promptMessage);
+  if (password === null) return; // User cancelled
+
+  if (hasPin) {
+    const match = itemId.match(/_pin_([A-Za-z0-9+/=]+)$/);
+    let decoded = "";
+    if (match) {
+      try {
+        let padded = match[1];
+        while (padded.length % 4 !== 0) {
+          padded += "=";
+        }
+        decoded = atob(padded);
+      } catch {
+        decoded = match[1];
+      }
+    }
+    if (password !== "adminne" && password !== decoded) {
+      alert("Mật mã chỉnh sửa hoặc mật khẩu admin không chính xác! Không thể thực hiện thao tác.");
+      return;
+    }
+  } else {
+    if (password !== "adminne") {
+      alert("Mật khẩu admin không chính xác! Không thể thực hiện thao tác.");
+      return;
+    }
+  }
+
+  callback();
+}
+
 export function ManageNewsModal({
   isOpen,
   onClose,
@@ -69,8 +111,10 @@ export function ManageNewsModal({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        onClose();
-                        onEdit(item);
+                        handleValidateAction(item.id, item.title, "sửa", () => {
+                          onClose();
+                          onEdit(item);
+                        });
                       }}
                       className="h-7 w-7 rounded-lg border-slate-200/80 p-0 text-blue-600 hover:bg-slate-100"
                       title="Chỉnh sửa"
@@ -82,13 +126,9 @@ export function ManageNewsModal({
                       size="sm"
                       disabled={isSubmitting}
                       onClick={() => {
-                        const password = prompt(`Nhập mật khẩu để xác nhận xóa bản tin "${item.title}":`);
-                        if (password === null) return; // User cancelled
-                        if (password !== "adminne") {
-                          alert("Mật khẩu không chính xác! Không thể thực hiện xóa.");
-                          return;
-                        }
-                        onDelete(item.id);
+                        handleValidateAction(item.id, item.title, "xóa", () => {
+                          onDelete(item.id);
+                        });
                       }}
                       className="h-7 w-7 rounded-lg border-slate-200/80 p-0 text-rose-600 hover:bg-rose-50 hover:border-rose-200"
                       title="Xóa"
@@ -105,3 +145,4 @@ export function ManageNewsModal({
     </Dialog>
   );
 }
+

@@ -4,6 +4,7 @@ import React, { memo, useMemo, useState } from "react";
 
 import { useNewsState } from "@/hooks/useNewsState";
 
+import { CommunityBanner } from "./news/CommunityBanner";
 import { FanpageSection } from "./news/FanpageSection";
 import { NewsFormModal } from "./news/NewsFormModal";
 import { ManageFanpagesModal } from "./news/ManageFanpagesModal";
@@ -81,7 +82,7 @@ export const NewsTab = memo(() => {
     };
     const success = form.editingId
       ? await editNewsItem(form.editingId, payload)
-      : await publishNews(payload);
+      : await publishNews(payload, form.pin);
 
     if (success) form.close();
   };
@@ -97,13 +98,14 @@ export const NewsTab = memo(() => {
     };
     const success = form.editingId
       ? await editFanpageItem(form.editingId, payload)
-      : await publishFanpage(payload);
+      : await publishFanpage(payload, form.pin);
 
     if (success) form.close();
   };
 
   return (
     <div className="min-w-full space-y-4 pb-8">
+      <CommunityBanner onAddClick={() => form.openCreate("news")} />
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
         <NewsSection
           activeCategory={activeCategory}

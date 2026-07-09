@@ -44,6 +44,8 @@ export function NewsFormModal({
             isEditing={isEditing}
             isSubmitting={isSubmitting}
             onSubmit={onSubmitNews}
+            pin={form.pin}
+            setPin={form.setPin}
           />
         ) : (
           <FanpageForm
@@ -51,6 +53,8 @@ export function NewsFormModal({
             isEditing={isEditing}
             isSubmitting={isSubmitting}
             onSubmit={onSubmitFanpage}
+            pin={form.pin}
+            setPin={form.setPin}
           />
         )}
       </DialogContent>

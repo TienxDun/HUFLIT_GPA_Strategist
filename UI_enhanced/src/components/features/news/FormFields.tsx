@@ -1,7 +1,7 @@
 "use client";
 
-import { type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,9 @@ export function TextInputField({
   type?: string;
   value: string;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPasswordType = type === "password";
+
   return (
     <div className={cn(FIELD_SHELL_CLASS, className)}>
       <Label htmlFor={id} className={FIELD_LABEL_CLASS}>
@@ -51,13 +54,22 @@ export function TextInputField({
         )}
         <Input
           id={id}
-          type={type}
+          type={isPasswordType ? (showPassword ? "text" : "password") : type}
           required={required}
           placeholder={placeholder}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className={cn(FIELD_CONTROL_CLASS, icon && "pl-10")}
+          className={cn(FIELD_CONTROL_CLASS, icon && "pl-10", isPasswordType && "pr-10")}
         />
+        {isPasswordType && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none transition-colors"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
       </div>
       {helpText && <p className="text-[10px] font-medium leading-snug text-slate-500">{helpText}</p>}
     </div>
