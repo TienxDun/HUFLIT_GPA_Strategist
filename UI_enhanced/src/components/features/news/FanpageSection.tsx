@@ -37,7 +37,7 @@ export function FanpageSection({
   search,
   onAdd,
   onCategoryChange,
-  onEdit,
+  onManage,
   onRefresh,
   onSearchChange,
 }: {
@@ -49,7 +49,7 @@ export function FanpageSection({
   search: string;
   onAdd: () => void;
   onCategoryChange: (category: string) => void;
-  onEdit: (page: FanpageItem) => void;
+  onManage: () => void;
   onRefresh: () => void;
   onSearchChange: (value: string) => void;
 }) {
@@ -101,6 +101,8 @@ export function FanpageSection({
         description="Danh sách các Fanpage hữu ích cho sinh viên"
         actionLabel="Thêm kênh thông tin"
         onAdd={onAdd}
+        onEditAll={onManage}
+        editAllLabel="Quản lý kênh thông tin"
       />
       <SearchField
         label="Tìm kiếm kênh thông tin"
@@ -155,7 +157,7 @@ export function FanpageSection({
               className="max-h-[560px] space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent cursor-grab active:cursor-grabbing touch-pan-y"
             >
               {filteredFanpages.map((page) => (
-                <FanpageCard key={page.id} page={page} onEdit={onEdit} />
+                <FanpageCard key={page.id} page={page} />
               ))}
             </motion.div>
           </AnimatePresence>

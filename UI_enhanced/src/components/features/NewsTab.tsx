@@ -6,11 +6,15 @@ import { useNewsState } from "@/hooks/useNewsState";
 
 import { FanpageSection } from "./news/FanpageSection";
 import { NewsFormModal } from "./news/NewsFormModal";
+import { ManageFanpagesModal } from "./news/ManageFanpagesModal";
+import { ManageNewsModal } from "./news/ManageNewsModal";
 import { NewsSection } from "./news/NewsSection";
 import { countByCategory, getThumbnailUrl } from "./news/news-utils";
 import { useNewsForm } from "./news/useNewsForm";
 
 export const NewsTab = memo(() => {
+  const [isManageFanpagesOpen, setIsManageFanpagesOpen] = useState(false);
+  const [isManageNewsOpen, setIsManageNewsOpen] = useState(false);
   const {
     newsItems,
     fanpageItems,
@@ -19,8 +23,10 @@ export const NewsTab = memo(() => {
     isSubmitting,
     publishNews,
     editNewsItem,
+    removeNewsItem,
     publishFanpage,
     editFanpageItem,
+    removeFanpageItem,
     refreshNews,
   } = useNewsState();
 
@@ -108,7 +114,7 @@ export const NewsTab = memo(() => {
           search={newsSearch}
           onAdd={() => form.openCreate("news")}
           onCategoryChange={setActiveCategory}
-          onEdit={form.openNewsEdit}
+          onManage={() => setIsManageNewsOpen(true)}
           onRefresh={refreshNews}
           onSearchChange={setNewsSearch}
         />
@@ -121,7 +127,7 @@ export const NewsTab = memo(() => {
           search={fanpageSearch}
           onAdd={() => form.openCreate("fanpage")}
           onCategoryChange={setActiveFanpageCategory}
-          onEdit={form.openFanpageEdit}
+          onManage={() => setIsManageFanpagesOpen(true)}
           onRefresh={refreshNews}
           onSearchChange={setFanpageSearch}
         />
@@ -132,6 +138,24 @@ export const NewsTab = memo(() => {
         isSubmitting={isSubmitting}
         onSubmitFanpage={handleSubmitFanpage}
         onSubmitNews={handleSubmitNews}
+      />
+
+      <ManageFanpagesModal
+        isOpen={isManageFanpagesOpen}
+        onClose={() => setIsManageFanpagesOpen(false)}
+        fanpages={fanpageItems}
+        onEdit={form.openFanpageEdit}
+        onDelete={removeFanpageItem}
+        isSubmitting={isSubmitting}
+      />
+
+      <ManageNewsModal
+        isOpen={isManageNewsOpen}
+        onClose={() => setIsManageNewsOpen(false)}
+        news={newsItems}
+        onEdit={form.openNewsEdit}
+        onDelete={removeNewsItem}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

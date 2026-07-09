@@ -3,18 +3,17 @@
 import { type FanpageItem } from "@/lib/api/news";
 
 import { FANPAGE_CATEGORIES } from "./news-constants";
-import { DateLine, EditButton, MetaBadge } from "./CardMeta";
-import { getEmbeddedImageUrl, getUrlPreview, openExternalUrl, openOnKeyboard } from "./news-utils";
+import { MetaBadge } from "./CardMeta";
+import { formatDisplayDate, getEmbeddedImageUrl, openExternalUrl, openOnKeyboard } from "./news-utils";
 
 export function FanpageCard({
   page,
-  onEdit,
 }: {
   page: FanpageItem;
-  onEdit: (page: FanpageItem) => void;
 }) {
-  const source = getUrlPreview(page.url);
-  const categories = page.category;
+  const categories = [...page.category].sort(
+    (a, b) => Object.keys(FANPAGE_CATEGORIES).indexOf(a) - Object.keys(FANPAGE_CATEGORIES).indexOf(b)
+  );
 
   return (
     <div
@@ -34,22 +33,24 @@ export function FanpageCard({
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
+        {page.date && (
+          <div className="absolute bottom-2 left-2 rounded-md bg-slate-950/65 px-1.5 py-0.5 text-[8.5px] font-bold text-white backdrop-blur-[1px]">
+            {formatDisplayDate(page.date)}
+          </div>
+        )}
       </div>
 
-      <EditButton label="Chỉnh sửa kênh thông tin" onClick={() => onEdit(page)} className="right-3 top-3" />
 
       <div className="flex min-w-0 flex-col overflow-hidden p-3.5">
-        <div className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5 pr-16">
+        <div className="mb-2 flex min-w-0 flex-nowrap items-center gap-1.5 pr-12">
           {categories.map((catKey) => {
             const config = FANPAGE_CATEGORIES[catKey] || FANPAGE_CATEGORIES.other;
             return <MetaBadge key={catKey} className={config.color} label={config.label} />;
           })}
-          <MetaBadge className={source.tone} label={source.label} />
         </div>
         <h4 className="line-clamp-2 min-h-[38px] text-[14px] font-extrabold leading-snug text-slate-900 transition-colors duration-200 group-hover/item:text-blue-700">
           {page.name}
         </h4>
-        <DateLine value={page.date} hideIconWhenEmpty compact />
         <p className="mt-1.5 line-clamp-2 text-[12px] leading-relaxed text-slate-600">
           {page.description || "Kênh thông tin chính thức của HUFLIT."}
         </p>

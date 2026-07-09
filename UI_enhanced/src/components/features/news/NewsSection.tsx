@@ -22,7 +22,7 @@ export function NewsSection({
   search,
   onAdd,
   onCategoryChange,
-  onEdit,
+  onManage,
   onRefresh,
   onSearchChange,
 }: {
@@ -34,7 +34,7 @@ export function NewsSection({
   search: string;
   onAdd: () => void;
   onCategoryChange: (category: string) => void;
-  onEdit: (item: NewsItem) => void;
+  onManage: () => void;
   onRefresh: () => void;
   onSearchChange: (value: string) => void;
 }) {
@@ -46,6 +46,8 @@ export function NewsSection({
         description="Cập nhật tin tức học vụ và hoạt động mới nhất"
         actionLabel="Đăng bản tin mới"
         onAdd={onAdd}
+        onEditAll={onManage}
+        editAllLabel="Quản lý bản tin"
       />
       <SearchField
         label="Tìm kiếm bản tin"
@@ -72,7 +74,7 @@ export function NewsSection({
         <motion.div layout className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <AnimatePresence mode="popLayout">
             {filteredNews.map((item, index) => (
-              <NewsCard key={item.id} item={item} index={index} onEdit={onEdit} />
+              <NewsCard key={item.id} item={item} index={index} />
             ))}
           </AnimatePresence>
         </motion.div>
