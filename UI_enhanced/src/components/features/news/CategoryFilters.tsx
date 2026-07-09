@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -23,13 +23,69 @@ export function CategoryFilters<T extends string>({
   counts: Record<string, number>;
   onChange: (category: string) => void;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const hasMoved = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    isDown.current = true;
+    startX.current = e.pageX - (containerRef.current?.offsetLeft || 0);
+    scrollLeft.current = containerRef.current?.scrollLeft || 0;
+    hasMoved.current = false;
+    if (containerRef.current) {
+      containerRef.current.style.cursor = "grabbing";
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isDown.current = false;
+    if (containerRef.current) {
+      containerRef.current.style.cursor = "grab";
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDown.current = false;
+    if (containerRef.current) {
+      containerRef.current.style.cursor = "grab";
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDown.current || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    if (Math.abs(walk) > 3) {
+      hasMoved.current = true;
+    }
+    containerRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleClick = (key: string) => {
+    if (hasMoved.current) {
+      hasMoved.current = false;
+      return;
+    }
+    onChange(key);
+  };
+
   return (
-    <div className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1.5 scrollbar-none">
+    <div
+      ref={containerRef}
+      onMouseDown={handleMouseDown}
+      onMouseLeave={handleMouseLeave}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
+      className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1.5 scrollbar-none cursor-grab select-none"
+    >
       <CategoryFilterButton
         label="Tất cả"
         count={counts.all}
         isActive={active === "all"}
-        onClick={() => onChange("all")}
+        onClick={() => handleClick("all")}
       />
       {Object.entries(categories).map(([key, config]) => (
         <CategoryFilterButton
@@ -37,7 +93,7 @@ export function CategoryFilters<T extends string>({
           label={(config as { label: string }).label}
           count={counts[key] || 0}
           isActive={active === key}
-          onClick={() => onChange(key)}
+          onClick={() => handleClick(key)}
         />
       ))}
     </div>
