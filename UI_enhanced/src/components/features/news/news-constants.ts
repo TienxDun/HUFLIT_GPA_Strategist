@@ -97,3 +97,19 @@ export const URL_PREVIEW_STYLES = [
     accent: "from-rose-600/85 to-orange-500/70",
   },
 ] as const;
+
+export const NEWS_CATEGORY_FALLBACKS: Record<NewsCategory, string> = {
+  announcement: PRESET_THUMBNAILS[0].url,
+  activity: PRESET_THUMBNAILS[1].url,
+  scholarship: PRESET_THUMBNAILS[2].url,
+  other: PRESET_THUMBNAILS[3].url,
+};
+
+export const FANPAGE_THUMBNAILS: Record<FanpageCategory, string> = {
+  school: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop",
+  union: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop",
+  faculty: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
+  club: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600&auto=format&fit=crop",
+  other: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=600&auto=format&fit=crop",
+};
+

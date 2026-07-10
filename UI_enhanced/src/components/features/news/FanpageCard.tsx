@@ -2,7 +2,7 @@
 
 import { type FanpageItem } from "@/lib/api/news";
 
-import { FANPAGE_CATEGORIES } from "./news-constants";
+import { FANPAGE_CATEGORIES, FANPAGE_THUMBNAILS } from "./news-constants";
 import { MetaBadge } from "./CardMeta";
 import { formatDisplayDate, getEmbeddedImageUrl, openExternalUrl, openOnKeyboard } from "./news-utils";
 
@@ -14,6 +14,9 @@ export function FanpageCard({
   const categories = [...page.category].sort(
     (a, b) => Object.keys(FANPAGE_CATEGORIES).indexOf(a) - Object.keys(FANPAGE_CATEGORIES).indexOf(b)
   );
+
+  const primaryCategory = categories[0] || "other";
+  const fallbackThumbnail = FANPAGE_THUMBNAILS[primaryCategory] || FANPAGE_THUMBNAILS.other;
 
   return (
     <div
@@ -32,6 +35,11 @@ export function FanpageCard({
           className="h-full w-full object-cover transition-transform duration-500 group-hover/item:scale-105"
           loading="lazy"
           referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            target.onerror = null;
+            target.src = fallbackThumbnail;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
         {page.date && (

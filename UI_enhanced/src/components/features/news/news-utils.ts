@@ -39,9 +39,28 @@ export function getEmbeddedImageUrl(url: string, fallbackUrl: string = PRESET_TH
       ? parsed.pathname.split("/").filter(Boolean)[0]
       : parsed.searchParams.get("v");
 
-    return youtubeId
-      ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
-      : `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=900`;
+    if (youtubeId) {
+      return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+    }
+
+    // Facebook URLs: Extract username/ID to fetch their public profile picture directly
+    if (parsed.hostname.includes("facebook.com") || parsed.hostname.includes("fb.watch")) {
+      if (parsed.pathname === "/profile.php") {
+        const id = parsed.searchParams.get("id");
+        if (id) return `https://graph.facebook.com/${id}/picture?type=large`;
+      }
+
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const ignoreWords = ["groups", "events", "share", "sharer", "people", "pages", "permalink.php"];
+      
+      if (parts.length > 0 && !ignoreWords.includes(parts[0])) {
+        return `https://graph.facebook.com/${parts[0]}/picture?type=large`;
+      }
+      
+      return fallbackUrl;
+    }
+
+    return `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=900`;
   } catch {
     return fallbackUrl;
   }

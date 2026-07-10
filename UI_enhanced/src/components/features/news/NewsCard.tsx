@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { type NewsItem } from "@/lib/api/news";
 import { cn } from "@/lib/utils";
 
-import { NEWS_CATEGORIES } from "./news-constants";
+import { NEWS_CATEGORIES, NEWS_CATEGORY_FALLBACKS } from "./news-constants";
 import { MetaBadge } from "./CardMeta";
 import { formatDisplayDate, getEmbeddedImageUrl, openExternalUrl, openOnKeyboard } from "./news-utils";
 
@@ -42,6 +42,11 @@ export function NewsCard({
           className="h-full w-full object-cover transition-transform duration-500 group-hover/item:scale-105"
           loading="lazy"
           referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            target.onerror = null;
+            target.src = NEWS_CATEGORY_FALLBACKS[item.category] || NEWS_CATEGORY_FALLBACKS.other;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
         <div className="absolute bottom-2 left-2 right-2 flex min-w-0 items-center justify-between gap-2">
