@@ -15,7 +15,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { memo, useState } from "react";
 import { FeedbackDialog } from "../features/community/FeedbackDialog";
-import { VisitorCount } from "./VisitorCount";
 
 export const AuthorInfoDialog = memo(({ children }: { children: React.ReactElement }) => {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -57,9 +56,6 @@ export const AuthorInfoDialog = memo(({ children }: { children: React.ReactEleme
               K29 IT - HUFLIT
             </div>
 
-            <div className="mb-6">
-              <VisitorCount />
-            </div>
 
             <p className="text-slate-500 text-[13px] leading-relaxed mb-8 px-4 font-medium">
               &ldquo;Mình hy vọng công cụ này sẽ giúp ích được cho mọi người trong hành trình chinh phục tấm bằng đại học tại HUFLIT.&rdquo;

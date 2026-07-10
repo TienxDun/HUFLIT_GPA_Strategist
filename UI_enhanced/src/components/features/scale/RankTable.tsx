@@ -28,16 +28,16 @@ export const RankTable = memo(({
       const parts = range.split(" - ");
       return (
         <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center font-mono tabular-nums text-xs min-w-[90px] ml-auto">
-          <span className="text-right text-slate-700">{parts[0]}</span>
+          <span className="text-right text-slate-800 font-bold">{parts[0]}</span>
           <span className="text-slate-300 font-bold">-</span>
-          <span className="text-left text-slate-700">{parts[1]}</span>
+          <span className="text-left text-slate-800 font-bold">{parts[1]}</span>
         </div>
       );
     }
     
     // Trường hợp không có dấu gạch ngang (ví dụ: < 1.0)
     return (
-      <div className="font-mono tabular-nums text-xs text-right text-slate-700 w-full pr-1">
+      <div className="font-mono tabular-nums text-xs text-right text-slate-800 font-bold w-full pr-1">
         {range}
       </div>
     );
