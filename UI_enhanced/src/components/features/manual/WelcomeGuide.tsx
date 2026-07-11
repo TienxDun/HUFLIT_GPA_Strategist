@@ -15,7 +15,7 @@ export function WelcomeGuide({ onAddSemester, onImportPortal }: WelcomeGuideProp
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-5"
+      className="space-y-5 flex-1 flex flex-col"
     >
       {/* Header card with welcome message */}
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-100/50">
@@ -33,7 +33,7 @@ export function WelcomeGuide({ onAddSemester, onImportPortal }: WelcomeGuideProp
       </div>
 
       {/* Pathways Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
         {/* Pathway 1: Import from Portal */}
         <motion.div
           whileHover={{ y: -4 }}
@@ -109,7 +109,7 @@ export function WelcomeGuide({ onAddSemester, onImportPortal }: WelcomeGuideProp
       </div>
 
       {/* Helpful Quick Tip Card */}
-      <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4 flex flex-col space-y-1">
+      <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 flex flex-col space-y-1">
         <h5 className="text-[11px] sm:text-xs font-black text-amber-900 uppercase tracking-wide">
           Mẹo lập Lộ trình học tập (Tab Lộ trình)
         </h5>

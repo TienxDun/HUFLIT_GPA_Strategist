@@ -9,9 +9,10 @@ interface ManualStatsProps {
   result: GPAResult;
   semesters: Semester[];
   onSwitchToRoadmap?: (data: any) => void;
+  className?: string;
 }
 
-const ManualStats = memo(({ result, semesters, onSwitchToRoadmap }: ManualStatsProps) => {
+const ManualStats = memo(({ result, semesters, onSwitchToRoadmap, className }: ManualStatsProps) => {
   const handleSwitchToRoadmap = () => {
     let remainingCredits = 0;
     const pendingRetakes: any[] = [];
@@ -43,8 +44,8 @@ const ManualStats = memo(({ result, semesters, onSwitchToRoadmap }: ManualStatsP
   };
 
   return (
-    <Card className="ring-0 border border-slate-300 bg-white shadow-xl shadow-blue-500/5 py-0">
-      <CardContent className="p-3 space-y-3.5">
+    <Card className={`ring-0 border border-slate-300 bg-white shadow-xl shadow-blue-500/5 py-0 flex flex-col ${className || ""}`}>
+      <CardContent className="p-3 space-y-3.5 flex-1 flex flex-col justify-between">
         {/* GPA Display */}
         <div className="text-center py-1 relative">
           <div className="absolute inset-0 bg-blue-500/5 blur-2xl rounded-full -z-10"></div>

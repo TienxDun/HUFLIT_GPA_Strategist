@@ -51,13 +51,17 @@ const ManualTab = memo(({ onSwitchToRoadmap }: ManualTabProps) => {
   if (!isLoaded) return null;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-start pb-10">
+    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 pb-10 ${isFirstTime ? "items-stretch" : "items-start"}`}>
       {/* SIDEBAR */}
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="lg:col-span-4 static lg:sticky lg:top-20 space-y-2 order-first h-fit z-20 self-start"
+        className={`lg:col-span-4 order-first z-20 ${
+          isFirstTime 
+            ? "flex flex-col space-y-3 h-full" 
+            : "static lg:sticky lg:top-20 space-y-2 h-fit self-start"
+        }`}
       >
         <InitialStatsCard
           initialGPA={initialGPA}
@@ -73,6 +77,7 @@ const ManualTab = memo(({ onSwitchToRoadmap }: ManualTabProps) => {
           result={result} 
           semesters={semesters} 
           onSwitchToRoadmap={onSwitchToRoadmap} 
+          className={isFirstTime ? "flex-1" : ""}
         />
 
         <ManualChart semesterStats={result.semesterStats} />
@@ -83,7 +88,7 @@ const ManualTab = memo(({ onSwitchToRoadmap }: ManualTabProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="lg:col-span-8 space-y-6"
+        className={`lg:col-span-8 ${isFirstTime ? "flex flex-col h-full" : "space-y-6"}`}
       >
         {isFirstTime ? (
           <WelcomeGuide onAddSemester={addSemester} onImportPortal={importFromPortal} />
