@@ -44,8 +44,10 @@ export function NewsCard({
           referrerPolicy="no-referrer"
           onError={(e) => {
             const target = e.currentTarget;
-            target.onerror = null;
-            target.src = NEWS_CATEGORY_FALLBACKS[item.category] || NEWS_CATEGORY_FALLBACKS.other;
+            const fallback = NEWS_CATEGORY_FALLBACKS[item.category] || NEWS_CATEGORY_FALLBACKS.other;
+            if (target.src !== fallback) {
+              target.src = fallback;
+            }
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />

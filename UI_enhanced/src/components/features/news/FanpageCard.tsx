@@ -37,8 +37,9 @@ export function FanpageCard({
           referrerPolicy="no-referrer"
           onError={(e) => {
             const target = e.currentTarget;
-            target.onerror = null;
-            target.src = fallbackThumbnail;
+            if (target.src !== fallbackThumbnail) {
+              target.src = fallbackThumbnail;
+            }
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
