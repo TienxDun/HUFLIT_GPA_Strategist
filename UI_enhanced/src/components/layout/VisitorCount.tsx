@@ -44,11 +44,17 @@ export function VisitorCount() {
   const displayCount = count || "---";
 
   return (
-    <span className="animate-in fade-in duration-700 text-slate-500 flex items-center gap-1.5">
-      <Activity className="h-3.5 w-3.5 text-blue-500/80" />
-      <span>
+    <a
+      href="https://tienxdun.goatcounter.com/?hl-period=year&group=hour&period-start=2025-07-16&period-end=2026-07-16&filter=&group=hour"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="animate-in fade-in duration-700 text-slate-500 hover:text-blue-600 flex items-center gap-1.5 transition-colors cursor-pointer group"
+      title="Xem thống kê chi tiết lượt truy cập"
+    >
+      <Activity className="h-3.5 w-3.5 text-blue-500/80 group-hover:text-blue-600 transition-colors" />
+      <span className="group-hover:underline decoration-dotted">
         <strong className="text-blue-600 font-bold">{displayCount}</strong> lượt truy cập từ 08/12/2025
       </span>
-    </span>
+    </a>
   );
 }
