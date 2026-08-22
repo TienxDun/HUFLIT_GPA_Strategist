@@ -135,7 +135,8 @@ export function calculateTargetResult(
   currentCredits: number,
   targetGPA: number,
   newCredits: number,
-  retakes: { oldGrade: number; credits: number; targetGrade?: number }[] = []
+  retakes: { oldGrade: number; credits: number; targetGrade?: number }[] = [],
+  exactCurrentPoints?: number
 ) {
   let removedPoints = 0;
   let retakeTotalCredits = 0;
@@ -160,7 +161,10 @@ export function calculateTargetResult(
     }
   }
 
-  const currentTotalPoints = currentGPA * currentCredits;
+  const currentTotalPoints = (exactCurrentPoints !== undefined && exactCurrentPoints > 0)
+    ? exactCurrentPoints
+    : currentGPA * currentCredits;
+
   const effectiveCurrentPoints = currentTotalPoints - removedPoints + lockedRetakePoints;
   const totalFutureCredits = currentCredits + newCredits + creditsFromF;
   const targetTotalPoints = targetGPA * totalFutureCredits;
@@ -171,6 +175,11 @@ export function calculateTargetResult(
     ? requiredPoints / totalEffortCredits 
     : (requiredPoints > 0.001 ? Infinity : 0);
 
+  // Projected GPA after improvements (especially when no more new credits needed)
+  const projectedGPA = totalFutureCredits > 0
+    ? roundGPA(effectiveCurrentPoints / totalFutureCredits)
+    : 0;
+
   return {
     requiredGPA: roundGPA(requiredGPA),
     requiredPoints: roundGPA(requiredPoints),
@@ -179,5 +188,7 @@ export function calculateTargetResult(
     targetTotalPoints: roundGPA(targetTotalPoints),
     newCredits,
     totalEffortCredits,
+    projectedGPA,
   };
 }
+

@@ -19,7 +19,8 @@ export function AnimatedNumber({
   prefix = "",
 }: AnimatedNumberProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const motionValue = useMotionValue(0);
+  // Initialize with initial value instead of 0 to prevent 50+ concurrent mount animations
+  const motionValue = useMotionValue(value);
   const springValue = useSpring(motionValue, {
     damping: 30,
     stiffness: 100,

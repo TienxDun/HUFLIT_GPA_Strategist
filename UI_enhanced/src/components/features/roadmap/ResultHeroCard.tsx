@@ -42,9 +42,26 @@ export const ResultHeroCard = memo(({ result, status, maxPossibleGPA, targetGPA,
           <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider">Chia sẻ</span>
         </Button>
       )}
-      <GPADisplay status={status} requiredGPA={result.requiredGPA} textColor={textColor} />
-      <StatusBadge status={status} maxPossibleGPA={maxPossibleGPA} textColor={textColor} isNegative={isNegative} />
-      <StatsRow result={result} status={status} maxPossibleGPA={maxPossibleGPA} targetGPA={targetGPA} currentCredits={currentCredits} />
+      <GPADisplay 
+        status={status} 
+        requiredGPA={result.requiredGPA} 
+        projectedGPA={result.projectedGPA}
+        textColor={textColor} 
+      />
+      <StatusBadge 
+        status={status} 
+        maxPossibleGPA={maxPossibleGPA} 
+        targetGPA={targetGPA}
+        textColor={textColor} 
+        isNegative={isNegative} 
+      />
+      <StatsRow 
+        result={result} 
+        status={status} 
+        maxPossibleGPA={maxPossibleGPA} 
+        targetGPA={targetGPA} 
+        currentCredits={currentCredits} 
+      />
     </div>
   );
 });
@@ -54,20 +71,29 @@ ResultHeroCard.displayName = "ResultHeroCard";
 interface GPADisplayProps {
   status: ResultHeroCardProps["status"];
   requiredGPA: number;
+  projectedGPA?: number;
   textColor: string;
 }
 
-const GPADisplay = memo(({ status, requiredGPA, textColor }: GPADisplayProps) => {
+const GPADisplay = memo(({ status, requiredGPA, projectedGPA, textColor }: GPADisplayProps) => {
+  const isAchieved = status === "achieved";
   const displayVal = getDisplayGPA(status, requiredGPA);
-  const isNumeric = !isNaN(Number(displayVal));
+  const isNumeric = isAchieved || !isNaN(Number(displayVal));
 
   return (
     <div className="space-y-1">
       <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">
-        {getDisplayLabel(status)}
+        {isAchieved ? "GPA Dự kiến sau cải thiện" : getDisplayLabel(status)}
       </div>
       <div className={`${isNumeric ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl"} font-black tracking-tighter py-0.5 ${textColor}`}>
-        {isNumeric ? (
+        {isAchieved ? (
+          <div className="flex items-center justify-center gap-2">
+            <AnimatedNumber value={projectedGPA ?? 0} precision={2} />
+            <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 tracking-normal border border-emerald-200 shadow-2xs">
+              ĐẠT
+            </span>
+          </div>
+        ) : isNumeric ? (
           <AnimatedNumber value={requiredGPA} precision={2} />
         ) : (
           displayVal
@@ -77,15 +103,20 @@ const GPADisplay = memo(({ status, requiredGPA, textColor }: GPADisplayProps) =>
   );
 });
 
+GPADisplay.displayName = "GPADisplay";
+
 interface StatusBadgeProps {
   status: ResultHeroCardProps["status"];
   maxPossibleGPA: number;
+  targetGPA: number;
   textColor: string;
   isNegative: boolean;
 }
 
-const StatusBadge = memo(({ status, maxPossibleGPA, textColor, isNegative }: StatusBadgeProps) => {
-  const label = getStatusLabel(status, maxPossibleGPA);
+const StatusBadge = memo(({ status, maxPossibleGPA, targetGPA, textColor, isNegative }: StatusBadgeProps) => {
+  const label = status === "achieved"
+    ? `Đã đạt mục tiêu đề ra • Chuẩn ra trường ≥ ${targetGPA.toFixed(2)}`
+    : getStatusLabel(status, maxPossibleGPA);
   const parts = label.split(' • ');
 
   return (
@@ -106,6 +137,8 @@ const StatusBadge = memo(({ status, maxPossibleGPA, textColor, isNegative }: Sta
     </div>
   );
 });
+
+StatusBadge.displayName = "StatusBadge";
 
 interface StatsRowProps {
   result: ResultHeroCardProps["result"];
@@ -149,6 +182,8 @@ const StatsRow = memo(({ result, status, maxPossibleGPA, targetGPA, currentCredi
   );
 });
 
+StatsRow.displayName = "StatsRow";
+
 interface StatItemProps {
   label: string;
   value: number;
@@ -168,3 +203,4 @@ const StatItem = memo(({ label, value, precision = 0, subtitle }: StatItemProps)
   );
 });
 
+StatItem.displayName = "StatItem";

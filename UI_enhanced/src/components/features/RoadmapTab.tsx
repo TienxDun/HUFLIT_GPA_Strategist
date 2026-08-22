@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRoadmapState, type InitialRoadmapData } from "@/hooks/useRoadmapState";
 import { GoalSetupCard } from "./roadmap/GoalSetupCard";
@@ -26,8 +26,20 @@ export function RoadmapTab({ initialData, onSwitchTab }: RoadmapTabProps) {
     1: true,
     2: true,
     3: true,
-    4: false
+    4: Boolean(initialData?.pendingRetakes && initialData.pendingRetakes.length > 0)
   });
+
+  // Tự động mở bước 4 (Học cải thiện) khi nhận dữ liệu môn cải thiện
+  useEffect(() => {
+    if (initialData?.pendingRetakes && initialData.pendingRetakes.length > 0) {
+      setExpandedSteps(prev => ({
+        ...prev,
+        4: true,
+        2: false,
+        3: false
+      }));
+    }
+  }, [initialData]);
 
   const toggleStep = useCallback((step: number) => {
     setExpandedSteps(prev => {

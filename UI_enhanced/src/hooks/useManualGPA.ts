@@ -31,11 +31,13 @@ export const useManualGPA = () => {
     setIsLoaded(true);
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage with debounce to prevent blocking the main thread
   useEffect(() => {
-    if (isLoaded) {
+    if (!isLoaded) return;
+    const timeoutId = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialGPA, initialCredits, semesters }));
-    }
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [initialGPA, initialCredits, semesters, isLoaded]);
 
   const deferredSemesters = useDeferredValue(semesters);

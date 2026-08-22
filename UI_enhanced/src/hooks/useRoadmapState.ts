@@ -27,6 +27,7 @@ export interface RetakeItem {
 export interface InitialRoadmapData {
   gpa: number;
   credits: number;
+  totalPoints?: number;
   targetGPA?: number;
   remainingCredits?: number;
   pendingRetakes?: RetakeItem[];
@@ -35,6 +36,7 @@ export interface InitialRoadmapData {
 export interface RoadmapState {
   currentGPA: number;
   currentCredits: number;
+  exactPoints?: number;
   targetGPA: number;
   remainingCredits: number;
   retakes: RetakeItem[];
@@ -84,6 +86,9 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
   const [currentCredits, setCurrentCredits] = useState<number>(
     initialData?.credits ?? saved?.currentCredits ?? 0
   );
+  const [exactPoints, setExactPoints] = useState<number | undefined>(
+    initialData?.totalPoints ?? saved?.exactPoints ?? undefined
+  );
   const [targetGPA, setTargetGPA] = useState<number>(saved?.targetGPA ?? 0);
   const [remainingCredits, setRemainingCredits] = useState<number>(
     initialData?.remainingCredits ?? saved?.remainingCredits ?? 0
@@ -98,10 +103,13 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
 
   useEffect(() => {
     if (!isLoaded) return;
-    localStorage.setItem(ROADMAP_STORAGE_KEY, JSON.stringify({
-      currentGPA, currentCredits, targetGPA, remainingCredits, retakes,
-    }));
-  }, [isLoaded, currentGPA, currentCredits, targetGPA, remainingCredits, retakes]);
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem(ROADMAP_STORAGE_KEY, JSON.stringify({
+        currentGPA, currentCredits, exactPoints, targetGPA, remainingCredits, retakes,
+      }));
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [isLoaded, currentGPA, currentCredits, exactPoints, targetGPA, remainingCredits, retakes]);
 
   // Listen for manual data changes
   useEffect(() => {
@@ -118,6 +126,9 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
     if (!initialData) return;
     setCurrentGPA(initialData.gpa);
     setCurrentCredits(initialData.credits);
+    if (initialData.totalPoints !== undefined) {
+      setExactPoints(initialData.totalPoints);
+    }
     setRemainingCredits(initialData.remainingCredits || 0);
     setRetakes(initialData.pendingRetakes || []);
     
@@ -130,21 +141,32 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
     }
   }, [initialData]);
 
+  const handleSetCurrentGPA = useCallback((v: number) => {
+    setCurrentGPA(v);
+    setExactPoints(undefined);
+  }, []);
+
+  const handleSetCurrentCredits = useCallback((v: number) => {
+    setCurrentCredits(v);
+    setExactPoints(undefined);
+  }, []);
+
   const result = useMemo(
-    () => calculateTargetResult(currentGPA, currentCredits, targetGPA, remainingCredits, retakes),
-    [currentGPA, currentCredits, targetGPA, remainingCredits, retakes]
+    () => calculateTargetResult(currentGPA, currentCredits, targetGPA, remainingCredits, retakes, exactPoints),
+    [currentGPA, currentCredits, targetGPA, remainingCredits, retakes, exactPoints]
   );
 
   const maxPossibleGPA = useMemo(() => {
     if (!result || result.totalFutureCredits === 0) return currentGPA;
     const pointsToReplace = retakes.reduce((acc, r) => acc + r.oldGrade * r.credits, 0);
-    const effectiveCurrentPoints = currentGPA * currentCredits - pointsToReplace;
+    const basePoints = (exactPoints !== undefined && exactPoints > 0) ? exactPoints : currentGPA * currentCredits;
+    const effectiveCurrentPoints = basePoints - pointsToReplace;
     const fixedTargetPoints = retakes
       .filter(r => r.targetGrade !== undefined)
       .reduce((acc, r) => acc + r.targetGrade! * r.credits, 0);
     const maxEffortPoints = result.totalEffortCredits * 4.0;
     return (effectiveCurrentPoints + fixedTargetPoints + maxEffortPoints) / result.totalFutureCredits;
-  }, [currentGPA, currentCredits, retakes, result]);
+  }, [currentGPA, currentCredits, retakes, result, exactPoints]);
 
   const combinations = useMemo(() => {
     if (result.requiredGPA > 4.0 || result.requiredGPA <= 0) return [];
@@ -287,6 +309,7 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
       const calcResult = calculateManualGPA(semesters, initialGPA, initialCredits);
       setCurrentGPA(calcResult.gpa);
       setCurrentCredits(calcResult.totalCredits);
+      setExactPoints(calcResult.totalPoints);
       setManualVersion(v => v + 1);
 
       // Sync retakes and remaining credits
@@ -328,6 +351,7 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
       // In case of parsing error, clear the state for safety
       setCurrentGPA(0);
       setCurrentCredits(0);
+      setExactPoints(undefined);
       setTargetGPA(0);
       setRemainingCredits(0);
       setRetakes([]);
@@ -370,12 +394,12 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
   }, [retakes]);
 
   const state: RoadmapState = useMemo(() => ({ 
-    currentGPA, currentCredits, targetGPA, remainingCredits, retakes 
-  }), [currentGPA, currentCredits, targetGPA, remainingCredits, retakes]);
+    currentGPA, currentCredits, exactPoints, targetGPA, remainingCredits, retakes 
+  }), [currentGPA, currentCredits, exactPoints, targetGPA, remainingCredits, retakes]);
 
   const actions: RoadmapActions = useMemo(() => ({
-    setCurrentGPA,
-    setCurrentCredits,
+    setCurrentGPA: handleSetCurrentGPA,
+    setCurrentCredits: handleSetCurrentCredits,
     setTargetGPA,
     setRemainingCredits,
     setTotalGraduationCredits,
@@ -385,7 +409,7 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
     updateRetake,
     addRetakesFromSuggestion,
     toggleRetakeFromManual,
-  }), [setTotalGraduationCredits, syncFromManual, addRetake, removeRetake, updateRetake, addRetakesFromSuggestion, toggleRetakeFromManual]);
+  }), [handleSetCurrentGPA, handleSetCurrentCredits, setTotalGraduationCredits, syncFromManual, addRetake, removeRetake, updateRetake, addRetakesFromSuggestion, toggleRetakeFromManual]);
 
   const computed: RoadmapComputed = useMemo(() => ({
     result,

@@ -17,7 +17,7 @@ import {
   getRecommendedGraduationTarget,
   type GraduationAnalysis 
 } from "@/lib/gpa/graduation-calculator";
-import { GPAResult, Semester } from "@/lib/gpa-engine";
+import { GPAResult, Semester, findGradeInfo } from "@/lib/gpa-engine";
 import { type InitialRoadmapData } from "@/hooks/useRoadmapState";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 
@@ -126,12 +126,37 @@ const GraduationGoalCard = memo(({
   }, [result.gpa, result.totalCredits, targetGPA, totalGradCredits, semesters]);
 
   const handleGoToRoadmap = () => {
+    const manualRetakes: { id: string; oldGrade: number; credits: number; name?: string; targetGrade?: number }[] = [];
+    let manualRemainingCredits = 0;
+
+    if (semesters && semesters.length > 0) {
+      semesters.forEach((sem) => {
+        sem.courses?.forEach((c) => {
+          const isPending = !c.grade || c.grade.trim() === "" || c.grade === "-";
+          if (isPending) {
+            if (c.isRetake) {
+              const gInfo = findGradeInfo(c.oldGrade || "D");
+              manualRetakes.push({
+                id: Math.random().toString(),
+                oldGrade: gInfo?.gpa ?? 1.0,
+                credits: c.credits || 0,
+                name: c.name,
+              });
+            } else {
+              manualRemainingCredits += (c.credits || 0);
+            }
+          }
+        });
+      });
+    }
+
     onSwitchToRoadmap?.({
       gpa: result.gpa,
       credits: result.totalCredits,
+      totalPoints: result.totalPoints,
       targetGPA: targetGPA,
-      remainingCredits: analysis.remainingCredits,
-      pendingRetakes: []
+      remainingCredits: manualRemainingCredits,
+      pendingRetakes: manualRetakes
     });
   };
 
