@@ -1,76 +1,108 @@
 #!/usr/bin/env python3
-"""
-Skill: performance-profiling
-Script: lighthouse_audit.py
-Purpose: Run Lighthouse performance audit on a URL
-Usage: python lighthouse_audit.py https://example.com
-Output: JSON with performance scores
-Note: Requires lighthouse CLI (npm install -g lighthouse)
-"""
-import subprocess
-import json
-import sys
-import os
-import tempfile
+"""Run a Lighthouse audit and enforce configurable quality thresholds."""
+from __future__ import annotations
 
-def run_lighthouse(url: str) -> dict:
-    """Run Lighthouse audit on URL."""
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+from urllib.parse import urlparse
+
+
+def valid_url(value: str) -> str:
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise argparse.ArgumentTypeError("URL must start with http:// or https://")
+    return value
+
+
+def run_lighthouse(url: str, timeout: int = 180) -> dict:
+    executable = shutil.which("lighthouse")
+    if not executable:
+        return {"url": url, "status": "error", "error": "Lighthouse CLI not found", "fix": "npm install -g lighthouse"}
+
+    output_path: Path | None = None
     try:
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
-            output_path = f.name
-        
-        result = subprocess.run(
+        fd, raw_path = tempfile.mkstemp(prefix="agkit-lighthouse-", suffix=".json")
+        os.close(fd)
+        output_path = Path(raw_path)
+        proc = subprocess.run(
             [
-                "lighthouse",
+                executable,
                 url,
                 "--output=json",
                 f"--output-path={output_path}",
-                "--chrome-flags=--headless",
-                "--only-categories=performance,accessibility,best-practices,seo"
+                "--chrome-flags=--headless --no-sandbox --disable-dev-shm-usage",
+                "--only-categories=performance,accessibility,best-practices,seo",
+                "--quiet",
             ],
             capture_output=True,
             text=True,
-            timeout=120
+            timeout=timeout,
+            check=False,
         )
-        
-        if os.path.exists(output_path):
-            with open(output_path, 'r') as f:
-                report = json.load(f)
-            os.unlink(output_path)
-            
-            categories = report.get("categories", {})
-            return {
-                "url": url,
-                "scores": {
-                    "performance": int(categories.get("performance", {}).get("score", 0) * 100),
-                    "accessibility": int(categories.get("accessibility", {}).get("score", 0) * 100),
-                    "best_practices": int(categories.get("best-practices", {}).get("score", 0) * 100),
-                    "seo": int(categories.get("seo", {}).get("score", 0) * 100)
-                },
-                "summary": get_summary(categories)
-            }
-        else:
-            return {"error": "Lighthouse failed to generate report", "stderr": result.stderr[:500]}
-            
+        if proc.returncode != 0 and (not output_path.exists() or output_path.stat().st_size == 0):
+            return {"url": url, "status": "error", "error": "Lighthouse execution failed", "stderr": proc.stderr[-1200:]}
+        report = json.loads(output_path.read_text("utf-8"))
+        categories = report.get("categories", {})
+        scores = {
+            "performance": round(float(categories.get("performance", {}).get("score") or 0) * 100),
+            "accessibility": round(float(categories.get("accessibility", {}).get("score") or 0) * 100),
+            "best_practices": round(float(categories.get("best-practices", {}).get("score") or 0) * 100),
+            "seo": round(float(categories.get("seo", {}).get("score") or 0) * 100),
+        }
+        audits = report.get("audits", {})
+        metrics = {}
+        for key, label in (
+            ("largest-contentful-paint", "lcp_ms"),
+            ("cumulative-layout-shift", "cls"),
+            ("interaction-to-next-paint", "inp_ms"),
+            ("total-blocking-time", "tbt_ms"),
+        ):
+            value = audits.get(key, {}).get("numericValue")
+            if value is not None:
+                metrics[label] = round(float(value), 3)
+        return {"url": url, "status": "success", "scores": scores, "metrics": metrics}
     except subprocess.TimeoutExpired:
-        return {"error": "Lighthouse audit timed out"}
-    except FileNotFoundError:
-        return {"error": "Lighthouse CLI not found. Install with: npm install -g lighthouse"}
+        return {"url": url, "status": "error", "error": f"Lighthouse timed out after {timeout}s"}
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        return {"url": url, "status": "error", "error": str(exc)}
+    finally:
+        if output_path:
+            output_path.unlink(missing_ok=True)
 
-def get_summary(categories: dict) -> str:
-    """Generate summary based on scores."""
-    perf = categories.get("performance", {}).get("score", 0) * 100
-    if perf >= 90:
-        return "[OK] Excellent performance"
-    elif perf >= 50:
-        return "[!] Needs improvement"
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Run Lighthouse and enforce score thresholds")
+    parser.add_argument("url", type=valid_url)
+    parser.add_argument("--min-performance", type=int, default=50)
+    parser.add_argument("--min-accessibility", type=int, default=80)
+    parser.add_argument("--min-best-practices", type=int, default=80)
+    parser.add_argument("--min-seo", type=int, default=80)
+    parser.add_argument("--timeout", type=int, default=180)
+    args = parser.parse_args()
+
+    result = run_lighthouse(args.url, args.timeout)
+    thresholds = {
+        "performance": args.min_performance,
+        "accessibility": args.min_accessibility,
+        "best_practices": args.min_best_practices,
+        "seo": args.min_seo,
+    }
+    failures = []
+    if result.get("status") == "success":
+        failures = [name for name, minimum in thresholds.items() if result["scores"].get(name, 0) < minimum]
+        result["thresholds"] = thresholds
+        result["failed_thresholds"] = failures
+        result["passed"] = not failures
     else:
-        return "[X] Poor performance"
+        result["passed"] = False
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0 if result["passed"] else 1
+
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: python lighthouse_audit.py <url>"}))
-        sys.exit(1)
-    
-    result = run_lighthouse(sys.argv[1])
-    print(json.dumps(result, indent=2))
+    raise SystemExit(main())

@@ -3,6 +3,7 @@ name: api-patterns
 description: API design principles and decision-making. REST vs GraphQL vs tRPC selection, response formats, versioning, pagination.
 when_to_use: "When designing REST/GraphQL/tRPC APIs, defining response formats, versioning, pagination, or API authentication. NOT for UI/frontend work."
 allowed-tools: Read, Write, Edit, Glob, Grep
+version: 1.0.0
 ---
 
 # API Patterns

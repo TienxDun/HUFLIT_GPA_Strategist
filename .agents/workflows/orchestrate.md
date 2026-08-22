@@ -1,5 +1,10 @@
 ---
+name: orchestrate
 description: Coordinate multiple agents for complex tasks. Use for multi-perspective analysis, comprehensive reviews, or tasks requiring different domain expertise.
+version: 1.0.0
+requires_agents: orchestrator
+requires_skills: parallel-agents, coordinator-mode
+artifact_outputs: task-graph, coordination-status, final-synthesis
 ---
 
 # Multi-Agent Orchestration

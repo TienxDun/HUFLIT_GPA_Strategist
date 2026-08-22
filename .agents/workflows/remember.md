@@ -1,5 +1,10 @@
 ---
+name: remember
 description: Save information to persistent memory for cross-session recall. Stores preferences, conventions, decisions, and context.
+version: 1.0.0
+requires_agents: orchestrator
+requires_skills: memory-system
+artifact_outputs: memory-entry
 ---
 
 # /remember — Persistent Memory Management

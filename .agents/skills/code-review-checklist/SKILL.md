@@ -3,6 +3,7 @@ name: code-review-checklist
 description: Code review guidelines covering code quality, security, and best practices.
 when_to_use: "When reviewing code for quality, security, and best practices. When the user says 'review my code' or 'check this PR'."
 allowed-tools: Read, Glob, Grep
+version: 1.0.0
 ---
 
 # Code Review Checklist

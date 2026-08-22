@@ -30,31 +30,35 @@ const CourseRow = memo(({
   onUpdate,
   onRemove,
 }: CourseRowProps) => {
+  const hasNoGrade = !course.grade || course.grade.trim() === "" || course.grade === "-";
+
   return (
     <TableRow className="hover:bg-slate-50/80 group transition-colors border-b border-slate-200 last:border-0">
       <TableCell className="ps-2 sm:ps-5 py-1.5">
+        <div className="flex flex-col justify-center">
           <Input
             placeholder="Tên môn học..."
             value={course.name}
             onChange={(e) => onUpdate(sIdx, cIdx, "name", e.target.value)}
-            className="bg-white border-slate-300 h-8 text-[10px] md:text-[13px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+            className="bg-white border-slate-300 h-8 text-[10px] md:text-[13px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
             aria-label="Tên môn học"
           />
           {course.equivalentName && (
-            <span className="text-[9px] md:text-[10px] text-slate-400 block mt-0.5 italic font-medium">
+            <span className="text-[9px] md:text-[10px] text-slate-400 italic font-medium mt-0.5">
               Tương đương: {course.equivalentName} {course.equivalentCode ? `(${course.equivalentCode})` : ""}
             </span>
           )}
+        </div>
       </TableCell>
       <TableCell className="text-center py-1.5">
-          <Input
-            type="number"
-            min="1"
-            value={course.credits}
-            onChange={(e) => onUpdate(sIdx, cIdx, "credits", parseInt(e.target.value) || 0)}
-            className="bg-white border-slate-300 h-8 text-sm text-center font-semibold focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-            aria-label="Số tín chỉ"
-          />
+        <Input
+          type="number"
+          min="1"
+          value={course.credits}
+          onChange={(e) => onUpdate(sIdx, cIdx, "credits", parseInt(e.target.value) || 0)}
+          className="bg-white border-slate-300 h-8 text-sm text-center font-semibold focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+          aria-label="Số tín chỉ"
+        />
       </TableCell>
       <TableCell className="text-center py-1.5 px-1">
         <Select
@@ -62,8 +66,13 @@ const CourseRow = memo(({
           onValueChange={(val) => onUpdate(sIdx, cIdx, "grade", val)}
         >
           <SelectTrigger 
-            className="bg-white border-slate-300 h-8 w-14 sm:w-20 text-sm font-bold text-blue-600 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm mx-auto cursor-pointer px-1"
+            className={`h-8 w-14 sm:w-20 text-xs sm:text-sm font-bold transition-all shadow-xs mx-auto cursor-pointer px-1 ${
+              hasNoGrade
+                ? "bg-amber-50 border-amber-400 text-amber-600 font-black ring-2 ring-amber-400/25 hover:bg-amber-100/70 hover:border-amber-500"
+                : "bg-white border-slate-300 text-blue-600 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            }`}
             aria-label="Chọn điểm chữ"
+            title={hasNoGrade ? "Chưa có điểm môn này" : `Điểm: ${course.grade}`}
           >
             <SelectValue placeholder="-" />
           </SelectTrigger>

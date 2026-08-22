@@ -1,5 +1,10 @@
 ---
+name: status
 description: Display agent and project status. Progress tracking and status board.
+version: 1.0.0
+requires_agents: orchestrator
+requires_skills: context-compression, memory-system
+artifact_outputs: status-report
 ---
 
 # /status - Show Status

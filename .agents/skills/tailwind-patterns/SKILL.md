@@ -3,6 +3,7 @@ name: tailwind-patterns
 description: Tailwind CSS v4 principles. CSS-first configuration, container queries, modern patterns, design token architecture.
 when_to_use: "When using Tailwind CSS v4, implementing design tokens, container queries, or modern CSS patterns with Tailwind."
 allowed-tools: Read, Write, Edit, Glob, Grep
+version: 1.0.0
 ---
 
 # Tailwind CSS Patterns (v4)

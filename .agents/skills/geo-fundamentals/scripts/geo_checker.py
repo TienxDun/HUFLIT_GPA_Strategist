@@ -16,6 +16,7 @@ WHAT IT CHECKS:
 Usage:
     python geo_checker.py <project_path>
 """
+from __future__ import annotations
 import sys
 import re
 import json
@@ -29,194 +30,177 @@ except AttributeError:
     pass
 
 
-# Directories to skip (not public content)
+# Directories that never represent public source content.
 SKIP_DIRS = {
-    'node_modules', '.next', 'dist', 'build', '.git', '.github',
-    '__pycache__', '.vscode', '.idea', 'coverage', 'test', 'tests',
-    '__tests__', 'spec', 'docs', 'documentation'
+    "node_modules", ".next", "dist", "build", ".git", ".github",
+    ".agents", "__pycache__", ".vscode", ".idea", "coverage",
+    "test", "tests", "__tests__", "spec", "public", "components",
 }
 
-# Files to skip (not public pages)
-SKIP_FILES = {
-    'jest.config', 'webpack.config', 'vite.config', 'tsconfig',
-    'package.json', 'package-lock', 'yarn.lock', '.eslintrc',
-    'tailwind.config', 'postcss.config', 'next.config'
-}
+PAGE_SUFFIXES = {".html", ".htm", ".jsx", ".tsx"}
+ARTICLE_SEGMENTS = {"blog", "blogs", "article", "articles", "post", "posts", "news"}
+
+
+def _lower_parts(file_path: Path) -> list[str]:
+    return [part.lower() for part in file_path.parts]
 
 
 def is_page_file(file_path: Path) -> bool:
-    """Check if this file is likely a public-facing page."""
+    """Return True only for route entry points, not layouts or components."""
+    if file_path.suffix.lower() not in PAGE_SUFFIXES:
+        return False
+    parts = _lower_parts(file_path)
+    if any(part in SKIP_DIRS for part in parts):
+        return False
+    if file_path.suffix.lower() in {".html", ".htm"}:
+        return True
+
     name = file_path.stem.lower()
-    
-    # Skip config/utility files
-    if any(skip in name for skip in SKIP_FILES):
+    if name.endswith((".test", ".spec")) or name.startswith(("test_", "spec_")):
         return False
-    
-    # Skip test files
-    if name.endswith('.test') or name.endswith('.spec'):
-        return False
-    if name.startswith('test_') or name.startswith('spec_'):
-        return False
-    
-    # Likely page indicators
-    page_indicators = ['page', 'index', 'home', 'about', 'contact', 'blog', 
-                       'post', 'article', 'product', 'service', 'landing']
-    
-    # Check if it's in a pages/app directory (Next.js, etc.)
-    parts = [p.lower() for p in file_path.parts]
-    if 'pages' in parts or 'app' in parts or 'routes' in parts:
+
+    # Next.js App Router: only page.tsx/page.jsx is a public route entry.
+    if "app" in parts:
+        return name == "page"
+
+    # Next.js Pages Router: each source file is a route except framework/API files.
+    if "pages" in parts:
+        pages_index = parts.index("pages")
+        route_parts = parts[pages_index + 1 :]
+        if "api" in route_parts or name.startswith("_"):
+            return False
         return True
-    
-    # Check filename indicators
-    if any(ind in name for ind in page_indicators):
-        return True
-    
-    # HTML files are usually pages
-    if file_path.suffix.lower() == '.html':
-        return True
-    
-    return False
+
+    # Other routers commonly use explicit page/index route entries.
+    return "routes" in parts and name in {"page", "index"}
 
 
-def find_web_pages(project_path: Path) -> list:
-    """Find public-facing web pages only."""
-    patterns = ['**/*.html', '**/*.htm', '**/*.jsx', '**/*.tsx']
-    
+def find_web_pages(project_path: Path) -> list[Path]:
+    """Find public-facing route source files deterministically."""
     files = []
-    for pattern in patterns:
-        for f in project_path.glob(pattern):
-            # Skip excluded directories
-            if any(skip in f.parts for skip in SKIP_DIRS):
+    for suffix in PAGE_SUFFIXES:
+        for file_path in project_path.rglob(f"*{suffix}"):
+            if is_page_file(file_path):
+                files.append(file_path)
+    return sorted(set(files), key=lambda item: item.as_posix())[:100]
+
+
+def _read_route_content(file_path: Path) -> str:
+    """Read a route and its directly imported local content modules.
+
+    Next.js route entries often delegate all visible markup to content.tsx or
+    localized MDX files. Static analysis must follow those imports or it scores
+    a thin wrapper instead of the page users and crawlers receive.
+    """
+    content = file_path.read_text(encoding="utf-8", errors="ignore")
+    import_paths = re.findall(r"(?:import|from)\s+(?:[^'\"]+?\s+from\s+)?['\"](\.{1,2}/[^'\"]+)['\"]", content)
+    extensions = ("", ".tsx", ".ts", ".jsx", ".js", ".mdx", ".md")
+    seen = {file_path.resolve()}
+    resolved_imports = []
+    for import_path in import_paths:
+        base = (file_path.parent / import_path).resolve()
+        candidates = [Path(f"{base}{extension}") for extension in extensions]
+        candidates.extend(base / f"index{extension}" for extension in extensions[1:])
+        for candidate in candidates:
+            if not candidate.is_file() or candidate.resolve() in seen:
                 continue
-            
-            # Check if it's likely a page
-            if is_page_file(f):
-                files.append(f)
-    
-    return files[:30]  # Limit to 30 pages
+            seen.add(candidate.resolve())
+            resolved_imports.append(candidate)
+            break
+
+    # A localized wrapper renders one locale at a time. Analyze the canonical
+    # English source rather than concatenating four mutually exclusive H1s.
+    canonical_locale = [item for item in resolved_imports if ".en." in item.name.lower()]
+    selected = canonical_locale or resolved_imports
+    chunks = [content]
+    chunks.extend(item.read_text(encoding="utf-8", errors="ignore") for item in selected)
+    return "\n".join(chunks)
 
 
-def check_page(file_path: Path) -> dict:
-    """Check a single web page for GEO elements."""
+def check_page(file_path: Path, project_path: Path | None = None) -> dict:
+    """Score a route source file without requiring article metadata on product docs."""
     try:
-        content = file_path.read_text(encoding='utf-8', errors='ignore')
-    except Exception as e:
-        return {'file': str(file_path.name), 'passed': [], 'issues': [f"Error: {e}"], 'score': 0}
-    
+        content = _read_route_content(file_path)
+    except Exception as exc:
+        return {"file": str(file_path), "passed": [], "issues": [f"Error: {exc}"], "score": 0}
+
     issues = []
     passed = []
-    
-    # 1. JSON-LD Structured Data (Critical for AI)
-    if 'application/ld+json' in content:
-        passed.append("JSON-LD structured data found")
-        if '"@type"' in content:
-            if 'Article' in content:
-                passed.append("Article schema present")
-            if 'FAQPage' in content:
-                passed.append("FAQ schema present")
-            if 'Organization' in content or 'Person' in content:
-                passed.append("Entity schema present")
-    else:
-        issues.append("No JSON-LD structured data (AI engines prefer structured content)")
-    
-    # 2. Heading Structure
-    h1_count = len(re.findall(r'<h1[^>]*>', content, re.I))
-    h2_count = len(re.findall(r'<h2[^>]*>', content, re.I))
-    
+    optional_points = 0
+    lower_content = content.lower()
+    parts = set(_lower_parts(file_path))
+    is_article = bool(parts & ARTICLE_SEGMENTS)
+    is_root_landing = file_path.parent.name.lower() == "app"
+
+    heading_content = re.sub(r"```.*?```", "", content, flags=re.S)
+    heading_content = re.sub(r"`(?:\.|[^`])*`", "", heading_content, flags=re.S)
+    h1_count = len(re.findall(r"<h1[^>]*>", heading_content, re.I))
+    h1_count += len(re.findall(r"^#\s+\S", heading_content, re.M))
+    h2_count = len(re.findall(r"<h2[^>]*>", heading_content, re.I))
+    h2_count += len(re.findall(r"^##\s+\S", heading_content, re.M))
+    required_total = 1 if is_root_landing else 2
+    required_passed = 0
+
     if h1_count == 1:
         passed.append("Single H1 heading (clear topic)")
+        required_passed += 1
     elif h1_count == 0:
         issues.append("No H1 heading - page topic unclear")
     else:
         issues.append(f"Multiple H1 headings ({h1_count}) - confusing for AI")
-    
-    if h2_count >= 2:
-        passed.append(f"{h2_count} H2 subheadings (good structure)")
+
+    if not is_root_landing:
+        repeated_heading = h2_count >= 1 and ".map(" in content
+        if h2_count >= 2 or repeated_heading:
+            detail = "dynamic repeated" if repeated_heading and h2_count < 2 else str(h2_count)
+            passed.append(f"{detail} H2 subheadings (good structure)")
+            required_passed += 1
+        else:
+            issues.append("Add at least two H2 subheadings for scannable content")
+
+    if "application/ld+json" in lower_content:
+        passed.append("JSON-LD structured data found")
+        optional_points += 10
+    if re.search(r'"@type"\s*:\s*"(Organization|Person|Brand|Article|FAQPage)"', content, re.I):
+        passed.append("Recognizable schema entity found")
+        optional_points += 5
+
+    author_patterns = ("author", "byline", "written-by", "contributor", 'rel="author"')
+    has_author = any(pattern in lower_content for pattern in author_patterns)
+    date_patterns = ("datepublished", "datemodified", "datetime=", "pubdate", "article:published")
+    has_date = any(pattern in lower_content for pattern in date_patterns)
+    if is_article:
+        required_total += 2
+        if has_author:
+            passed.append("Author attribution found")
+            required_passed += 1
+        else:
+            issues.append("Article has no author attribution")
+        if has_date:
+            passed.append("Publication date found")
+            required_passed += 1
+        else:
+            issues.append("Article has no publication date")
     else:
-        issues.append("Add more H2 subheadings for scannable content")
-    
-    # 3. Author Attribution (E-E-A-T signal)
-    author_patterns = ['author', 'byline', 'written-by', 'contributor', 'rel="author"']
-    has_author = any(p in content.lower() for p in author_patterns)
-    if has_author:
-        passed.append("Author attribution found")
-    else:
-        issues.append("No author info (AI prefers attributed content)")
-    
-    # 4. Publication Date (Freshness signal)
-    date_patterns = ['datePublished', 'dateModified', 'datetime=', 'pubdate', 'article:published']
-    has_date = any(re.search(p, content, re.I) for p in date_patterns)
-    if has_date:
-        passed.append("Publication date found")
-    else:
-        issues.append("No publication date (freshness matters for AI)")
-    
-    # 5. FAQ Section (Highly citable)
-    faq_patterns = [r'<details', r'faq', r'frequently.?asked', r'"FAQPage"']
-    has_faq = any(re.search(p, content, re.I) for p in faq_patterns)
-    if has_faq:
-        passed.append("FAQ section detected (highly citable)")
-    
-    # 6. Lists (Structured content)
-    list_count = len(re.findall(r'<(ul|ol)[^>]*>', content, re.I))
-    if list_count >= 2:
-        passed.append(f"{list_count} lists (structured content)")
-    
-    # 7. Tables (Comparison data)
-    table_count = len(re.findall(r'<table[^>]*>', content, re.I))
-    if table_count >= 1:
-        passed.append(f"{table_count} table(s) (comparison data)")
-    
-    # 8. Entity Recognition (E-E-A-T signal) - NEW 2025
-    entity_patterns = [
-        r'"@type"\s*:\s*"Organization"',
-        r'"@type"\s*:\s*"LocalBusiness"', 
-        r'"@type"\s*:\s*"Brand"',
-        r'itemtype.*schema\.org/(Organization|Person|Brand)',
-        r'rel="author"'
-    ]
-    has_entity = any(re.search(p, content, re.I) for p in entity_patterns)
-    if has_entity:
-        passed.append("Entity/Brand recognition (E-E-A-T)")
-    
-    # 9. Original Statistics/Data (AI citation magnet) - NEW 2025
-    stat_patterns = [
-        r'\d+%',                    # Percentages
-        r'\$[\d,]+',                # Dollar amounts
-        r'study\s+(shows|found)',   # Research citations
-        r'according to',            # Source attribution
-        r'data\s+(shows|reveals)',  # Data-backed claims
-        r'\d+x\s+(faster|better|more)', # Comparison stats
-        r'(million|billion|trillion)', # Large numbers
-    ]
-    stat_matches = sum(1 for p in stat_patterns if re.search(p, content, re.I))
-    if stat_matches >= 2:
-        passed.append("Original statistics/data (citation magnet)")
-    
-    # 10. Conversational/Direct answers - NEW 2025
-    direct_answer_patterns = [
-        r'is defined as',
-        r'refers to',
-        r'means that',
-        r'the answer is',
-        r'in short,',
-        r'simply put,',
-        r'<dfn'
-    ]
-    has_direct = any(re.search(p, content, re.I) for p in direct_answer_patterns)
-    if has_direct:
-        passed.append("Direct answer patterns (LLM-friendly)")
-    
-    # Calculate score
-    total = len(passed) + len(issues)
-    score = (len(passed) / total * 100) if total > 0 else 0
-    
-    return {
-        'file': str(file_path.name),
-        'passed': passed,
-        'issues': issues,
-        'score': round(score)
-    }
+        optional_points += 3 if has_author else 0
+        optional_points += 3 if has_date else 0
+
+    optional_checks = (
+        (r"<details|faq|frequently.?asked|\"FAQPage\"", "FAQ section detected", 5),
+        (r"<(ul|ol)[^>]*>", "Structured list content found", 5),
+        (r"<table[^>]*>", "Comparison table found", 5),
+        (r"\d+%|according to|data\s+(shows|reveals)|\d+x\s+(faster|better|more)", "Data-backed claims found", 5),
+        (r"is defined as|refers to|means that|in short,|simply put,|<dfn", "Direct-answer phrasing found", 5),
+    )
+    for pattern, label, points in optional_checks:
+        if re.search(pattern, content, re.I):
+            passed.append(label)
+            optional_points += points
+
+    base_score = (required_passed / required_total * 70) if required_total else 70
+    score = min(100, round(base_score + min(optional_points, 30)))
+    display = file_path.relative_to(project_path).as_posix() if project_path else file_path.as_posix()
+    return {"file": display, "passed": passed, "issues": issues, "score": score}
 
 
 def main():
@@ -245,7 +229,7 @@ def main():
     # Check each page
     results = []
     for page in pages:
-        result = check_page(page)
+        result = check_page(page, target_path)
         results.append(result)
     
     # Print results

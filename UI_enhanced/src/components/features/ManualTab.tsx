@@ -10,6 +10,7 @@ import { type InitialRoadmapData } from "@/hooks/useRoadmapState";
 import InitialStatsCard from "./manual/InitialStatsCard";
 import PortalImportDialog from "./manual/PortalImportDialog";
 import ManualStats from "./manual/ManualStats";
+import GraduationGoalCard from "./manual/GraduationGoalCard";
 import dynamic from "next/dynamic";
 const ManualChart = dynamic(() => import("./manual/ManualChart"), {
   ssr: false,
@@ -59,7 +60,7 @@ const ManualTab = memo(({ onSwitchToRoadmap }: ManualTabProps) => {
         transition={{ duration: 0.5, delay: 0.1 }}
         className={`lg:col-span-4 order-first z-20 ${
           isFirstTime 
-            ? "flex flex-col space-y-3 h-full" 
+            ? "flex flex-col space-y-2.5 h-full" 
             : "static lg:sticky lg:top-20 space-y-2 h-fit self-start"
         }`}
       >
@@ -78,6 +79,12 @@ const ManualTab = memo(({ onSwitchToRoadmap }: ManualTabProps) => {
           semesters={semesters} 
           onSwitchToRoadmap={onSwitchToRoadmap} 
           className={isFirstTime ? "flex-1" : ""}
+        />
+
+        <GraduationGoalCard
+          result={result}
+          semesters={semesters}
+          onSwitchToRoadmap={onSwitchToRoadmap}
         />
 
         <ManualChart semesterStats={result.semesterStats} />

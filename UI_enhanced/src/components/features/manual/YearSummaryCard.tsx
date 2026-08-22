@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 interface YearSummaryCardProps {
   year: string;
@@ -17,6 +18,8 @@ interface YearSummaryCardProps {
 const YearSummaryCard = memo(({ year, data }: YearSummaryCardProps) => {
   if (!data) return null;
 
+  const yearGPA = data.credits > 0 ? data.points / data.credits : 0;
+
   return (
     <div className="w-full py-4 px-4 bg-transparent border-t border-slate-100">
       <div className="flex flex-col gap-3">
@@ -26,18 +29,40 @@ const YearSummaryCard = memo(({ year, data }: YearSummaryCardProps) => {
         </div>
         
         <div className="grid grid-cols-2 min-[400px]:grid-cols-3 sm:flex sm:flex-wrap items-center gap-x-4 gap-y-3 sm:gap-x-6 sm:gap-y-2">
-          {[
-            { label: "TC Đạt", value: data.passedCredits, color: "text-emerald-600" },
-            { label: "TC Rớt", value: data.failedCredits, color: "text-rose-500" },
-            { label: "GPA Năm", value: (data.points / (data.credits || 1)).toFixed(2), color: "text-slate-900" },
-            { label: "TC Tích lũy", value: data.cumulativeCredits, color: "text-slate-900" },
-            { label: "GPA Tích lũy", value: data.cumulativeGPA.toFixed(2), color: "text-blue-600" }
-          ].map((item, idx) => (
-            <div key={idx} className="flex items-baseline gap-1.5 whitespace-nowrap">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{item.label}</span>
-              <span className={`text-sm font-black ${item.color} tracking-tight`}>{item.value}</span>
-            </div>
-          ))}
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">TC Đạt</span>
+            <span className="text-sm font-black text-emerald-600 tracking-tight">
+              <AnimatedNumber value={data.passedCredits} precision={0} />
+            </span>
+          </div>
+
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">TC Rớt</span>
+            <span className="text-sm font-black text-rose-500 tracking-tight">
+              <AnimatedNumber value={data.failedCredits} precision={0} />
+            </span>
+          </div>
+
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">GPA Năm</span>
+            <span className="text-sm font-black text-slate-900 tracking-tight">
+              <AnimatedNumber value={yearGPA} precision={2} />
+            </span>
+          </div>
+
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">TC Tích lũy</span>
+            <span className="text-sm font-black text-slate-900 tracking-tight">
+              <AnimatedNumber value={data.cumulativeCredits} precision={0} />
+            </span>
+          </div>
+
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">GPA Tích lũy</span>
+            <span className="text-sm font-black text-blue-600 tracking-tight">
+              <AnimatedNumber value={data.cumulativeGPA} precision={2} />
+            </span>
+          </div>
         </div>
       </div>
     </div>

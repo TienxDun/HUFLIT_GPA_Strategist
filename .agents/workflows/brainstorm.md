@@ -1,5 +1,10 @@
 ---
+name: brainstorm
 description: Structured brainstorming for projects and features. Explores multiple options before implementation.
+version: 1.0.0
+requires_agents: project-planner
+requires_skills: brainstorming
+artifact_outputs: discovery-notes, decision-summary
 ---
 
 # /brainstorm - Structured Idea Exploration

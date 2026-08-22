@@ -7,16 +7,38 @@ Based on Vercel Engineering best practices
 
 import os
 import re
-import json
 from pathlib import Path
-from typing import List, Dict, Tuple
+
+SKIP_DIRS = {
+    ".git", ".next", ".agents", "node_modules", "dist", "build",
+    "coverage", "out", ".turbo", ".cache", "vendor",
+}
+
 
 class PerformanceChecker:
     def __init__(self, project_path: str):
-        self.project_path = Path(project_path)
+        self.project_path = Path(project_path).resolve()
         self.issues = []
         self.warnings = []
         self.passed = []
+        self.scan_roots = self._discover_scan_roots()
+
+    def _discover_scan_roots(self):
+        """Prefer actual React source roots over generated or unrelated files."""
+        candidates = []
+        for base in (self.project_path, self.project_path / "web"):
+            package_json = base / "package.json"
+            if not package_json.exists():
+                continue
+            try:
+                package_text = package_json.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if not any(name in package_text for name in ('"next"', '"react"')):
+                continue
+            source = base / "src"
+            candidates.append(source if source.is_dir() else base)
+        return candidates or [self.project_path]
 
     def _iter_files(self, extensions):
         """Yield project files matching the given extensions.
@@ -24,11 +46,17 @@ class PerformanceChecker:
         pathlib.rglob does NOT support brace expansion ('*.{ts,tsx}' matches
         nothing), so we iterate per-extension explicitly.
         """
-        for ext in extensions:
-            for filepath in self.project_path.rglob(f'*.{ext}'):
-                if 'node_modules' in filepath.parts:
-                    continue
-                yield filepath
+        seen = set()
+        for root in self.scan_roots:
+            for ext in extensions:
+                for filepath in root.rglob(f"*.{ext}"):
+                    if any(part in SKIP_DIRS for part in filepath.parts):
+                        continue
+                    resolved = filepath.resolve()
+                    if resolved in seen:
+                        continue
+                    seen.add(resolved)
+                    yield filepath
 
     def check_waterfalls(self):
         """Check for sequential await patterns (Section 1)"""
@@ -62,9 +90,12 @@ class PerformanceChecker:
             try:
                 content = filepath.read_text(encoding='utf-8')
 
-                # Pattern: import from index files or barrel exports
-                barrel_imports = re.findall(r"import.*from\s+['\"](@/.*?)/index['\"]", content)
-                barrel_imports += re.findall(r"import.*from\s+['\"]\.\.?/.*?['\"](?!.*?\.tsx?)", content)
+                # Only explicit /index imports are treated as barrels. Extensionless
+                # relative imports are normal in TypeScript and are not evidence of a barrel.
+                barrel_imports = re.findall(
+                    r"import[^;\n]*from\s+['\"](?:@/|\.{1,2}/)[^'\"]*/index['\"]",
+                    content,
+                )
 
                 if barrel_imports:
                     self.warnings.append({
@@ -226,24 +257,25 @@ class PerformanceChecker:
         self.check_image_optimization()
 
         self.generate_report()
+        return len(self.issues) == 0
 
 
 def main():
-    import sys
+    import argparse
 
-    if len(sys.argv) < 2:
-        print("Usage: python react_performance_checker.py <project_path>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Audit React/Next.js performance patterns")
+    parser.add_argument("project_path", nargs="?", default=".")
+    parser.add_argument("--fail-on-warnings", action="store_true", help="Treat advisory warnings as blocking")
+    args = parser.parse_args()
 
-    project_path = sys.argv[1]
+    if not os.path.isdir(args.project_path):
+        parser.error(f"Path not found: {args.project_path}")
 
-    if not os.path.exists(project_path):
-        print(f"[ERROR] Path not found: {project_path}")
-        sys.exit(1)
-
-    checker = PerformanceChecker(project_path)
-    checker.run()
+    checker = PerformanceChecker(args.project_path)
+    critical_passed = checker.run()
+    passed = critical_passed and (not args.fail_on_warnings or not checker.warnings)
+    return 0 if passed else 1
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

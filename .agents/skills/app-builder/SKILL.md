@@ -3,6 +3,7 @@ name: app-builder
 description: Main application building orchestrator. Creates full-stack applications from natural language requests. Determines project type, selects tech stack, coordinates agents.
 when_to_use: "When creating a new full-stack application from scratch, selecting tech stack, or scaffolding project structure. Use with /create workflow."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+version: 1.0.0
 ---
 
 # App Builder - Application Building Orchestrator

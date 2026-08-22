@@ -1,241 +1,223 @@
 #!/usr/bin/env python3
-"""
-i18n Checker - Detects hardcoded strings and missing translations.
-Scans for untranslated text in React, Vue, and Python files.
-"""
-import sys
-import re
+"""Audit locale completeness and likely user-facing hard-coded strings."""
+from __future__ import annotations
+
+import argparse
 import json
+import re
+import sys
 from pathlib import Path
+from typing import Any
 
-# Fix Windows console encoding for Unicode output
-try:
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-except AttributeError:
-    pass  # Python < 3.7
-
-# Patterns that indicate hardcoded strings (should be translated)
+SKIP_DIRS = {"node_modules", ".git", ".agents", ".agent", "dist", "build", "__pycache__", ".venv", "venv", ".next", "tests", "test", "spec", "specs"}
+CODE_TYPES = {".tsx": "jsx", ".jsx": "jsx", ".ts": "jsx", ".js": "jsx", ".vue": "vue", ".py": "python"}
+I18N_PATTERNS = (
+    re.compile(r"\buseTranslation\s*\("),
+    re.compile(r"\buseTranslations\s*\("),
+    re.compile(r"(?<![\w$])t\s*\(\s*[\"']"),
+    re.compile(r"\$t\s*\("),
+    re.compile(r"\bgettext\s*\("),
+    re.compile(r"(?<!\w)_\s*\(\s*[\"']"),
+    re.compile(r"\bFormattedMessage\b"),
+    re.compile(r"\bi18n\."),
+)
 HARDCODED_PATTERNS = {
-    'jsx': [
-        # Text directly in JSX: <div>Hello World</div>
-        r'>\s*[A-Z][a-zA-Z\s]{3,30}\s*</',
-        # JSX attribute strings: title="Welcome"
-        r'(title|placeholder|label|alt|aria-label)="[A-Z][a-zA-Z\s]{2,}"',
-        # Button/heading text
-        r'<(button|h[1-6]|p|span|label)[^>]*>\s*[A-Z][a-zA-Z\s!?.,]{3,}\s*</',
-    ],
-    'vue': [
-        # Vue template text
-        r'>\s*[A-Z][a-zA-Z\s]{3,30}\s*</',
-        r'(placeholder|label|title)="[A-Z][a-zA-Z\s]{2,}"',
-    ],
-    'python': [
-        # print/raise with string literals
-        r'(print|raise\s+\w+)\s*\(\s*["\'][A-Z][^"\']{5,}["\']',
-        # Flask flash messages
-        r'flash\s*\(\s*["\'][A-Z][^"\']{5,}["\']',
-    ]
+    "jsx": (
+        re.compile(r">\s*([A-Z][A-Za-z][A-Za-z\s!?.,'-]{2,80})\s*</"),
+        re.compile(r"(?:title|placeholder|label|alt|aria-label)=[\"']([A-Z][A-Za-z\s!?.,'-]{2,80})[\"']"),
+    ),
+    "vue": (
+        re.compile(r">\s*([A-Z][A-Za-z][A-Za-z\s!?.,'-]{2,80})\s*</"),
+        re.compile(r"(?:title|placeholder|label|alt|aria-label)=[\"']([A-Z][A-Za-z\s!?.,'-]{2,80})[\"']"),
+    ),
+    "python": (
+        re.compile(r"\bflash\s*\(\s*[\"']([A-Z][^\"']{4,100})[\"']"),
+    ),
 }
 
-# Patterns that indicate proper i18n usage
-I18N_PATTERNS = [
-    r't\(["\']',           # t('key') - react-i18next
-    r'useTranslation',     # React hook
-    r'\$t\(',              # Vue i18n
-    r'_\(["\']',           # Python gettext
-    r'gettext\(',          # Python gettext
-    r'useTranslations',    # next-intl
-    r'FormattedMessage',   # react-intl
-    r'i18n\.',             # Generic i18n
-]
 
-def find_locale_files(project_path: Path) -> list:
-    """Find translation/locale files."""
-    patterns = [
-        "**/locales/**/*.json",
-        "**/translations/**/*.json",
-        "**/lang/**/*.json",
-        "**/i18n/**/*.json",
-        "**/messages/*.json",
-        "**/*.po",  # gettext
-    ]
-    
-    files = []
+def is_skipped(path: Path, root: Path) -> bool:
+    try:
+        rel = path.relative_to(root)
+    except ValueError:
+        rel = path
+    return any(part in SKIP_DIRS for part in rel.parts)
+
+
+def find_locale_files(root: Path) -> list[Path]:
+    patterns = (
+        "**/locales/**/*.json", "**/translations/**/*.json", "**/lang/**/*.json",
+        "**/i18n/**/*.json", "**/messages/*.json", "**/*.po",
+    )
+    found: set[Path] = set()
     for pattern in patterns:
-        files.extend(project_path.glob(pattern))
-    
-    return [f for f in files if 'node_modules' not in str(f)]
+        for path in root.glob(pattern):
+            if path.is_file() and not is_skipped(path, root):
+                found.add(path)
+    return sorted(found)
 
-def check_locale_completeness(locale_files: list) -> dict:
-    """Check if all locales have the same keys."""
-    issues = []
-    passed = []
-    
-    if not locale_files:
-        return {'passed': [], 'issues': ["[!] No locale files found"]}
-    
-    # Group by parent folder (language)
-    locales = {}
-    for f in locale_files:
-        if f.suffix == '.json':
-            try:
-                lang = f.parent.name
-                content = json.loads(f.read_text(encoding='utf-8'))
-                if lang not in locales:
-                    locales[lang] = {}
-                locales[lang][f.stem] = set(flatten_keys(content))
-            except:
-                continue
-    
-    if len(locales) < 2:
-        passed.append(f"[OK] Found {len(locale_files)} locale file(s)")
-        return {'passed': passed, 'issues': issues}
-    
-    passed.append(f"[OK] Found {len(locales)} language(s): {', '.join(locales.keys())}")
-    
-    # Compare keys across locales
-    all_langs = list(locales.keys())
-    base_lang = all_langs[0]
-    
-    for namespace in locales.get(base_lang, {}):
-        base_keys = locales[base_lang].get(namespace, set())
-        
-        for lang in all_langs[1:]:
-            other_keys = locales.get(lang, {}).get(namespace, set())
-            
-            missing = base_keys - other_keys
-            if missing:
-                issues.append(f"[X] {lang}/{namespace}: Missing {len(missing)} keys")
-            
-            extra = other_keys - base_keys
-            if extra:
-                issues.append(f"[!] {lang}/{namespace}: {len(extra)} extra keys")
-    
-    if not issues:
-        passed.append("[OK] All locales have matching keys")
-    
-    return {'passed': passed, 'issues': issues}
 
-def flatten_keys(d, prefix=''):
-    """Flatten nested dict keys."""
-    keys = set()
-    for k, v in d.items():
-        new_key = f"{prefix}.{k}" if prefix else k
-        if isinstance(v, dict):
-            keys.update(flatten_keys(v, new_key))
+def flatten_keys(value: Any, prefix: str = "") -> set[str]:
+    keys: set[str] = set()
+    if not isinstance(value, dict):
+        return keys
+    for key, child in value.items():
+        name = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(child, dict):
+            keys.update(flatten_keys(child, name))
         else:
-            keys.add(new_key)
+            keys.add(name)
     return keys
 
-def check_hardcoded_strings(project_path: Path) -> dict:
-    """Check for hardcoded strings in code files."""
-    issues = []
-    passed = []
-    
-    # Find code files
-    extensions = {
-        '.tsx': 'jsx', '.jsx': 'jsx', '.ts': 'jsx', '.js': 'jsx',
-        '.vue': 'vue',
-        '.py': 'python'
-    }
-    
-    code_files = []
-    for ext in extensions:
-        code_files.extend(project_path.rglob(f"*{ext}"))
-    
-    code_files = [f for f in code_files if not any(x in str(f) for x in 
-                  ['node_modules', '.git', 'dist', 'build', '__pycache__', 'venv', 'test', 'spec'])]
-    
-    if not code_files:
-        return {'passed': ["[!] No code files found"], 'issues': []}
-    
-    files_with_i18n = 0
-    files_with_hardcoded = 0
-    hardcoded_examples = []
-    
-    for file_path in code_files[:50]:  # Limit
-        try:
-            content = file_path.read_text(encoding='utf-8', errors='ignore')
-            ext = file_path.suffix
-            file_type = extensions.get(ext, 'jsx')
-            
-            # Check for i18n usage
-            has_i18n = any(re.search(p, content) for p in I18N_PATTERNS)
-            if has_i18n:
-                files_with_i18n += 1
-            
-            # Check for hardcoded strings
-            patterns = HARDCODED_PATTERNS.get(file_type, [])
-            hardcoded_found = False
-            
-            for pattern in patterns:
-                matches = re.findall(pattern, content)
-                if matches and not has_i18n:
-                    hardcoded_found = True
-                    if len(hardcoded_examples) < 5:
-                        hardcoded_examples.append(f"{file_path.name}: {str(matches[0])[:40]}...")
-            
-            if hardcoded_found:
-                files_with_hardcoded += 1
-                
-        except:
-            continue
-    
-    passed.append(f"[OK] Analyzed {len(code_files)} code files")
-    
-    if files_with_i18n > 0:
-        passed.append(f"[OK] {files_with_i18n} files use i18n")
-    
-    if files_with_hardcoded > 0:
-        issues.append(f"[X] {files_with_hardcoded} files may have hardcoded strings")
-        for ex in hardcoded_examples:
-            issues.append(f"   → {ex}")
-    else:
-        passed.append("[OK] No obvious hardcoded strings detected")
-    
-    return {'passed': passed, 'issues': issues}
 
-def main():
-    target = sys.argv[1] if len(sys.argv) > 1 else "."
-    project_path = Path(target)
-    
-    print("\n" + "=" * 60)
-    print("  i18n CHECKER - Internationalization Audit")
-    print("=" * 60 + "\n")
-    
-    # Check locale files
-    locale_files = find_locale_files(project_path)
-    locale_result = check_locale_completeness(locale_files)
-    
-    # Check hardcoded strings
-    code_result = check_hardcoded_strings(project_path)
-    
-    # Print results
-    print("[LOCALE FILES]")
-    print("-" * 40)
-    for item in locale_result['passed']:
-        print(f"  {item}")
-    for item in locale_result['issues']:
-        print(f"  {item}")
-    
-    print("\n[CODE ANALYSIS]")
-    print("-" * 40)
-    for item in code_result['passed']:
-        print(f"  {item}")
-    for item in code_result['issues']:
-        print(f"  {item}")
-    
-    # Summary
-    critical_issues = sum(1 for i in locale_result['issues'] + code_result['issues'] if i.startswith("[X]"))
-    
-    print("\n" + "=" * 60)
-    if critical_issues == 0:
-        print("[OK] i18n CHECK: PASSED")
-        sys.exit(0)
+def check_locale_completeness(locale_files: list[Path], root: Path) -> dict[str, Any]:
+    if not locale_files:
+        return {"status": "not_applicable", "files": 0, "languages": [], "issues": [], "notes": ["No locale files found."]}
+
+    locales: dict[str, dict[str, set[str]]] = {}
+    issues: list[dict[str, str]] = []
+    for path in locale_files:
+        if path.suffix == ".po":
+            continue
+        try:
+            content = json.loads(path.read_text("utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            issues.append({"severity": "high", "file": path.relative_to(root).as_posix(), "issue": f"Invalid locale JSON: {exc}"})
+            continue
+        language = path.parent.name
+        locales.setdefault(language, {})[path.stem] = flatten_keys(content)
+
+    languages = sorted(locales)
+    if len(languages) >= 2:
+        base = languages[0]
+        namespaces = set().union(*(set(locales[lang]) for lang in languages))
+        for namespace in sorted(namespaces):
+            base_keys = locales[base].get(namespace, set())
+            for language in languages[1:]:
+                keys = locales[language].get(namespace, set())
+                missing = sorted(base_keys - keys)
+                extra = sorted(keys - base_keys)
+                if missing:
+                    issues.append({"severity": "high", "file": f"{language}/{namespace}", "issue": f"Missing {len(missing)} key(s): {', '.join(missing[:8])}"})
+                if extra:
+                    issues.append({"severity": "medium", "file": f"{language}/{namespace}", "issue": f"Has {len(extra)} extra key(s)"})
+
+    return {"status": "checked", "files": len(locale_files), "languages": languages, "issues": issues, "notes": []}
+
+
+def iter_code_files(root: Path):
+    for path in root.rglob("*"):
+        if path.is_file() and path.suffix.lower() in CODE_TYPES and not is_skipped(path, root):
+            yield path
+
+
+def project_uses_i18n(root: Path, code_files: list[Path], locale_files: list[Path]) -> bool:
+    if locale_files:
+        return True
+    package = root / "package.json"
+    if package.is_file():
+        try:
+            text = package.read_text("utf-8").lower()
+            if any(name in text for name in ("i18next", "next-intl", "react-intl", "vue-i18n", "@lingui")):
+                return True
+        except OSError:
+            pass
+    for path in code_files[:200]:
+        try:
+            content = path.read_text("utf-8", errors="ignore")
+        except OSError:
+            continue
+        if any(pattern.search(content) for pattern in I18N_PATTERNS):
+            return True
+    return False
+
+
+def check_hardcoded_strings(root: Path, code_files: list[Path], enforce: bool) -> dict[str, Any]:
+    if not enforce:
+        return {"status": "not_applicable", "files_checked": 0, "files_using_i18n": 0, "issues": [], "notes": ["No i18n framework or locale files detected."]}
+
+    issues: list[dict[str, Any]] = []
+    files_using_i18n = 0
+    checked = 0
+    for path in code_files[:500]:
+        try:
+            content = path.read_text("utf-8", errors="ignore")
+        except OSError:
+            continue
+        checked += 1
+        has_i18n = any(pattern.search(content) for pattern in I18N_PATTERNS)
+        if has_i18n:
+            files_using_i18n += 1
+        if has_i18n:
+            continue
+        file_type = CODE_TYPES[path.suffix.lower()]
+        for pattern in HARDCODED_PATTERNS[file_type]:
+            for match in pattern.finditer(content):
+                value = match.group(1).strip()
+                if value.lower().startswith(("http", "error", "warning")):
+                    continue
+                line = content.count("\n", 0, match.start()) + 1
+                issues.append({
+                    "severity": "medium",
+                    "file": path.relative_to(root).as_posix(),
+                    "line": line,
+                    "issue": "Likely user-facing hard-coded string",
+                    "text": value[:100],
+                })
+                if len(issues) >= 100:
+                    break
+            if len(issues) >= 100:
+                break
+        if len(issues) >= 100:
+            break
+    return {"status": "checked", "files_checked": checked, "files_using_i18n": files_using_i18n, "issues": issues, "notes": []}
+
+
+def audit(root: Path, strict: bool = False) -> dict[str, Any]:
+    locale_files = find_locale_files(root)
+    code_files = list(iter_code_files(root))
+    enforce = strict or project_uses_i18n(root, code_files, locale_files)
+    locale = check_locale_completeness(locale_files, root)
+    code = check_hardcoded_strings(root, code_files, enforce)
+    findings = locale["issues"] + code["issues"]
+    high = sum(item["severity"] == "high" for item in findings)
+    medium = sum(item["severity"] == "medium" for item in findings)
+    return {
+        "project": str(root),
+        "applicable": enforce,
+        "locale_check": locale,
+        "code_check": code,
+        "summary": {"total": len(findings), "high": high, "medium": medium, "passed": high == 0},
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Check locale completeness and likely hard-coded UI strings")
+    parser.add_argument("project", nargs="?", default=".")
+    parser.add_argument("--strict", action="store_true", help="Scan hard-coded strings even when no i18n setup is detected")
+    parser.add_argument("--json", action="store_true", dest="as_json")
+    args = parser.parse_args()
+    root = Path(args.project).resolve()
+    if not root.is_dir():
+        parser.error(f"Project directory does not exist: {root}")
+    report = audit(root, args.strict)
+    if args.as_json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
-        print(f"[X] i18n CHECK: {critical_issues} issues found")
-        sys.exit(1)
+        print(f"i18n Audit: {root}")
+        if not report["applicable"]:
+            print("[SKIP] No i18n framework or locale files detected.")
+        else:
+            locale = report["locale_check"]
+            code = report["code_check"]
+            print(f"Locale files: {locale['files']} | Languages: {', '.join(locale['languages']) or 'unknown'}")
+            print(f"Code files checked: {code['files_checked']} | Files using i18n: {code['files_using_i18n']}")
+            for item in (locale["issues"] + code["issues"])[:30]:
+                line = f":{item['line']}" if "line" in item else ""
+                print(f"[{item['severity'].upper()}] {item['file']}{line} - {item['issue']}")
+            print("[PASS] No blocking i18n issues." if report["summary"]["passed"] else "[FAIL] Blocking i18n issues found.")
+    return 0 if report["summary"]["passed"] else 1
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

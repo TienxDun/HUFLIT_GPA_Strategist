@@ -1,173 +1,123 @@
 #!/usr/bin/env python3
-"""
-Skill: webapp-testing
-Script: playwright_runner.py
-Purpose: Run basic Playwright browser tests
-Usage: python playwright_runner.py <url> [--screenshot]
-Output: JSON with page info, health status, and optional screenshot path
-Note: Requires playwright (pip install playwright && playwright install chromium)
-Screenshots: Saved to system temp directory (auto-cleaned by OS)
-"""
-import sys
-import json
-import os
-import tempfile
-from datetime import datetime
+"""Run a Playwright smoke or lightweight accessibility test against a URL."""
+from __future__ import annotations
 
-# Fix Windows console encoding for Unicode output
-try:
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-except AttributeError:
-    pass  # Python < 3.7
+import argparse
+import json
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import urlparse
 
 try:
     from playwright.sync_api import sync_playwright
-    PLAYWRIGHT_AVAILABLE = True
 except ImportError:
-    PLAYWRIGHT_AVAILABLE = False
+    sync_playwright = None
 
 
-def run_basic_test(url: str, take_screenshot: bool = False) -> dict:
-    """Run basic browser test on URL."""
-    if not PLAYWRIGHT_AVAILABLE:
-        return {
-            "error": "Playwright not installed",
-            "fix": "pip install playwright && playwright install chromium"
-        }
-    
-    result = {
-        "url": url,
-        "timestamp": datetime.now().isoformat(),
-        "status": "pending"
-    }
-    
+def valid_url(value: str) -> str:
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise argparse.ArgumentTypeError("URL must start with http:// or https://")
+    return value
+
+
+def run_test(url: str, screenshot: bool, accessibility_only: bool, timeout_ms: int) -> dict:
+    if sync_playwright is None:
+        return {"url": url, "status": "error", "error": "Playwright is not installed", "fix": "pip install playwright && playwright install chromium"}
+
+    result = {"url": url, "timestamp": datetime.now(timezone.utc).isoformat(), "status": "pending"}
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(
-                viewport={"width": 1280, "height": 720},
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            )
+        with sync_playwright() as runtime:
+            browser = runtime.chromium.launch(headless=True)
+            context = browser.new_context(viewport={"width": 1280, "height": 720})
             page = context.new_page()
-            
-            # Navigate
-            response = page.goto(url, wait_until="networkidle", timeout=30000)
-            
-            # Basic info
-            result["page"] = {
-                "title": page.title(),
-                "url": page.url,
-                "status_code": response.status if response else None
-            }
-            
-            # Health checks
-            result["health"] = {
-                "loaded": response.ok if response else False,
-                "has_title": bool(page.title()),
-                "has_h1": page.locator("h1").count() > 0,
-                "has_links": page.locator("a").count() > 0,
-                "has_images": page.locator("img").count() > 0
-            }
-            
-            # Console errors
-            console_errors = []
-            page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
-            
-            # Performance metrics
-            result["performance"] = {
-                "dom_content_loaded": page.evaluate("window.performance.timing.domContentLoadedEventEnd - window.performance.timing.navigationStart"),
-                "load_complete": page.evaluate("window.performance.timing.loadEventEnd - window.performance.timing.navigationStart")
-            }
-            
-            # Screenshot - uses system temp directory (cross-platform, auto-cleaned)
-            if take_screenshot:
-                # Cross-platform: Windows=%TEMP%, Linux/macOS=/tmp
-                screenshot_dir = os.path.join(tempfile.gettempdir(), "maestro_screenshots")
-                os.makedirs(screenshot_dir, exist_ok=True)
-                screenshot_path = os.path.join(screenshot_dir, f"screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-                page.screenshot(path=screenshot_path, full_page=True)
-                result["screenshot"] = screenshot_path
-                result["screenshot_note"] = "Saved to temp directory (auto-cleaned by OS)"
-            
-            # Element counts
-            result["elements"] = {
-                "links": page.locator("a").count(),
-                "buttons": page.locator("button").count(),
-                "inputs": page.locator("input").count(),
-                "images": page.locator("img").count(),
-                "forms": page.locator("form").count()
-            }
-            
-            browser.close()
-            
-            result["status"] = "success" if result["health"]["loaded"] else "failed"
-            result["summary"] = "[OK] Page loaded successfully" if result["status"] == "success" else "[X] Page failed to load"
-            
-    except Exception as e:
-        result["status"] = "error"
-        result["error"] = str(e)
-        result["summary"] = f"[X] Error: {str(e)[:100]}"
-    
-    return result
+            console_errors: list[str] = []
+            page_errors: list[str] = []
+            page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
+            page.on("pageerror", lambda error: page_errors.append(str(error)))
 
+            response = page.goto(url, wait_until="networkidle", timeout=timeout_ms)
+            status_code = response.status if response else None
+            title = page.title()
 
-def run_accessibility_check(url: str) -> dict:
-    """Run basic accessibility check."""
-    if not PLAYWRIGHT_AVAILABLE:
-        return {"error": "Playwright not installed"}
-    
-    result = {"url": url, "accessibility": {}}
-    
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto(url, wait_until="networkidle", timeout=30000)
-            
-            # Basic a11y checks
-            result["accessibility"] = {
-                "images_with_alt": page.locator("img[alt]").count(),
-                "images_without_alt": page.locator("img:not([alt])").count(),
-                "buttons_with_label": page.locator("button[aria-label], button:has-text('')").count(),
-                "links_with_text": page.locator("a:has-text('')").count(),
-                "form_labels": page.locator("label").count(),
-                "headings": {
-                    "h1": page.locator("h1").count(),
-                    "h2": page.locator("h2").count(),
-                    "h3": page.locator("h3").count()
+            accessibility = page.evaluate(
+                """() => {
+                    const text = (el) => (el.innerText || el.textContent || '').trim();
+                    const interactive = [...document.querySelectorAll('button, a[href], input, select, textarea')];
+                    return {
+                        images_total: document.querySelectorAll('img').length,
+                        images_without_alt: document.querySelectorAll('img:not([alt])').length,
+                        buttons_without_name: [...document.querySelectorAll('button')].filter(el => !text(el) && !el.getAttribute('aria-label') && !el.getAttribute('title')).length,
+                        links_without_name: [...document.querySelectorAll('a[href]')].filter(el => !text(el) && !el.getAttribute('aria-label') && !el.getAttribute('title')).length,
+                        inputs_without_label: [...document.querySelectorAll('input:not([type=hidden]), select, textarea')].filter(el => {
+                            const id = el.id;
+                            return !el.getAttribute('aria-label') && !el.getAttribute('aria-labelledby') && !(id && document.querySelector(`label[for="${CSS.escape(id)}"]`)) && !el.closest('label');
+                        }).length,
+                        h1_count: document.querySelectorAll('h1').length,
+                        interactive_count: interactive.length,
+                    };
+                }"""
+            )
+
+            result.update({
+                "page": {"title": title, "final_url": page.url, "status_code": status_code},
+                "accessibility": accessibility,
+                "console_errors": console_errors[:20],
+                "page_errors": page_errors[:20],
+            })
+
+            if not accessibility_only:
+                navigation = page.evaluate(
+                    """() => {
+                        const entry = performance.getEntriesByType('navigation')[0];
+                        if (!entry) return {};
+                        return {
+                            dom_content_loaded_ms: Math.round(entry.domContentLoadedEventEnd),
+                            load_complete_ms: Math.round(entry.loadEventEnd),
+                            response_ms: Math.round(entry.responseEnd),
+                        };
+                    }"""
+                )
+                result["performance"] = navigation
+                result["elements"] = {
+                    "links": page.locator("a").count(),
+                    "buttons": page.locator("button").count(),
+                    "inputs": page.locator("input").count(),
+                    "images": page.locator("img").count(),
+                    "forms": page.locator("form").count(),
                 }
-            }
-            
+
+            if screenshot:
+                screenshot_dir = Path(tempfile.gettempdir()) / "agkit_screenshots"
+                screenshot_dir.mkdir(parents=True, exist_ok=True)
+                screenshot_path = screenshot_dir / f"screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.png"
+                page.screenshot(path=str(screenshot_path), full_page=True)
+                result["screenshot"] = str(screenshot_path)
+
+            context.close()
             browser.close()
-            result["status"] = "success"
-            
-    except Exception as e:
-        result["status"] = "error"
-        result["error"] = str(e)
-    
+
+            blocking_a11y = sum(accessibility[key] for key in ("images_without_alt", "buttons_without_name", "links_without_name", "inputs_without_label"))
+            loaded = status_code is not None and status_code < 400
+            result["passed"] = bool(loaded and title and not page_errors and blocking_a11y == 0)
+            result["status"] = "success" if result["passed"] else "failed"
+    except Exception as exc:
+        result.update({"status": "error", "passed": False, "error": str(exc)})
     return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Run a Playwright smoke test")
+    parser.add_argument("url", type=valid_url)
+    parser.add_argument("--screenshot", action="store_true")
+    parser.add_argument("--a11y", action="store_true", help="Run only lightweight accessibility checks")
+    parser.add_argument("--timeout-ms", type=int, default=30000)
+    args = parser.parse_args()
+    result = run_test(args.url, args.screenshot, args.a11y, args.timeout_ms)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0 if result.get("passed") else 1
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(json.dumps({
-            "error": "Usage: python playwright_runner.py <url> [--screenshot] [--a11y]",
-            "examples": [
-                "python playwright_runner.py https://example.com",
-                "python playwright_runner.py https://example.com --screenshot",
-                "python playwright_runner.py https://example.com --a11y"
-            ]
-        }, indent=2))
-        sys.exit(1)
-    
-    url = sys.argv[1]
-    take_screenshot = "--screenshot" in sys.argv
-    check_a11y = "--a11y" in sys.argv
-    
-    if check_a11y:
-        result = run_accessibility_check(url)
-    else:
-        result = run_basic_test(url, take_screenshot)
-    
-    print(json.dumps(result, indent=2))
+    raise SystemExit(main())

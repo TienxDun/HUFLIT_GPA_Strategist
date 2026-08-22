@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Semester, Course } from "@/lib/gpa-engine";
 import CourseRow from "./CourseRow";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 interface SemesterCardProps {
   sem: Semester;
@@ -125,33 +126,41 @@ const SemesterCard = memo(({
           </div>
 
           {semStats && (
-            <div className="px-1 pt-1.5">
+            <div className="px-1 pt-1.5 pb-2">
               <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-2 grid grid-cols-2 lg:grid-cols-5 gap-2">
                 <div className="flex flex-col items-center justify-center py-0.5">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Tín chỉ đạt</span>
-                  <span className="text-sm font-bold text-emerald-600">{semStats.passedCredits}</span>
+                  <span className="text-sm font-bold text-emerald-600">
+                    <AnimatedNumber value={semStats.passedCredits} precision={0} />
+                  </span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-0.5 border-l border-slate-200/60">
                   <span className={`text-[10px] font-semibold uppercase tracking-wider mb-0.5 ${semStats.failedCredits > 0 ? "text-rose-400" : "text-slate-400"}`}>Tín chỉ rớt</span>
-                  <span className={`text-sm font-bold ${semStats.failedCredits > 0 ? "text-rose-500" : "text-slate-500"}`}>{semStats.failedCredits}</span>
+                  <span className={`text-sm font-bold ${semStats.failedCredits > 0 ? "text-rose-500" : "text-slate-500"}`}>
+                    <AnimatedNumber value={semStats.failedCredits} precision={0} />
+                  </span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-0.5 border-l border-slate-200/60">
                   <span className={`text-[10px] font-semibold uppercase tracking-wider mb-0.5 ${semStats.isWarning ? "text-rose-400" : "text-blue-400"}`}>GPA Học kỳ</span>
-                  <span className={`text-sm font-bold ${semStats.isWarning ? "text-rose-500" : "text-blue-600"}`}>{semStats.gpa.toFixed(2)}</span>
+                  <span className={`text-sm font-bold ${semStats.isWarning ? "text-rose-500" : "text-blue-600"}`}>
+                    <AnimatedNumber value={semStats.gpa} precision={2} />
+                  </span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-0.5 border-l border-slate-200/60">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">TC Tích lũy</span>
-                  <span className="text-sm font-bold text-slate-700">{semStats.cumulativeCredits}</span>
+                  <span className="text-sm font-bold text-slate-700">
+                    <AnimatedNumber value={semStats.cumulativeCredits} precision={0} />
+                  </span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-0.5 bg-blue-600 rounded-xl shadow-md shadow-blue-500/20 col-span-2 lg:col-span-1">
                   <span className="text-[10px] font-semibold text-blue-100/80 uppercase tracking-wider">GPA Tích lũy</span>
-                  <span className="text-sm font-black text-white">{semStats.cumulativeGPA.toFixed(2)}</span>
+                  <span className="text-sm font-black text-white">
+                    <AnimatedNumber value={semStats.cumulativeGPA} precision={2} />
+                  </span>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Year Summary - Pure Minimalism Style */}
         </CardContent>
       </Card>
     </div>

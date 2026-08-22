@@ -1,5 +1,10 @@
 ---
+name: preview
 description: Preview server start, stop, and status check. Local development server management.
+version: 1.0.0
+requires_agents: frontend-specialist
+requires_skills: verify-changes
+artifact_outputs: preview-status, runtime-findings
 ---
 
 # /preview - Preview Management

@@ -1,5 +1,10 @@
 ---
+name: test
 description: Test generation and test running command. Creates and executes tests for code.
+version: 1.0.0
+requires_agents: test-engineer
+requires_skills: testing-patterns, verify-changes
+artifact_outputs: test-report
 ---
 
 # /test - Test Generation and Execution

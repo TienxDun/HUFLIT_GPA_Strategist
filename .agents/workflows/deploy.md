@@ -1,5 +1,10 @@
 ---
+name: deploy
 description: Deployment command for production releases. Pre-flight checks and deployment execution.
+version: 1.0.0
+requires_agents: devops-engineer
+requires_skills: deployment-procedures, verify-changes
+artifact_outputs: deployment-plan, deployment-report, rollback-plan
 ---
 
 # /deploy - Production Deployment

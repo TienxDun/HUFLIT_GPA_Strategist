@@ -3,6 +3,7 @@ name: code-review-graph
 description: Token-efficient code review using Tree-sitter AST graphs and MCP. Cuts AI token usage on large codebases by computing the blast radius of changes instead of reading entire codebases. Uses a SQLite graph database for structural analysis.
 when_to_use: "When reviewing code in large codebases (500+ files), when token costs are high, when making multi-file changes with cross-module dependencies, or when working with monorepos. Also for dead code detection, architecture visualization, and refactoring previews. NOT for small projects under 200 files with isolated single-file changes."
 allowed-tools: Read, Grep, Glob, Bash
+version: 1.0.0
 effort: medium
 ---
 
