@@ -39,12 +39,21 @@ const GraduationGoalCard = memo(({
 }: GraduationGoalCardProps) => {
   const [totalGradCredits, setTotalGradCredits] = useState<number>(DEFAULT_HUFLIT_CREDITS);
   const [targetGPA, setTargetGPA] = useState<number>(3.2);
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => result.totalCredits > 0 || semesters.length > 0);
   const [hasUserChosenTarget, setHasUserChosenTarget] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [customCreditsInput, setCustomCreditsInput] = useState<string>(DEFAULT_HUFLIT_CREDITS.toString());
   
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const prevCreditsRef = useRef(result.totalCredits);
+
+  // Tự động mở khi import bảng điểm hoặc nhập học kỳ/tín chỉ mới
+  useEffect(() => {
+    if (prevCreditsRef.current === 0 && (result.totalCredits > 0 || semesters.length > 0)) {
+      setIsExpanded(true);
+    }
+    prevCreditsRef.current = result.totalCredits;
+  }, [result.totalCredits, semesters.length]);
 
   // Load saved preferences
   useEffect(() => {
@@ -164,21 +173,21 @@ const GraduationGoalCard = memo(({
     <Card className={`ring-0 border border-slate-300 bg-white shadow-xl shadow-blue-500/5 gap-0 py-0 relative ${className || ""}`}>
       {/* Header: Clean & Consistent with other cards */}
       <CardHeader 
-        className="py-3 !pb-3 px-4 border-b border-slate-200 bg-slate-50/50 flex flex-row items-center justify-between space-y-0 select-none cursor-pointer rounded-t-xl"
+        className="py-3 !pb-3 px-4 border-b border-slate-200 bg-slate-50/50 flex flex-row items-center justify-between space-y-0 select-none cursor-pointer rounded-t-xl hover:bg-slate-100/60 transition-colors"
         onClick={() => setIsExpanded(prev => !prev)}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 cursor-pointer">
           <div className="bg-blue-50/50 backdrop-blur-sm p-1.5 rounded-lg border border-blue-100/50 shadow-sm text-blue-600 shrink-0">
             <GraduationCap className="h-4 w-4" />
           </div>
-          <CardTitle className="text-sm text-slate-800 font-bold tracking-tight">
+          <CardTitle className="text-sm text-slate-800 font-bold tracking-tight cursor-pointer">
             Mục tiêu Tốt nghiệp
           </CardTitle>
         </div>
 
         <button 
           type="button"
-          className={`p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+          className={`p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-transform duration-200 cursor-pointer ${isExpanded ? "rotate-180" : ""}`}
           aria-label="Thu gọn hoặc mở rộng"
         >
           <ChevronDown className="h-4 w-4" />
