@@ -246,8 +246,8 @@ const GraduationGoalCard = memo(({
                 <div className="space-y-1.5">
                   {[
                     { value: 130, title: "130 TC", badge: null, desc: "Khối Ngôn ngữ, Du lịch, Luật" },
-                    { value: 135, title: "135 TC", badge: null, desc: "Khối Kinh tế, QTKD (Chuẩn mới)" },
-                    { value: 140, title: "140 TC", badge: null, desc: "Khối CNTT, Kỹ thuật, Khóa cũ" },
+                    { value: 135, title: "135 TC", badge: null, desc: "Khối Kinh tế, QTKD" },
+                    { value: 140, title: "140 TC", badge: null, desc: "Khối CNTT, Kỹ thuật" },
                   ].map((p) => {
                     const isSelected = totalGradCredits === p.value;
                     return (
