@@ -94,8 +94,7 @@ export const AppHeader = memo(({ activeTab, onTabChange }: AppHeaderProps) => {
         </div>
 
         {/* Action Section */}
-        <div className="flex items-center gap-1.5 pr-0.5 shrink-0">
-
+        <div className="flex items-center gap-2 pr-0.5 shrink-0">
           <AuthorInfoDialog>
             <button 
               className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-[1px] shadow-sm active:scale-90 transition-transform cursor-pointer overflow-hidden border-none outline-none"

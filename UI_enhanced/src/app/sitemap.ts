@@ -12,6 +12,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
-    // Nếu sau này bạn có thêm các route tĩnh khác, hãy thêm vào đây
+    {
+      url: `${baseUrl}/study`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
   ];
 }
