@@ -155,16 +155,16 @@ const GraduationGoalCard = memo(({
       credits: result.totalCredits,
       totalPoints: result.totalPoints,
       targetGPA: targetGPA,
-      remainingCredits: manualRemainingCredits,
+      remainingCredits: analysis.remainingCredits,
       pendingRetakes: manualRetakes
     });
   };
 
   return (
-    <Card className={`ring-0 border border-slate-300 bg-white shadow-xl shadow-blue-500/5 py-0 relative ${className || ""}`}>
+    <Card className={`ring-0 border border-slate-300 bg-white shadow-xl shadow-blue-500/5 gap-0 py-0 relative ${className || ""}`}>
       {/* Header: Clean & Consistent with other cards */}
       <CardHeader 
-        className="py-2.5 px-4 border-b border-slate-200 bg-slate-50/50 flex flex-row items-center justify-between space-y-0 select-none cursor-pointer rounded-t-xl"
+        className="py-3 !pb-3 px-4 border-b border-slate-200 bg-slate-50/50 flex flex-row items-center justify-between space-y-0 select-none cursor-pointer rounded-t-xl"
         onClick={() => setIsExpanded(prev => !prev)}
       >
         <div className="flex items-center gap-2.5">
@@ -332,7 +332,7 @@ const GraduationGoalCard = memo(({
           </div>
 
           {/* Row 2: Target Degree Selection Buttons (4 tiers) */}
-          <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+          <div className="grid grid-cols-4 gap-2 pt-0.5">
             {Object.values(GRADUATION_TARGETS).map((t) => {
               const isSelected = Math.abs(targetGPA - t.minGPA) < 0.01;
               return (
@@ -340,7 +340,7 @@ const GraduationGoalCard = memo(({
                   key={t.key}
                   type="button"
                   onClick={() => handleSelectTarget(t.minGPA)}
-                  className={`py-1.5 px-0.5 rounded-xl text-[11px] font-bold transition-all border flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all border flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                     isSelected
                       ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/10 scale-[1.02]"
                       : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50/40"
@@ -356,16 +356,16 @@ const GraduationGoalCard = memo(({
           </div>
 
           {/* Row 3: Metric Dashboard Box */}
-          <div className={`p-3 rounded-2xl border ${
+          <div className={`p-3.5 rounded-2xl border ${
             analysis.status === "NEEDS_RETAKES"
               ? "bg-amber-50/70 border-amber-200"
               : analysis.status === "ALREADY_ACHIEVED"
               ? "bg-emerald-50/70 border-emerald-200"
               : "bg-slate-50/80 border-slate-200"
           }`}>
-            <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-2 gap-3.5 text-xs">
               {/* Col 1: Target GPA & Suggestion */}
-              <div className="space-y-1 border-r border-slate-200/80 pr-2">
+              <div className="space-y-1.5 border-r border-slate-200/80 pr-2.5">
                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
                   GPA CẦN ĐẠT
                 </div>
@@ -392,7 +392,7 @@ const GraduationGoalCard = memo(({
               </div>
 
               {/* Col 2: Remaining Credits & Approx Courses */}
-              <div className="space-y-1 pl-1">
+              <div className="space-y-1.5 pl-1.5">
                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
                   CÒN THIẾU
                 </div>
@@ -422,11 +422,11 @@ const GraduationGoalCard = memo(({
           </div>
 
           {/* Quick link button to Roadmap */}
-          <div className="pt-0.5">
+          <div className="pt-1">
             <Button
               variant="outline"
               onClick={handleGoToRoadmap}
-              className="w-full h-9 rounded-xl font-bold text-xs text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 transition-all active:scale-95 gap-1.5 shadow-sm cursor-pointer"
+              className="w-full h-10 rounded-xl font-bold text-xs text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 transition-all active:scale-95 gap-1.5 shadow-sm cursor-pointer"
             >
               <span>Mở Lộ trình chi tiết</span>
               <ArrowRight className="h-3.5 w-3.5" />

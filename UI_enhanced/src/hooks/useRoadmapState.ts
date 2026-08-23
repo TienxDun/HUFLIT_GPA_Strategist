@@ -129,7 +129,10 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
     if (initialData.totalPoints !== undefined) {
       setExactPoints(initialData.totalPoints);
     }
-    setRemainingCredits(initialData.remainingCredits || 0);
+    const rem = initialData.remainingCredits && initialData.remainingCredits > 0
+      ? initialData.remainingCredits
+      : Math.max(0, 135 - initialData.credits);
+    setRemainingCredits(rem);
     setRetakes(initialData.pendingRetakes || []);
     
     if (initialData.targetGPA !== undefined && initialData.targetGPA > 0) {
@@ -338,14 +341,40 @@ export function useRoadmapState(initialData?: InitialRoadmapData | null) {
         });
       }
       
-      // Always sync to ensure consistency
-      setRetakes(manualRetakes);
-      setRemainingCredits(manualRemainingCredits);
+      // Load saved graduation total credits and target GPA from manual tab if available
+      let gradTotalCredits = 135;
+      try {
+        const savedGradCredits = localStorage.getItem("huflit-manual-grad-total-credits");
+        if (savedGradCredits) {
+          const parsed = parseInt(savedGradCredits, 10);
+          if (!isNaN(parsed) && parsed > 0) gradTotalCredits = parsed;
+        }
+      } catch { }
 
-      // Auto-suggest next target GPA milestone based on new cumulative GPA
-      const milestones = [2.0, 2.5, 3.2, 3.6];
-      const nextTarget = milestones.find(m => m > calcResult.gpa) || 0;
-      setTargetGPA(nextTarget);
+      let savedUserTargetGPA = 0;
+      try {
+        const savedTarget = localStorage.getItem("huflit-manual-grad-target-gpa");
+        if (savedTarget) {
+          const parsed = parseFloat(savedTarget);
+          if (!isNaN(parsed) && parsed > 0) savedUserTargetGPA = parsed;
+        }
+      } catch { }
+
+      // Always sync to ensure consistency
+      const defaultRemaining = manualRemainingCredits > 0
+        ? manualRemainingCredits
+        : Math.max(0, gradTotalCredits - calcResult.totalCredits);
+      setRetakes(manualRetakes);
+      setRemainingCredits(defaultRemaining);
+
+      // Auto-suggest target GPA: prioritize user's saved target or next milestone
+      if (savedUserTargetGPA > 0) {
+        setTargetGPA(savedUserTargetGPA);
+      } else {
+        const milestones = [2.0, 2.5, 3.2, 3.6];
+        const nextTarget = milestones.find(m => m > calcResult.gpa) || 0;
+        setTargetGPA(nextTarget);
+      }
 
     } catch {
       // In case of parsing error, clear the state for safety

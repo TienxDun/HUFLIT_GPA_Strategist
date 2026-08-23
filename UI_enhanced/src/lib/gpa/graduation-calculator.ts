@@ -13,19 +13,12 @@ export const HUFLIT_CREDIT_PRESETS = [130, 135, 140] as const;
 export const DEFAULT_HUFLIT_CREDITS = 135;
 
 export const GRADUATION_TARGETS: Record<string, GraduationTargetOption> = {
-  EXCELLENT: {
-    key: "EXCELLENT",
-    label: "Xuất sắc",
-    minGPA: 3.6,
-    badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    description: "Tốt nghiệp loại Xuất sắc (GPA ≥ 3.60)",
-  },
-  GOOD: {
-    key: "GOOD",
-    label: "Giỏi",
-    minGPA: 3.2,
-    badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
-    description: "Tốt nghiệp loại Giỏi (GPA ≥ 3.20)",
+  AVERAGE: {
+    key: "AVERAGE",
+    label: "T.Bình",
+    minGPA: 2.0,
+    badgeColor: "bg-slate-50 text-slate-700 border-slate-200",
+    description: "Tốt nghiệp loại Trung bình / Chuẩn ra trường (GPA ≥ 2.00)",
   },
   FAIR: {
     key: "FAIR",
@@ -34,12 +27,19 @@ export const GRADUATION_TARGETS: Record<string, GraduationTargetOption> = {
     badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
     description: "Tốt nghiệp loại Khá (GPA ≥ 2.50)",
   },
-  AVERAGE: {
-    key: "AVERAGE",
-    label: "T.Bình",
-    minGPA: 2.0,
-    badgeColor: "bg-slate-50 text-slate-700 border-slate-200",
-    description: "Tốt nghiệp loại Trung bình / Chuẩn ra trường (GPA ≥ 2.00)",
+  GOOD: {
+    key: "GOOD",
+    label: "Giỏi",
+    minGPA: 3.2,
+    badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+    description: "Tốt nghiệp loại Giỏi (GPA ≥ 3.20)",
+  },
+  EXCELLENT: {
+    key: "EXCELLENT",
+    label: "Xuất sắc",
+    minGPA: 3.6,
+    badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    description: "Tốt nghiệp loại Xuất sắc (GPA ≥ 3.60)",
   },
 };
 

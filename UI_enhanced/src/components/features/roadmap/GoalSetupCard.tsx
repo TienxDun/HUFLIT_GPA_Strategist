@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, memo } from "react";
-import { Compass, RefreshCcw, BookOpen, GraduationCap, ChevronDown, ChevronUp } from "lucide-react";
+import { Compass, RefreshCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { RetakeList } from "./RetakeList";
 import type { RoadmapState, RoadmapActions, RoadmapComputed } from "@/hooks/useRoadmapState";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface GoalSetupCardProps {
@@ -349,6 +348,12 @@ const TargetGPAStep = memo(({ targetGPA, onSelect, isExpanded, onToggle }: Targe
   );
 });
 
+const CREDIT_PRESETS = [
+  { value: 130, label: "130 TC" },
+  { value: 135, label: "135 TC" },
+  { value: 140, label: "140 TC" },
+];
+
 interface EffortPlanStepProps {
   currentCredits: number;
   remainingCredits: number;
@@ -360,22 +365,38 @@ interface EffortPlanStepProps {
 
 const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, onRemainingChange, isExpanded, onToggle }: EffortPlanStepProps) => {
   const totalVal = currentCredits + remainingCredits;
-  const [totalStr, setTotalStr] = useState(totalVal === 0 ? "" : totalVal.toString());
-  const [remStr, setRemStr] = useState(remainingCredits === 0 ? "" : remainingCredits.toString());
-  const [isTotalFocused, setIsTotalFocused] = useState(false);
-  const [isRemFocused, setIsRemFocused] = useState(false);
+  const isPresetMatch = CREDIT_PRESETS.some(p => p.value === totalVal);
+  const [mode, setMode] = useState<"preset" | "custom">(isPresetMatch || totalVal >= 120 ? "preset" : "custom");
+  const [customInputStr, setCustomInputStr] = useState(remainingCredits === 0 ? "" : remainingCredits.toString());
+  const [totalCustomStr, setTotalCustomStr] = useState(totalVal === 0 ? "" : totalVal.toString());
+  const [isFocused, setIsFocused] = useState(false);
+  const [isTotalCustomFocused, setIsTotalCustomFocused] = useState(false);
 
   useEffect(() => {
-    if (!isTotalFocused) {
-      if (parseInt(totalStr) !== totalVal) setTotalStr(totalVal === 0 ? "" : totalVal.toString());
+    if (!isFocused) {
+      setCustomInputStr(remainingCredits === 0 ? "" : remainingCredits.toString());
     }
-  }, [totalVal, totalStr, isTotalFocused]);
+  }, [remainingCredits, isFocused]);
 
   useEffect(() => {
-    if (!isRemFocused) {
-      if (parseInt(remStr) !== remainingCredits) setRemStr(remainingCredits === 0 ? "" : remainingCredits.toString());
+    if (!isTotalCustomFocused) {
+      setTotalCustomStr(totalVal === 0 ? "" : totalVal.toString());
     }
-  }, [remainingCredits, remStr, isRemFocused]);
+  }, [totalVal, isTotalCustomFocused]);
+
+  const handleSelectPreset = (total: number) => {
+    onTotalChange(total);
+  };
+
+  const handleCustomChange = (valStr: string) => {
+    setCustomInputStr(valStr);
+    const parsed = parseInt(valStr, 10);
+    if (isNaN(parsed) || parsed < 0) {
+      onRemainingChange(0);
+    } else {
+      onRemainingChange(Math.min(250, parsed));
+    }
+  };
 
   return (
     <div className={`bg-white border border-slate-100 rounded-[1.5rem] shadow-sm relative z-10 transition-all duration-300 overflow-hidden ${isExpanded ? "p-2.5" : "p-2.5"}`}>
@@ -388,7 +409,7 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
             <span className="text-xs font-black">3</span>
           </div>
           <Label className={`text-[11px] font-bold uppercase tracking-wider whitespace-nowrap cursor-pointer transition-colors duration-300 ${isExpanded ? "text-slate-700" : "text-slate-500"}`}>
-            Kế hoạch nỗ lực
+            Tín chỉ dự kiến học
           </Label>
         </div>
         <div className="flex items-center gap-3 shrink-0">
@@ -398,7 +419,7 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
               animate={{ opacity: 1, scale: 1 }}
               className="text-[9px] font-black text-blue-600 bg-blue-50/50 px-2 py-1 rounded-lg border border-blue-100/30 whitespace-nowrap shadow-sm"
             >
-              {remainingCredits} TC CÒN LẠI
+              {remainingCredits} TC CẦN HỌC
             </motion.span>
           )}
           {isExpanded ? <ChevronUp className="h-3 w-3 text-slate-300" /> : <ChevronDown className="h-3 w-3 text-slate-300" />}
@@ -414,85 +435,133 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="bg-slate-50/50 p-2 pt-3.5 rounded-2xl border border-slate-100/50 space-y-3">
-              <Tabs defaultValue="remaining" className="w-full gap-3 flex flex-col">
-                <TabsContent value="total" className="mt-0">
+            <div className="bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100/50 space-y-3">
+              {/* Segmented Mode Switcher (Text only, no icons) */}
+              <div className="grid grid-cols-2 h-7 bg-white rounded-xl p-0.5 border border-slate-200/60 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setMode("preset")}
+                  className={`text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                    mode === "preset"
+                      ? "bg-blue-50 text-blue-700 font-black shadow-2xs border border-blue-200/50"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Theo chuẩn toàn khóa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("custom")}
+                  className={`text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                    mode === "custom"
+                      ? "bg-blue-50 text-blue-700 font-black shadow-2xs border border-blue-200/50"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Tự nhập số tín
+                </button>
+              </div>
+
+              {/* Mode 1: Theo chuẩn toàn khóa (Đồng bộ thị giác 100% với Bước 2) */}
+              {mode === "preset" ? (
+                <div className="space-y-3 pt-1">
+                  {/* Ô số trung tâm */}
                   <div className="relative group">
                     <Input
                       type="number"
-                      min={0}
+                      min={currentCredits}
                       max={300}
-                      value={totalStr}
-                      onFocus={() => setIsTotalFocused(true)}
+                      value={totalCustomStr}
+                      onFocus={() => setIsTotalCustomFocused(true)}
                       onBlur={() => {
-                        setIsTotalFocused(false);
-                        const parsed = parseInt(totalStr);
+                        setIsTotalCustomFocused(false);
+                        const parsed = parseInt(totalCustomStr, 10);
                         if (isNaN(parsed) || parsed < currentCredits) {
-                          onRemainingChange(0);
+                          onTotalChange(currentCredits + (remainingCredits > 0 ? remainingCredits : 0));
                         } else {
-                          onTotalChange(Math.min(300, Math.max(0, parsed)));
+                          onTotalChange(Math.min(300, Math.max(currentCredits, parsed)));
                         }
                       }}
-                      onChange={e => {
+                      onChange={(e) => {
                         const s = e.target.value;
-                        setTotalStr(s);
-                        if (s === "") {
-                          onRemainingChange(0);
-                          return;
-                        }
-                        const val = parseInt(s);
-                        if (!isNaN(val)) {
-                          onRemainingChange(Math.max(0, val - currentCredits));
+                        setTotalCustomStr(s);
+                        const val = parseInt(s, 10);
+                        if (!isNaN(val) && val >= currentCredits) {
+                          onTotalChange(val);
                         }
                       }}
-                      placeholder="Ví dụ: 140"
+                      placeholder="135"
                       className="text-center text-lg font-black text-blue-700 bg-white border-2 border-blue-100 focus:ring-blue-500/20 rounded-xl h-10 shadow-sm transition-all group-hover:border-blue-200"
                     />
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-white px-2.5 py-0.5 rounded-full border border-blue-100 text-[9px] font-black text-blue-600 uppercase tracking-widest whitespace-nowrap pointer-events-none shadow-sm">Tổng tín chỉ toàn khóa</div>
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-white px-2.5 py-0.5 rounded-full border border-blue-100 text-[9px] font-black text-blue-600 uppercase tracking-widest whitespace-nowrap pointer-events-none shadow-xs">
+                      Tổng tín chỉ toàn khóa
+                    </div>
                   </div>
-                </TabsContent>
 
-                <TabsContent value="remaining" className="mt-0">
+                  {/* Dải nút bấm nhanh chuẩn HUFLIT (130 / 135 / 140) */}
+                  <div className="grid grid-cols-3 h-8 bg-white/60 rounded-lg p-0.5 border border-slate-200/60 shadow-2xs">
+                    {CREDIT_PRESETS.map((p) => {
+                      const isSelected = totalVal === p.value;
+                      return (
+                        <button
+                          key={p.value}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTotalCustomStr(p.value.toString());
+                            handleSelectPreset(p.value);
+                          }}
+                          className={`h-full text-[10px] font-black transition-all rounded-md cursor-pointer ${
+                            isSelected
+                              ? "bg-white text-blue-600 shadow-sm border border-blue-100"
+                              : "text-slate-400 hover:text-slate-600 hover:bg-white/40"
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Khung tóm tắt kết quả */}
+                  <div className="py-1.5 px-2.5 bg-white rounded-xl border border-blue-100/60 flex items-center justify-between text-[11px] font-bold text-slate-600 shadow-2xs">
+                    <span>Đã tích lũy: <b className="text-slate-900">{currentCredits} TC</b></span>
+                    <span className="text-slate-300">|</span>
+                    <span>Cần học thêm: <b className="text-blue-600 font-extrabold">{remainingCredits} TC</b></span>
+                  </div>
+                </div>
+              ) : (
+                /* Mode 2: Tự nhập số tín dự kiến (Theo kỳ / năm) */
+                <div className="space-y-2 pt-1">
                   <div className="relative group">
                     <Input
                       type="number"
                       min={0}
                       max={200}
-                      value={remStr}
-                      onFocus={() => setIsRemFocused(true)}
+                      value={customInputStr}
+                      onFocus={() => setIsFocused(true)}
                       onBlur={() => {
-                        setIsRemFocused(false);
-                        const parsed = parseInt(remStr);
+                        setIsFocused(false);
+                        const parsed = parseInt(customInputStr, 10);
                         if (isNaN(parsed)) {
                           onRemainingChange(0);
                         } else {
                           onRemainingChange(Math.min(200, Math.max(0, parsed)));
                         }
                       }}
-                      onChange={e => {
-                        const s = e.target.value;
-                        setRemStr(s);
-                        const val = s === "" ? 0 : parseInt(s);
-                        if (!isNaN(val)) {
-                          onRemainingChange(val);
-                        }
-                      }}
+                      onChange={e => handleCustomChange(e.target.value)}
                       placeholder="Ví dụ: 30"
                       className="text-center text-lg font-black text-blue-700 bg-white border-2 border-blue-100 focus:ring-blue-500/20 rounded-xl h-10 shadow-sm transition-all group-hover:border-blue-200"
                     />
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-white px-2.5 py-0.5 rounded-full border border-blue-100 text-[9px] font-black text-blue-600 uppercase tracking-widest whitespace-nowrap pointer-events-none shadow-sm">Số tín chỉ dự kiến học</div>
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-white px-2.5 py-0.5 rounded-full border border-blue-100 text-[9px] font-black text-blue-600 uppercase tracking-widest whitespace-nowrap pointer-events-none shadow-xs">
+                      Số tín chỉ dự kiến học
+                    </div>
                   </div>
-                </TabsContent>
-
-                <TabsList className="grid w-full grid-cols-2 h-7 bg-white/50 rounded-lg p-0.5 border border-slate-200/50 order-last">
-                  <TabsTrigger value="remaining" className="text-[9px] font-semibold uppercase tracking-tighter rounded-md data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all h-6">
-                    <BookOpen className="h-3 w-3 mr-1.5" /> Còn lại
-                  </TabsTrigger>
-                  <TabsTrigger value="total" className="text-[9px] font-semibold uppercase tracking-tighter rounded-md data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all h-6">
-                    <GraduationCap className="h-3 w-3 mr-1.5" /> Tổng cộng
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+                  <p className="text-[10px] text-slate-400 font-medium text-center leading-tight">
+                    Phù hợp khi lập kế hoạch cho 1 học kỳ (15–20 TC) hoặc 1 năm học
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
