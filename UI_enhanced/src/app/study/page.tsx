@@ -17,7 +17,8 @@ import {
   Timer,
   Keyboard,
   X,
-  Music2
+  Music2,
+  Sliders
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Scene, STUDY_SCENES } from "@/components/study/study-types";
@@ -26,6 +27,7 @@ import { StudyTasksWidget } from "@/components/study/StudyTasksWidget";
 import { StudyNotesWidget } from "@/components/study/StudyNotesWidget";
 import { SceneSelectorWidget } from "@/components/study/SceneSelectorWidget";
 import { StudyPomodoroWidget, TimerTab } from "@/components/study/StudyPomodoroWidget";
+import { StudySettingsModal } from "@/components/study/StudySettingsModal";
 
 export default function StudySpacePage() {
   const [currentScene, setCurrentScene] = useState<Scene>(STUDY_SCENES[0]);
@@ -44,6 +46,19 @@ export default function StudySpacePage() {
   const [isMixerOpen, setIsMixerOpen] = useState(false);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
 
+  // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [savedTabBeforeSettings, setSavedTabBeforeSettings] = useState<TimerTab | null>(null);
+  const [showClockSeconds, setShowClockSeconds] = useState(false);
+  const [isClock12Hour, setIsClock12Hour] = useState(false);
+  const [showStopwatchMilliseconds, setShowStopwatchMilliseconds] = useState(false);
+  const [pomodoroDurations, setPomodoroDurations] = useState({
+    focus: 25,
+    short_break: 5,
+    long_break: 15,
+  });
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
   // Phục hồi Background Scene & Cài đặt cá nhân từ LocalStorage khi vào lại trang
   useEffect(() => {
     try {
@@ -60,8 +75,79 @@ export default function StudySpacePage() {
       if (savedPomoVis !== null) {
         setIsPomodoroVisible(savedPomoVis === "true");
       }
+
+      // Restore Study Settings
+      const savedSec = localStorage.getItem("study_clock_show_seconds");
+      if (savedSec !== null) setShowClockSeconds(savedSec === "true");
+
+      const saved12h = localStorage.getItem("study_clock_12hour");
+      if (saved12h !== null) setIsClock12Hour(saved12h === "true");
+
+      const savedMs = localStorage.getItem("study_stopwatch_show_ms");
+      if (savedMs !== null) setShowStopwatchMilliseconds(savedMs === "true");
+
+      const savedDurations = localStorage.getItem("study_pomodoro_durations");
+      if (savedDurations) setPomodoroDurations(JSON.parse(savedDurations));
+
+      const savedSound = localStorage.getItem("study_sound_enabled");
+      if (savedSound !== null) setSoundEnabled(savedSound === "true");
     } catch {}
   }, []);
+
+  const handleOpenSettings = () => {
+    setSavedTabBeforeSettings(centerTab);
+    setIsSettingsOpen(true);
+  };
+
+  const handleCloseSettings = () => {
+    setIsSettingsOpen(false);
+    if (savedTabBeforeSettings) {
+      setCenterTab(savedTabBeforeSettings);
+      setSavedTabBeforeSettings(null);
+    }
+  };
+
+  const handleActiveSectionChange = (section: TimerTab) => {
+    setIsPomodoroVisible(true);
+    setCenterTab(section);
+  };
+
+  const handleToggleClockSeconds = () => {
+    setShowClockSeconds((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("study_clock_show_seconds", String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const handleToggleClock12Hour = () => {
+    setIsClock12Hour((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("study_clock_12hour", String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const handleToggleStopwatchMilliseconds = () => {
+    setShowStopwatchMilliseconds((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("study_stopwatch_show_ms", String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const handleSavePomodoroDurations = (d: typeof pomodoroDurations) => {
+    setPomodoroDurations(d);
+    try { localStorage.setItem("study_pomodoro_durations", JSON.stringify(d)); } catch {}
+  };
+
+  const handleToggleSound = () => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("study_sound_enabled", String(next)); } catch {}
+      return next;
+    });
+  };
 
   const handleSelectScene = (scene: Scene) => {
     setCurrentScene(scene);
@@ -127,6 +213,7 @@ export default function StudySpacePage() {
       );
 
       if (e.key === "Escape") {
+        handleCloseSettings();
         setIsTasksOpen(false);
         setIsNotesOpen(false);
         setIsScenesOpen(false);
@@ -294,6 +381,25 @@ export default function StudySpacePage() {
                 {isGlobalMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
               </button>
 
+              {/* Settings Toggle (Cài đặt không gian học tập) */}
+              <button
+                onClick={() => {
+                  if (isSettingsOpen) {
+                    handleCloseSettings();
+                  } else {
+                    handleOpenSettings();
+                  }
+                }}
+                className={`p-2 rounded-full backdrop-blur-xl border transition-all active:scale-95 cursor-pointer ${
+                  isSettingsOpen
+                    ? "bg-white text-black font-bold shadow-lg border-white"
+                    : "bg-slate-900/70 hover:bg-slate-900/95 border-white/15 text-white/80 hover:text-white"
+                }`}
+                title="Cài đặt không gian học tập"
+              >
+                <Sliders className="w-4 h-4" />
+              </button>
+
               {/* Fullscreen Toggle */}
               <button
                 onClick={toggleFullscreen}
@@ -421,6 +527,23 @@ export default function StudySpacePage() {
         onSelectScene={handleSelectScene}
       />
 
+      {/* Unified Study Settings Modal */}
+      <StudySettingsModal
+        isOpen={isSettingsOpen}
+        onClose={handleCloseSettings}
+        onActiveSectionChange={handleActiveSectionChange}
+        showClockSeconds={showClockSeconds}
+        onToggleClockSeconds={handleToggleClockSeconds}
+        isClock12Hour={isClock12Hour}
+        onToggleClock12Hour={handleToggleClock12Hour}
+        durations={pomodoroDurations}
+        onSaveDurations={handleSavePomodoroDurations}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
+        showStopwatchMilliseconds={showStopwatchMilliseconds}
+        onToggleStopwatchMilliseconds={handleToggleStopwatchMilliseconds}
+      />
+
       {/* Main Center Area: Ambient Centerpiece Pomodoro & Stopwatch hòa vào background */}
       <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14">
         <StudyPomodoroWidget 
@@ -428,6 +551,11 @@ export default function StudySpacePage() {
           activeTab={centerTab}
           onTabChange={setCenterTab}
           onToggleVisibility={() => setIsPomodoroVisible(!isPomodoroVisible)}
+          showClockSeconds={showClockSeconds}
+          isClock12Hour={isClock12Hour}
+          showStopwatchMilliseconds={showStopwatchMilliseconds}
+          durations={pomodoroDurations}
+          soundEnabled={soundEnabled}
         />
       </main>
 

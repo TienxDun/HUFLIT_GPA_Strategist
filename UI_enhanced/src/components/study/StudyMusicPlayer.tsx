@@ -337,7 +337,11 @@ export const StudyMusicPlayer = ({
   };
 
   const handleAudioError = () => {
-    console.warn("Audio load warning");
+    console.warn(`[StudyMusicPlayer] Tín hiệu mạng hoặc CDN bị gián đoạn cho bài "${currentTrack?.title}". Tự động chuyển sang bài tiếp theo...`);
+    // Tự động nhảy mượt sang bài tiếp theo nếu CDN server bên thứ ba bị ngắt stream HTTP/2
+    setTimeout(() => {
+      handleNextTrack();
+    }, 1000);
   };
 
   const handleSeek = (time: number) => {
@@ -367,7 +371,7 @@ export const StudyMusicPlayer = ({
         onError={handleAudioError}
         onEnded={handleNextTrack}
         loop={isLooping}
-        preload="auto"
+        preload="metadata"
       />
 
       {/* Sound Mixer Modal Drawer */}

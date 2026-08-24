@@ -26,12 +26,24 @@ import { motion, AnimatePresence } from "framer-motion";
 export type TimerTab = "clock" | "pomodoro" | "stopwatch";
 export type PomodoroMode = "focus" | "short_break" | "long_break";
 
+const CLOCK_SECONDS_KEY = "study_clock_show_seconds";
+const CLOCK_12HOUR_KEY = "study_clock_12hour";
+const STOPWATCH_MS_KEY = "study_stopwatch_show_ms";
+const POMO_DURATIONS_KEY = "study_pomodoro_durations";
+const SOUND_KEY = "study_sound_enabled";
+
 interface StudyPomodoroWidgetProps {
   isVisible: boolean;
   activeTab?: TimerTab;
   onTabChange?: (tab: TimerTab) => void;
   onToggleVisibility?: () => void;
   onSessionComplete?: (mode: PomodoroMode) => void;
+  // External Settings
+  showClockSeconds?: boolean;
+  isClock12Hour?: boolean;
+  durations?: { focus: number; short_break: number; long_break: number };
+  soundEnabled?: boolean;
+  showStopwatchMilliseconds?: boolean;
 }
 
 export const StudyPomodoroWidget = ({
@@ -40,8 +52,13 @@ export const StudyPomodoroWidget = ({
   onTabChange,
   onToggleVisibility,
   onSessionComplete,
+  showClockSeconds: externalShowSeconds,
+  isClock12Hour: external12Hour,
+  durations: externalDurations,
+  soundEnabled: externalSound,
+  showStopwatchMilliseconds: externalShowMs,
 }: StudyPomodoroWidgetProps) => {
-  const [internalTab, setInternalTab] = useState<TimerTab>("pomodoro");
+  const [internalTab, setInternalTab] = useState<TimerTab>("clock");
   const currentTab = externalTab !== undefined ? externalTab : internalTab;
   const switchTab = (tab: TimerTab) => {
     if (onTabChange) onTabChange(tab);
@@ -51,20 +68,87 @@ export const StudyPomodoroWidget = ({
   const [pomoMode, setPomoMode] = useState<PomodoroMode>("focus");
 
   // Real-time Clock State for "clock" tab
-  const [clockTime, setClockTime] = useState("");
+  const [clockDigits, setClockDigits] = useState("");
+  const [clockPeriod, setClockPeriod] = useState("");
   const [clockFullDate, setClockFullDate] = useState("");
+  const [internalShowClockSeconds, setInternalShowClockSeconds] = useState(false);
+  const [internalIsClock12Hour, setInternalIsClock12Hour] = useState(false);
+
+  const showClockSeconds = externalShowSeconds !== undefined ? externalShowSeconds : internalShowClockSeconds;
+  const isClock12Hour = external12Hour !== undefined ? external12Hour : internalIsClock12Hour;
+
+  // Stopwatch state
+  const [stopwatchTime, setStopwatchTime] = useState(0); // in milliseconds
+  const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
+  const [internalShowStopwatchMilliseconds, setInternalShowStopwatchMilliseconds] = useState(false);
+  const showStopwatchMilliseconds = externalShowMs !== undefined ? externalShowMs : internalShowStopwatchMilliseconds;
+  const [laps, setLaps] = useState<number[]>([]);
+  const [isLapsOpen, setIsLapsOpen] = useState(false);
+
+  // Custom durations in minutes
+  const [internalDurations, setInternalDurations] = useState({
+    focus: 25,
+    short_break: 5,
+    long_break: 15,
+  });
+  const durations = externalDurations !== undefined ? externalDurations : internalDurations;
+
+  // Pomodoro countdown timer state (in seconds)
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [isRunning, setIsRunning] = useState(false);
+  const [completedSessions, setCompletedSessions] = useState(0);
+  const [internalSoundEnabled, setInternalSoundEnabled] = useState(true);
+  const soundEnabled = externalSound !== undefined ? externalSound : internalSoundEnabled;
+
+  // Load saved preferences on mount if not provided externally
+  useEffect(() => {
+    try {
+      const savedCount = localStorage.getItem("huflit_study_pomo_count");
+      if (savedCount) setCompletedSessions(parseInt(savedCount, 10) || 0);
+
+      const savedDurations = localStorage.getItem(POMO_DURATIONS_KEY);
+      if (savedDurations) setInternalDurations(JSON.parse(savedDurations));
+
+      const savedSound = localStorage.getItem(SOUND_KEY);
+      if (savedSound !== null) setInternalSoundEnabled(savedSound === "true");
+
+      const savedSec = localStorage.getItem(CLOCK_SECONDS_KEY);
+      if (savedSec !== null) setInternalShowClockSeconds(savedSec === "true");
+
+      const saved12h = localStorage.getItem(CLOCK_12HOUR_KEY);
+      if (saved12h !== null) setInternalIsClock12Hour(saved12h === "true");
+
+      const savedMs = localStorage.getItem(STOPWATCH_MS_KEY);
+      if (savedMs !== null) setInternalShowStopwatchMilliseconds(savedMs === "true");
+    } catch {}
+  }, []);
+
+  // Update timeLeft when durations prop changes
+  useEffect(() => {
+    if (!isRunning) {
+      setTimeLeft(durations[pomoMode] * 60);
+    }
+  }, [durations, pomoMode, isRunning]);
 
   useEffect(() => {
     const updateRealtime = () => {
       const now = new Date();
-      setClockTime(
-        now.toLocaleTimeString("vi-VN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        })
-      );
+      const hours24 = now.getHours();
+      let hours = hours24;
+      let period = "";
+
+      if (isClock12Hour) {
+        period = hours24 >= 12 ? "PM" : "AM";
+        hours = hours24 % 12;
+        if (hours === 0) hours = 12;
+      }
+
+      const hStr = String(hours).padStart(2, "0");
+      const mStr = String(now.getMinutes()).padStart(2, "0");
+      const sStr = String(now.getSeconds()).padStart(2, "0");
+
+      setClockDigits(showClockSeconds ? `${hStr} : ${mStr} : ${sStr}` : `${hStr} : ${mStr}`);
+      setClockPeriod(period);
       
       const weekdays = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
       const dayName = weekdays[now.getDay()];
@@ -75,9 +159,9 @@ export const StudyPomodoroWidget = ({
     };
 
     updateRealtime();
-    const interval = setInterval(updateRealtime, 1000);
+    const interval = setInterval(updateRealtime, showClockSeconds ? 1000 : 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [showClockSeconds, isClock12Hour]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -86,26 +170,6 @@ export const StudyPomodoroWidget = ({
     if (hour >= 18 && hour < 22) return "🌆 Buổi tối yên tĩnh, tập trung học tập hiệu quả";
     return "🌙 Không gian đêm thanh tịnh, hãy giữ gìn sức khỏe bạn nhé";
   };
-
-  // Custom durations in minutes
-  const [durations, setDurations] = useState({
-    focus: 25,
-    short_break: 5,
-    long_break: 15,
-  });
-
-  // Pomodoro countdown timer state (in seconds)
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [completedSessions, setCompletedSessions] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // Stopwatch state
-  const [stopwatchTime, setStopwatchTime] = useState(0); // in milliseconds
-  const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
-  const [laps, setLaps] = useState<number[]>([]);
-  const [isLapsOpen, setIsLapsOpen] = useState(false);
 
   // Sound chime synthesizer using Web Audio API (Thanh thoát, dịu êm)
   const playChime = useCallback(() => {
@@ -132,7 +196,7 @@ export const StudyPomodoroWidget = ({
 
       gain.gain.setValueAtTime(0, now);
       gain.gain.linearRampToValueAtTime(0.35, now + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
 
       osc1.connect(gain);
       osc2.connect(gain);
@@ -140,42 +204,10 @@ export const StudyPomodoroWidget = ({
 
       osc1.start(now);
       osc2.start(now);
-      osc1.stop(now + 1.4);
-      osc2.stop(now + 1.4);
+      osc1.stop(now + 1.5);
+      osc2.stop(now + 1.5);
     } catch {}
   }, [soundEnabled]);
-
-  // Load saved state from LocalStorage
-  useEffect(() => {
-    try {
-      const savedCount = localStorage.getItem("huflit_study_pomo_count");
-      if (savedCount) setCompletedSessions(parseInt(savedCount, 10) || 0);
-
-      const savedDurations = localStorage.getItem("huflit_study_pomo_durations");
-      if (savedDurations) {
-        const parsed = JSON.parse(savedDurations);
-        if (parsed && parsed.focus) {
-          setDurations(parsed);
-          setTimeLeft(parsed.focus * 60);
-        }
-      }
-
-      const savedSound = localStorage.getItem("huflit_study_pomo_sound");
-      if (savedSound !== null) {
-        setSoundEnabled(savedSound === "true");
-      }
-    } catch {}
-  }, []);
-
-  // Save custom durations
-  const handleSaveDurations = (newDurations: typeof durations) => {
-    setDurations(newDurations);
-    try {
-      localStorage.setItem("huflit_study_pomo_durations", JSON.stringify(newDurations));
-    } catch {}
-    setTimeLeft(newDurations[pomoMode] * 60);
-    setIsRunning(false);
-  };
 
   // Switch Pomodoro Mode
   const switchPomoMode = (mode: PomodoroMode) => {
@@ -184,7 +216,7 @@ export const StudyPomodoroWidget = ({
     setIsRunning(false);
   };
 
-  // Handle Pomodoro session completion
+  // Handle Pomodoro session completion / skip
   const handleComplete = useCallback(() => {
     setIsRunning(false);
     playChime();
@@ -206,11 +238,12 @@ export const StudyPomodoroWidget = ({
       if (onSessionComplete) onSessionComplete(pomoMode);
       switchPomoMode("focus");
     }
-  }, [pomoMode, completedSessions, durations, onSessionComplete, playChime]);
+  }, [pomoMode, completedSessions, onSessionComplete, playChime]);
 
-  // Pomodoro countdown timer tick
+  // Countdown timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
+
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
@@ -218,6 +251,7 @@ export const StudyPomodoroWidget = ({
     } else if (isRunning && timeLeft === 0) {
       handleComplete();
     }
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -230,23 +264,12 @@ export const StudyPomodoroWidget = ({
       const startTime = Date.now() - stopwatchTime;
       interval = setInterval(() => {
         setStopwatchTime(Date.now() - startTime);
-      }, 10);
+      }, 30); // ~33fps for smooth centiseconds
     }
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isStopwatchRunning]);
-
-  // Toggle Sound Setting
-  const toggleSound = () => {
-    setSoundEnabled((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("huflit_study_pomo_sound", String(next));
-      } catch {}
-      return next;
-    });
-  };
 
   const resetPomodoro = () => {
     setIsRunning(false);
@@ -285,24 +308,23 @@ export const StudyPomodoroWidget = ({
     const cs = centiseconds.toString().padStart(2, "0");
 
     if (hours > 0) {
-      return `${hours}:${m}:${s}.${cs}`;
+      return showStopwatchMilliseconds ? `${hours}:${m}:${s}.${cs}` : `${hours}:${m}:${s}`;
     }
-    return `${m} : ${s}.${cs}`;
+    return showStopwatchMilliseconds ? `${m} : ${s}.${cs}` : `${m} : ${s}`;
   };
 
   if (!isVisible) return null;
 
   return (
-    <div className="relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl h-[300px] sm:h-[320px]">
-      {/* 1. Sleek Floating Mode Pill Bar (Đúng chuẩn Ảnh 2: Tối giản, sang trọng, màu đen tuyền mờ kính) */}
-      <div className="flex items-center gap-2.5 mb-2 z-20">
+    <div className="group relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl h-[300px] sm:h-[320px]">
+      {/* 1. Sleek Floating Mode Pill Bar (Tự động ẩn khi không hover, hiện mượt khi hover) */}
+      <div 
+        className="flex items-center gap-2.5 mb-2 z-20 transition-all duration-300 opacity-0 -translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto"
+      >
         <div className="flex items-center p-1 rounded-full bg-black/80 backdrop-blur-2xl border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
           {/* Clock Tab */}
           <button
-            onClick={() => {
-              switchTab("clock");
-              setIsSettingsOpen(false);
-            }}
+            onClick={() => switchTab("clock")}
             className={`w-24 sm:w-28 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-center transition-all cursor-pointer ${
               currentTab === "clock"
                 ? "bg-white text-black shadow-md font-extrabold"
@@ -314,10 +336,7 @@ export const StudyPomodoroWidget = ({
 
           {/* Pomodoro Tab */}
           <button
-            onClick={() => {
-              switchTab("pomodoro");
-              setIsSettingsOpen(false);
-            }}
+            onClick={() => switchTab("pomodoro")}
             className={`w-24 sm:w-28 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-center transition-all cursor-pointer ${
               currentTab === "pomodoro"
                 ? "bg-white text-black shadow-md font-extrabold"
@@ -329,10 +348,7 @@ export const StudyPomodoroWidget = ({
 
           {/* Stopwatch Tab */}
           <button
-            onClick={() => {
-              switchTab("stopwatch");
-              setIsSettingsOpen(false);
-            }}
+            onClick={() => switchTab("stopwatch")}
             className={`w-24 sm:w-28 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-center transition-all cursor-pointer ${
               currentTab === "stopwatch"
                 ? "bg-white text-black shadow-md font-extrabold"
@@ -342,117 +358,23 @@ export const StudyPomodoroWidget = ({
             Stopwatch
           </button>
         </div>
-
-        {/* Circular Settings Button (Phong cách nút tròn tách riêng như Ảnh 2) */}
-        <button
-          onClick={() => {
-            if (currentTab !== "pomodoro") switchTab("pomodoro");
-            setIsSettingsOpen(!isSettingsOpen);
-          }}
-          className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-2xl border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.6)] transition-all cursor-pointer active:scale-90 ${
-            isSettingsOpen
-              ? "bg-white text-black font-bold shadow-lg"
-              : "bg-black/80 hover:bg-black text-white hover:text-white"
-          }`}
-          title="Cài đặt Pomodoro"
-        >
-          <Sliders className="w-3.5 h-3.5" />
-        </button>
       </div>
-
-      {/* 2. Settings Floating Popover */}
-      <AnimatePresence>
-        {isSettingsOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -10 }}
-            className="absolute top-14 left-1/2 -translate-x-1/2 p-4 rounded-3xl bg-black/95 backdrop-blur-2xl border border-white/20 shadow-2xl text-xs space-y-3 w-80 z-50"
-          >
-            <div className="flex items-center justify-between font-bold text-slate-200">
-              <span>Tuỳ chỉnh số phút Pomodoro:</span>
-              <button
-                onClick={() => setIsSettingsOpen(false)}
-                className="p-1 rounded-full hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-[10px] text-slate-400 font-semibold block mb-1">Tập trung</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={120}
-                  value={durations.focus}
-                  onChange={(e) =>
-                    handleSaveDurations({
-                      ...durations,
-                      focus: Math.max(1, parseInt(e.target.value, 10) || 25),
-                    })
-                  }
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/20 text-white text-center font-bold font-mono focus:border-white focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-400 font-semibold block mb-1">Nghỉ ngắn</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={durations.short_break}
-                  onChange={(e) =>
-                    handleSaveDurations({
-                      ...durations,
-                      short_break: Math.max(1, parseInt(e.target.value, 10) || 5),
-                    })
-                  }
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/20 text-white text-center font-bold font-mono focus:border-white focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-400 font-semibold block mb-1">Nghỉ dài</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={90}
-                  value={durations.long_break}
-                  onChange={(e) =>
-                    handleSaveDurations({
-                      ...durations,
-                      long_break: Math.max(1, parseInt(e.target.value, 10) || 15),
-                    })
-                  }
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/20 text-white text-center font-bold font-mono focus:border-white focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-              <span className="text-[11px] text-slate-300">Âm thanh chuông báo</span>
-              <button
-                onClick={toggleSound}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold transition-colors cursor-pointer"
-              >
-                {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 text-rose-400" />}
-                <span>{soundEnabled ? "Đang bật" : "Đang tắt"}</span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* 3. Giant Clean Digits (Chữ số 4K khổng lồ, cố định chiều cao h-32 để không giật nhảy layout) */}
       <div className="h-28 sm:h-32 md:h-36 flex items-center justify-center my-1">
         {currentTab === "clock" ? (
           <motion.div
-            key={clockTime}
+            key={`${clockDigits}-${clockPeriod}`}
             initial={{ opacity: 0.9 }}
             animate={{ opacity: 1 }}
-            className="text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none"
+            className="flex items-baseline justify-center whitespace-nowrap text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none"
           >
-            {clockTime || "00:00:00"}
+            <span>{clockDigits || "00 : 00"}</span>
+            {clockPeriod && (
+              <span className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-widest text-white/60 ml-2.5 sm:ml-3.5 self-center sm:self-end pb-1 sm:pb-2">
+                {clockPeriod}
+              </span>
+            )}
           </motion.div>
         ) : currentTab === "pomodoro" ? (
           <motion.div
@@ -618,13 +540,22 @@ export const StudyPomodoroWidget = ({
       {/* 7. Modern Glassmorphic Lap Times Drawer for Stopwatch (Nổi tuyệt đối, không chiếm height trong DOM flow) */}
       <AnimatePresence>
         {currentTab === "stopwatch" && laps.length > 0 && isLapsOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-80 sm:w-88 rounded-3xl bg-slate-900/90 hover:bg-slate-900/95 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-3.5 z-40 space-y-2.5"
-          >
+          <>
+            {/* Backdrop to close Laps Drawer when clicking outside */}
+            <div
+              className="fixed inset-0 z-30 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLapsOpen(false);
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-80 sm:w-88 rounded-3xl bg-slate-900/90 hover:bg-slate-900/95 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-3.5 z-40 space-y-2.5"
+            >
             {/* Header */}
             <div className="flex items-center justify-between px-1 pb-2 border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -688,8 +619,9 @@ export const StudyPomodoroWidget = ({
               })}
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </>
+      )}
+    </AnimatePresence>
     </div>
   );
 };

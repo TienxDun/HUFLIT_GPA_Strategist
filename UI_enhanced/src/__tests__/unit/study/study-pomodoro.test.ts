@@ -7,7 +7,7 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const formatStopwatch = (ms: number) => {
+  const formatStopwatch = (ms: number, showMs: boolean = true) => {
     const hours = Math.floor(ms / 3600000);
     const minutes = Math.floor((ms % 3600000) / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
@@ -18,9 +18,9 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
     const cs = centiseconds.toString().padStart(2, "0");
 
     if (hours > 0) {
-      return `${hours}:${m}:${s}.${cs}`;
+      return showMs ? `${hours}:${m}:${s}.${cs}` : `${hours}:${m}:${s}`;
     }
-    return `${m}:${s}.${cs}`;
+    return showMs ? `${m}:${s}.${cs}` : `${m}:${s}`;
   };
 
   it("should correctly format Pomodoro countdown times", () => {
@@ -44,13 +44,17 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
 
   it("should correctly format stopwatch times without hours", () => {
     expect(formatStopwatch(0)).toBe("00:00.00");
+    expect(formatStopwatch(0, false)).toBe("00:00");
     expect(formatStopwatch(1540)).toBe("00:01.54");
+    expect(formatStopwatch(1540, false)).toBe("00:01");
     expect(formatStopwatch(65230)).toBe("01:05.23");
+    expect(formatStopwatch(65230, false)).toBe("01:05");
   });
 
   it("should correctly format stopwatch times with hours", () => {
     const oneHourThirtyMins = 1 * 3600000 + 30 * 60000 + 15 * 1000 + 500;
     expect(formatStopwatch(oneHourThirtyMins)).toBe("1:30:15.50");
+    expect(formatStopwatch(oneHourThirtyMins, false)).toBe("1:30:15");
   });
 
   it("should suggest long break every 4 completed sessions", () => {
