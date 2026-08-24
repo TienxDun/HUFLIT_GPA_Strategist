@@ -486,7 +486,7 @@ export const StudyMusicPlayer = ({
 
                 return (
                   <div
-                    key={idx}
+                    key={`freq-${idx}`}
                     className="flex-1 flex items-center justify-center h-full"
                   >
                     <span

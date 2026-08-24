@@ -221,6 +221,7 @@ export function PWAInstallGuide() {
       <AnimatePresence>
         {visible && (
           <motion.section
+            key="pwa-install-banner"
             className="mx-auto mb-4 mt-1 w-full max-w-[1074px] px-3 sm:px-6"
             aria-label="Hướng dẫn cài đặt ứng dụng"
             initial={{ opacity: 0, y: -15, scale: 0.98 }}

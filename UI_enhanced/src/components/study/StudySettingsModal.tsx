@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   X, 
   Clock, 
@@ -126,15 +126,17 @@ export const StudySettingsModal = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <React.Fragment key="settings-modal-fragment">
           {/* Transparent Backdrop (Không làm mờ nền để người dùng thấy rõ 100% thay đổi trực quan trên màn hình) */}
           <div
+            key="settings-backdrop"
             className="fixed inset-0 z-40 cursor-pointer"
             onClick={onClose}
           />
 
           {/* Settings Floating Panel (Neo từ góc trên bên phải) */}
           <motion.div
+            key="settings-panel"
             initial={{ opacity: 0, scale: 0.94, y: -10, x: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: -10, x: 10 }}
@@ -350,7 +352,7 @@ export const StudySettingsModal = ({
               )}
             </div>
           </motion.div>
-        </>
+        </React.Fragment>
       )}
     </AnimatePresence>
   );

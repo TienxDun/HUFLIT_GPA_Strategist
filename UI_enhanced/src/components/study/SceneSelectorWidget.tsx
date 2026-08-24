@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { 
   Image as ImageIcon, 
   X, 
@@ -89,9 +89,10 @@ export const SceneSelectorWidget = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <React.Fragment key="scene-selector-fragment">
           {/* Fullscreen Backdrop (Trong suốt để nhìn rõ 100% hình nền thay đổi phía sau) */}
           <motion.div
+            key="scene-selector-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -100,6 +101,7 @@ export const SceneSelectorWidget = ({
           />
 
           <motion.div
+            key="scene-selector-panel"
             initial={{ opacity: 0, x: -30, scale: 0.96 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -30, scale: 0.96 }}
@@ -141,7 +143,7 @@ export const SceneSelectorWidget = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-white/5 hover:bg-white/10 focus:bg-white/10 border border-white/10 focus:border-sky-400/50 rounded-2xl pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-all"
                 />
-                {searchQuery && (
+                {Boolean(searchQuery) && (
                   <button
                     onClick={() => setSearchQuery("")}
                     className="absolute right-3 text-slate-400 hover:text-white text-xs cursor-pointer"
@@ -167,7 +169,7 @@ export const SceneSelectorWidget = ({
                 ref={scrollContainerRef}
                 className="flex items-center gap-1.5 overflow-x-auto px-2 sm:px-6 py-1 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               >
-                {availableCategories.map((cat) => {
+                {availableCategories.map((cat, idx) => {
                   const Icon = cat.icon;
                   const isSelected = selectedCategory === cat.key;
                   const count = scenes.filter((s) => {
@@ -178,7 +180,7 @@ export const SceneSelectorWidget = ({
 
                   return (
                     <button
-                      key={cat.key}
+                      key={cat.key || `cat-scene-${idx}`}
                       onClick={() => setSelectedCategory(cat.key)}
                       className={`relative group flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-200 shrink-0 cursor-pointer ${
                         isSelected
@@ -237,13 +239,13 @@ export const SceneSelectorWidget = ({
                   <span>Không tìm thấy bối cảnh nào phù hợp</span>
                 </div>
               ) : (
-                filteredScenes.map((scene) => {
+                filteredScenes.map((scene, idx) => {
                   const isSelected = currentScene.id === scene.id;
                   const isVideo = scene.type === "VIDEO";
 
                   return (
                     <button
-                      key={scene.id}
+                      key={scene.id || `scene-${idx}`}
                       onClick={() => onSelectScene(scene)}
                       className={`group relative flex flex-col rounded-2xl overflow-hidden border transition-all duration-300 text-left bg-slate-900/80 cursor-pointer shrink-0 shadow-md hover:shadow-xl ${
                         isSelected
@@ -291,7 +293,7 @@ export const SceneSelectorWidget = ({
               )}
             </div>
           </motion.div>
-        </>
+        </React.Fragment>
       )}
     </AnimatePresence>
   );

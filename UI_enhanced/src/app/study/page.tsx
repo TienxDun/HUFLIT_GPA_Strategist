@@ -240,10 +240,16 @@ export default function StudySpacePage() {
           } catch {}
           return next;
         });
-      } else if (e.key === "k" || e.key === "K" || e.key === "n" || e.key === "N") {
+      } else if (e.key === "k" || e.key === "K") {
         e.preventDefault();
         setIsTasksOpen((prev) => !prev);
         setIsNotesOpen(false);
+        setIsScenesOpen(false);
+        setIsMixerOpen(false);
+      } else if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        setIsNotesOpen((prev) => !prev);
+        setIsTasksOpen(false);
         setIsScenesOpen(false);
         setIsMixerOpen(false);
       } else if (e.key === "b" || e.key === "B") {
@@ -309,6 +315,7 @@ export default function StudySpacePage() {
       <AnimatePresence>
         {!isZenMode && (
           <motion.header
+            key="study-top-nav-bar"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -430,6 +437,7 @@ export default function StudySpacePage() {
       <AnimatePresence>
         {!isZenMode && (
           <motion.div 
+            key="study-left-dock-bar"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -583,6 +591,7 @@ export default function StudySpacePage() {
       <AnimatePresence>
         {isShortcutsHelpOpen && (
           <motion.div
+            key="study-shortcuts-modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -680,6 +689,10 @@ export default function StudySpacePage() {
                     <div className="flex items-center justify-between">
                       <span className="text-slate-300">Kế hoạch học tập</span>
                       <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">K</kbd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-300">Ghi chép nhanh (Notes)</span>
+                      <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">N</kbd>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-300">Đổi không gian hình nền</span>

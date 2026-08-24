@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   Play, 
   Pause, 
@@ -370,11 +370,11 @@ export const StudyPomodoroWidget = ({
             className="flex items-baseline justify-center whitespace-nowrap text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none"
           >
             <span>{clockDigits || "00 : 00"}</span>
-            {clockPeriod && (
+            {clockPeriod ? (
               <span className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-widest text-white/60 ml-2.5 sm:ml-3.5 self-center sm:self-end pb-1 sm:pb-2">
                 {clockPeriod}
               </span>
-            )}
+            ) : null}
           </motion.div>
         ) : currentTab === "pomodoro" ? (
           <motion.div
@@ -540,9 +540,10 @@ export const StudyPomodoroWidget = ({
       {/* 7. Modern Glassmorphic Lap Times Drawer for Stopwatch (Nổi tuyệt đối, không chiếm height trong DOM flow) */}
       <AnimatePresence>
         {currentTab === "stopwatch" && laps.length > 0 && isLapsOpen && (
-          <>
+          <React.Fragment key="stopwatch-laps-drawer-fragment">
             {/* Backdrop to close Laps Drawer when clicking outside */}
             <div
+              key="stopwatch-laps-backdrop"
               className="fixed inset-0 z-30 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
@@ -550,6 +551,7 @@ export const StudyPomodoroWidget = ({
               }}
             />
             <motion.div
+              key="stopwatch-laps-panel"
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -594,7 +596,7 @@ export const StudyPomodoroWidget = ({
                 const isLatest = idx === 0;
                 return (
                   <div
-                    key={idx}
+                    key={`lap-${lapNumber}-${idx}`}
                     className={`flex items-center justify-between px-3 py-1.5 rounded-2xl transition-all ${
                       isLatest
                         ? "bg-sky-500/20 border border-sky-400/30 text-white shadow-sm"
@@ -619,7 +621,7 @@ export const StudyPomodoroWidget = ({
               })}
             </div>
           </motion.div>
-        </>
+        </React.Fragment>
       )}
     </AnimatePresence>
     </div>

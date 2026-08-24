@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Plus, 
   Trash2, 
@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { KanbanBoard, KanbanCard, KanbanColumn, KanbanChecklistItem } from "./study-types";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 
 interface StudyTasksWidgetProps {
   isOpen: boolean;
@@ -54,6 +56,11 @@ const DEFAULT_BOARDS: KanbanBoard[] = [
 export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => {
   const [boards, setBoards] = useState<KanbanBoard[]>(DEFAULT_BOARDS);
   const [activeBoardId, setActiveBoardId] = useState<string>("board-default");
+  // Delete Confirmation States
+  const [boardToDelete, setBoardToDelete] = useState<KanbanBoard | null>(null);
+  const [columnToDelete, setColumnToDelete] = useState<KanbanColumn | null>(null);
+  const [cardToDelete, setCardToDelete] = useState<KanbanCard | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
   const [selectedCard, setSelectedCard] = useState<KanbanCard | null>(null);
@@ -316,13 +323,21 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     }
   };
 
-  // Delete Card
-  const handleDeleteCard = (cardId: string) => {
+  // Delete Card Prompt & Confirm
+  const promptDeleteCard = (card: KanbanCard) => {
+    setCardToDelete(card);
+  };
+
+  const handleConfirmDeleteCard = () => {
+    if (!cardToDelete) return;
+    const cardId = cardToDelete.id;
     updateCurrentBoard((board) => ({
       ...board,
       cards: board.cards.filter((c) => c.id !== cardId),
     }));
     if (selectedCard?.id === cardId) setSelectedCard(null);
+    toast.success(`Đã xóa thẻ "${cardToDelete.title}"`);
+    setCardToDelete(null);
   };
 
   // Add Column
@@ -341,14 +356,25 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     setIsAddingColumn(false);
   };
 
-  // Delete Column
-  const handleDeleteColumn = (colId: string) => {
-    if (currentBoard.columns.length <= 1) return;
+  // Delete Column Prompt & Confirm
+  const promptDeleteColumn = (col: KanbanColumn) => {
+    if (currentBoard.columns.length <= 1) {
+      toast.error("Phải giữ lại ít nhất 1 cột trong bảng.");
+      return;
+    }
+    setColumnToDelete(col);
+  };
+
+  const handleConfirmDeleteColumn = () => {
+    if (!columnToDelete) return;
+    const colId = columnToDelete.id;
     updateCurrentBoard((board) => ({
       ...board,
       columns: board.columns.filter((c) => c.id !== colId),
       cards: board.cards.filter((c) => c.columnId !== colId),
     }));
+    toast.success(`Đã xóa cột "${columnToDelete.title}"`);
+    setColumnToDelete(null);
   };
 
   // Rename Column
@@ -454,16 +480,23 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     } catch {}
   };
 
-  // Delete Board
-  const handleDeleteBoard = (boardId: string) => {
+  // Delete Board Prompt & Confirm
+  const promptDeleteBoard = (board: KanbanBoard) => {
     if (boards.length <= 1) {
-      alert("Bạn phải giữ lại ít nhất 1 bảng học tập.");
+      toast.error("Bạn phải giữ lại ít nhất 1 bảng học tập.");
       return;
     }
-    if (!confirm("Bạn có chắc chắn muốn xóa bảng này?")) return;
+    setBoardToDelete(board);
+  };
+
+  const handleConfirmDeleteBoard = () => {
+    if (!boardToDelete) return;
+    const boardId = boardToDelete.id;
     const updated = boards.filter((b) => b.id !== boardId);
     saveBoards(updated);
     setActiveBoardId(updated[0].id);
+    toast.success(`Đã xóa bảng "${boardToDelete.title}"`);
+    setBoardToDelete(null);
   };
 
   // Filter cards by search
@@ -479,11 +512,13 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
   };
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
-        <>
+        <React.Fragment key="tasks-widget-modal-fragment">
           {/* Backdrop to close Task Board when clicking outside */}
           <motion.div
+            key="tasks-widget-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -493,6 +528,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
           />
 
           <motion.div
+            key="tasks-widget-panel"
             initial={{ opacity: 0, scale: 0.98, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 10 }}
@@ -539,13 +575,15 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
 
                   <AnimatePresence>
                     {isBoardDropdownOpen && (
-                      <>
+                      <React.Fragment key="board-dropdown-fragment">
                         {/* Backdrop to close on click outside */}
                         <div 
+                          key="board-dropdown-backdrop"
                           className="fixed inset-0 z-40" 
                           onClick={() => setIsBoardDropdownOpen(false)} 
                         />
                         <motion.div
+                          key="board-dropdown-panel"
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -554,9 +592,9 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                           <div className="text-[10px] font-bold text-slate-400 px-2 py-1 uppercase">
                             Danh sách bảng học tập:
                           </div>
-                        {boards.map((b) => (
+                        {boards.map((b, bIdx) => (
                           <button
-                            key={b.id}
+                            key={b.id || `board-${bIdx}`}
                             onClick={() => {
                               setActiveBoardId(b.id);
                               setIsBoardDropdownOpen(false);
@@ -575,7 +613,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                           </button>
                         ))}
                         </motion.div>
-                      </>
+                      </React.Fragment>
                     )}
                   </AnimatePresence>
                 </div>
@@ -596,7 +634,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
               {/* Delete Board */}
               {boards.length > 1 && (
                 <button
-                  onClick={() => handleDeleteBoard(currentBoard.id)}
+                  onClick={() => promptDeleteBoard(currentBoard)}
                   className="p-1.5 rounded-xl hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
                   title="Xóa bảng này"
                 >
@@ -627,7 +665,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 rounded-full bg-black/40 border border-white/15 text-xs text-white placeholder-white/40 focus:outline-none focus:border-sky-400/50 backdrop-blur-md"
                 />
-                {searchQuery && (
+                {Boolean(searchQuery) && (
                   <button
                     onClick={() => setSearchQuery("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
@@ -738,13 +776,13 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                         <span className="text-xs font-bold text-sky-200 line-clamp-2">
                           {draggingCard?.title || "Nhiệm vụ"}
                         </span>
-                        {draggingCard?.priority && (
+                        {Boolean(draggingCard?.priority) && (
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                            draggingCard.priority === "high" ? "bg-rose-500/30 text-rose-200 border border-rose-400/40" :
-                            draggingCard.priority === "medium" ? "bg-amber-500/30 text-amber-200 border border-amber-400/40" :
+                            draggingCard?.priority === "high" ? "bg-rose-500/30 text-rose-200 border border-rose-400/40" :
+                            draggingCard?.priority === "medium" ? "bg-amber-500/30 text-amber-200 border border-amber-400/40" :
                             "bg-emerald-500/30 text-emerald-200 border border-emerald-400/40"
                           }`}>
-                            {draggingCard.priority === "high" ? "Cao" : draggingCard.priority === "medium" ? "Vừa" : "Thấp"}
+                            {draggingCard?.priority === "high" ? "Cao" : draggingCard?.priority === "medium" ? "Vừa" : "Thấp"}
                           </span>
                         )}
                       </div>
@@ -804,7 +842,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                         const isColCardDragOver = dragOverColId === column.id && draggingCardId !== null && draggingCard?.columnId !== column.id;
 
                         return (
-                          <div key={column.id} className="flex items-start gap-5 flex-shrink-0">
+                          <div key={column.id || `col-${colIdx}`} className="flex items-start gap-5 flex-shrink-0">
                             {/* Live Preview Column Placeholder (Before) */}
                             {isColDragOverBefore && renderColumnPlaceholder(column.id, "before")}
 
@@ -889,7 +927,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                                 <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                                   {currentBoard.columns.length > 1 && (
                                     <button
-                                      onClick={() => handleDeleteColumn(column.id)}
+                                      onClick={() => promptDeleteColumn(column)}
                                       className="p-1 rounded-lg text-white/40 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
                                       title="Xóa cột"
                                     >
@@ -905,7 +943,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                                 onDrop={(e) => handleCardDrop(e, column.id)}
                                 className="flex-1 overflow-y-auto py-3 space-y-2 pr-1 custom-study-scroll min-h-[80px]"
                               >
-                                {colCards.map((card) => {
+                                {colCards.map((card, cardIdx) => {
                                   const totalCheck = card.checklist.length;
                                   const doneCheck = card.checklist.filter((i) => i.completed).length;
                                   const progressPercent = totalCheck > 0 ? Math.round((doneCheck / totalCheck) * 100) : 0;
@@ -915,7 +953,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                                   const isDragOverAfter = dragOverCardId === card.id && dragOverCardPosition === "after" && isMeaningfulCardMove(card, "after", colCards);
 
                                   return (
-                                    <div key={card.id} className="space-y-2">
+                                    <div key={card.id || `card-${cardIdx}`} className="space-y-2">
                                       {/* Live Preview Card Placeholder (Before) */}
                                       {isDragOverBefore && renderCardPlaceholder(column.id, card.id, "before")}
 
@@ -1181,10 +1219,10 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
             ) : (
               /* LIST VIEW MODE */
               <div className="max-w-4xl mx-auto space-y-6">
-                {currentBoard.columns.map((col) => {
+                {currentBoard.columns.map((col, colIdx) => {
                   const colCards = filterCards(currentBoard.cards.filter((c) => c.columnId === col.id));
                   return (
-                    <div key={col.id} className="p-4 rounded-3xl bg-black/30 backdrop-blur-md border border-white/10 space-y-3">
+                    <div key={col.id || `col-list-${colIdx}`} className="p-4 rounded-3xl bg-black/30 backdrop-blur-md border border-white/10 space-y-3">
                       <div className="flex items-center justify-between pb-2 border-b border-white/10">
                         {editingColumnId === col.id ? (
                           <div className="flex items-center gap-2 max-w-xs flex-1">
@@ -1225,15 +1263,15 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                       </div>
 
                       <div className="space-y-2">
-                        {colCards.map((card) => (
+                        {colCards.map((card, cardIdx) => (
                           <div
-                            key={card.id}
+                            key={card.id || `card-list-${cardIdx}`}
                             onClick={() => setSelectedCard(card)}
                             className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between cursor-pointer transition-all gap-3"
                           >
                             <div className="space-y-1 min-w-0 flex-1">
                               <h4 className="text-xs font-semibold text-white break-words [overflow-wrap:anywhere]">{card.title}</h4>
-                              {card.description && (
+                              {Boolean(card.description) && (
                                 <p className="text-[10px] text-slate-400 break-words [overflow-wrap:anywhere]">{card.description}</p>
                               )}
                             </div>
@@ -1273,6 +1311,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
           <AnimatePresence>
             {selectedCard && (
               <motion.div
+                key={`card-details-modal-${selectedCard.id}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -1348,8 +1387,9 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                       {/* Dropdown Options */}
                       <AnimatePresence>
                         {isStatusDropdownOpen && (
-                          <>
+                          <React.Fragment key="card-status-dropdown-fragment">
                             <div 
+                              key="card-status-backdrop"
                               className="fixed inset-0 z-40" 
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1357,18 +1397,19 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                               }} 
                             />
                             <motion.div
+                              key="card-status-panel"
                               initial={{ opacity: 0, y: 6, scale: 0.97 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: 6, scale: 0.97 }}
                               transition={{ duration: 0.15 }}
                               className="absolute top-full mt-1.5 left-0 w-full p-1.5 rounded-2xl bg-slate-900/98 backdrop-blur-2xl border border-white/20 shadow-2xl z-50 max-h-48 overflow-y-auto custom-study-scroll space-y-1"
                             >
-                            {currentBoard.columns.map((col) => {
+                            {currentBoard.columns.map((col, colIdx) => {
                               const isActive = selectedCard.columnId === col.id;
                               const count = currentBoard.cards.filter((c) => c.columnId === col.id).length;
                               return (
                                 <button
-                                  key={col.id}
+                                  key={col.id || `col-opt-${colIdx}`}
                                   type="button"
                                   onClick={() => {
                                     handleMoveCard(selectedCard.id, col.id);
@@ -1389,7 +1430,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                               );
                             })}
                             </motion.div>
-                          </>
+                          </React.Fragment>
                         )}
                       </AnimatePresence>
                     </div>
@@ -1492,9 +1533,9 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                           {/* Checklist Items */}
                           {totalCheck > 0 && (
                             <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 custom-study-scroll">
-                              {selectedCard.checklist.map((item) => (
+                              {selectedCard.checklist.map((item, itemIdx) => (
                                 <div
-                                  key={item.id}
+                                  key={item.id || `chk-${itemIdx}`}
                                   className="flex items-center justify-between py-2 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] group transition-all"
                                 >
                                   <button
@@ -1558,7 +1599,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                   <div className="flex items-center justify-between pt-4 border-t border-white/10">
                     <button
                       type="button"
-                      onClick={() => handleDeleteCard(selectedCard.id)}
+                      onClick={() => promptDeleteCard(selectedCard)}
                       className="px-3.5 py-2 rounded-2xl text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 border border-rose-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -1582,8 +1623,43 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
             )}
           </AnimatePresence>
           </motion.div>
-        </>
+        </React.Fragment>
       )}
     </AnimatePresence>
+
+    {/* Delete Confirmation Dialogs (outside AnimatePresence — each has its own internal AnimatePresence) */}
+    <ConfirmDeleteModal
+      isOpen={!!boardToDelete}
+      onClose={() => setBoardToDelete(null)}
+      onConfirm={handleConfirmDeleteBoard}
+      title="Xác nhận xóa bảng học tập"
+      description="Bạn có chắc chắn muốn xóa toàn bộ bảng này và tất cả các thẻ công việc bên trong không?"
+      itemName={boardToDelete?.title}
+      confirmText="Xóa bảng"
+      cancelText="Hủy bỏ"
+    />
+
+    <ConfirmDeleteModal
+      isOpen={!!columnToDelete}
+      onClose={() => setColumnToDelete(null)}
+      onConfirm={handleConfirmDeleteColumn}
+      title="Xác nhận xóa danh sách cột"
+      description="Toàn bộ các thẻ nhiệm vụ trong cột này sẽ bị xóa vĩnh viễn."
+      itemName={columnToDelete?.title}
+      confirmText="Xóa cột"
+      cancelText="Hủy bỏ"
+    />
+
+    <ConfirmDeleteModal
+      isOpen={!!cardToDelete}
+      onClose={() => setCardToDelete(null)}
+      onConfirm={handleConfirmDeleteCard}
+      title="Xác nhận xóa thẻ công việc"
+      description="Bạn có chắc chắn muốn xóa thẻ nhiệm vụ này không?"
+      itemName={cardToDelete?.title}
+      confirmText="Xóa thẻ"
+      cancelText="Hủy bỏ"
+    />
+    </>
   );
 };

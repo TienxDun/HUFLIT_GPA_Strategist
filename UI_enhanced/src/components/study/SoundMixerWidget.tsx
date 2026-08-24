@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { 
   X, 
   Headphones, 
@@ -231,9 +231,10 @@ export const SoundMixerWidget = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <React.Fragment key="sound-mixer-fragment">
           {/* Fullscreen transparent backdrop capturing clicks anywhere outside the mixer */}
           <motion.div
+            key="sound-mixer-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -242,6 +243,7 @@ export const SoundMixerWidget = ({
           />
 
           <motion.div
+            key="sound-mixer-panel"
             ref={popupRef}
             initial={{ opacity: 0, x: 40, scale: 0.95 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -303,12 +305,12 @@ export const SoundMixerWidget = ({
                     { key: "lofi", label: "Lo-fi", icon: Headphones, color: "text-indigo-400" },
                     { key: "jazz", label: "Jazz", icon: Coffee, color: "text-emerald-400" },
                     { key: "relax", label: "Relax", icon: Moon, color: "text-amber-400" },
-                  ].map((mood) => {
+                  ].map((mood, idx) => {
                     const isSelected = currentMood === mood.key;
                     const Icon = mood.icon;
                     return (
                       <button
-                        key={mood.key}
+                        key={mood.key || `mood-${idx}`}
                         onClick={() => onSelectMood(mood.key as MoodType)}
                         className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl border transition-all active:scale-95 cursor-pointer ${
                           isSelected
@@ -455,11 +457,11 @@ export const SoundMixerWidget = ({
                   Up Next ({currentMoodTracks.length} bài)
                 </h4>
                 <div className="space-y-1.5">
-                  {currentMoodTracks.map((t) => {
+                  {currentMoodTracks.map((t, idx) => {
                     const isSelected = t.id === currentTrack.id;
                     return (
                       <button
-                        key={t.id}
+                        key={t.id || `track-${idx}`}
                         onClick={() => onSelectTrack(t)}
                         className={`flex items-center gap-3 p-2 rounded-2xl w-full text-left transition-all cursor-pointer ${
                           isSelected
@@ -581,7 +583,7 @@ export const SoundMixerWidget = ({
 
                     return (
                       <button
-                        key={idx}
+                        key={preset.label || `preset-${idx}`}
                         onClick={() => {
                           if (isPresetActive) {
                             const newVols = { ...ambientVolumes };
@@ -634,34 +636,33 @@ export const SoundMixerWidget = ({
 
               {/* 20 Ambient Sounds Studio Soundboard (Fills entire modal height) */}
               <div className="grid grid-cols-2 gap-2.5">
-                {AMBIENT_SOUNDS.map((sound) => {
+                {AMBIENT_SOUNDS.map((sound, idx) => {
                   const vol = ambientVolumes[sound.id] || 0;
                   const isActive = vol > 0;
 
-                  // Dynamic color themes & localized labels
-                  const isRain = sound.name.toLowerCase().includes("rain") || sound.name.toLowerCase().includes("storm") || sound.name.toLowerCase().includes("thunder");
                   const isFire = sound.name.toLowerCase().includes("fire") || sound.name.toLowerCase().includes("camp");
-                  const isNature = sound.name.toLowerCase().includes("forest") || sound.name.toLowerCase().includes("bird") || sound.name.toLowerCase().includes("river") || sound.name.toLowerCase().includes("wave");
+                  const isWater = ["rain", "ocean", "river", "drops"].some((k) => sound.id.includes(k));
+                  const isNature = ["birds", "forest", "wind", "night"].some((k) => sound.id.includes(k));
 
-                  const activeBg = isFire 
-                    ? "bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-black/60 border-amber-400/40 shadow-[0_4px_16px_rgba(245,158,11,0.2)]" 
-                    : isRain
-                    ? "bg-gradient-to-br from-sky-500/20 via-blue-500/10 to-black/60 border-sky-400/40 shadow-[0_4px_16px_rgba(14,165,233,0.2)]"
+                  const activeBg = isFire
+                    ? "bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-black/60 border-amber-400/40 shadow-[0_4px_16px_rgba(245,158,11,0.2)]"
+                    : isWater
+                    ? "bg-sky-500/15 border-sky-500/40 shadow-lg shadow-sky-500/10"
                     : isNature
-                    ? "bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-black/60 border-emerald-400/40 shadow-[0_4px_16px_rgba(16,185,129,0.2)]"
-                    : "bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-black/60 border-purple-400/40 shadow-[0_4px_16px_rgba(168,85,247,0.2)]";
+                    ? "bg-emerald-500/15 border-emerald-500/40 shadow-lg shadow-emerald-500/10"
+                    : "bg-purple-500/15 border-purple-500/40 shadow-lg shadow-purple-500/10";
 
                   const activeIconBg = isFire
                     ? "bg-amber-500/30 text-amber-300 border-amber-400/40"
-                    : isRain
-                    ? "bg-sky-500/30 text-sky-300 border-sky-400/40"
+                    : isWater
+                    ? "bg-sky-500/25 border-sky-400/50 text-sky-300"
                     : isNature
-                    ? "bg-emerald-500/30 text-emerald-300 border-emerald-400/40"
-                    : "bg-purple-500/30 text-purple-300 border-purple-400/40";
+                    ? "bg-emerald-500/25 border-emerald-400/50 text-emerald-300"
+                    : "bg-purple-500/25 border-purple-400/50 text-purple-300";
 
                   const accentColor = isFire
                     ? "accent-amber-400"
-                    : isRain
+                    : isWater
                     ? "accent-sky-400"
                     : isNature
                     ? "accent-emerald-400"
@@ -669,7 +670,7 @@ export const SoundMixerWidget = ({
 
                   return (
                     <div
-                      key={sound.id}
+                      key={sound.id || `ambient-${idx}`}
                       className={`flex flex-col justify-between p-2.5 rounded-2xl border transition-all duration-300 ${
                         isActive
                           ? `${activeBg}`
@@ -734,8 +735,8 @@ export const SoundMixerWidget = ({
           )}
         </div>
       </motion.div>
-    </>
-  )}
-</AnimatePresence>
+        </React.Fragment>
+      )}
+    </AnimatePresence>
   );
 };
