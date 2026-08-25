@@ -11,9 +11,11 @@ import {
   Music2, 
   Repeat, 
   Shuffle, 
-  SlidersHorizontal 
+  SlidersHorizontal,
+  Maximize2,
+  X
 } from "lucide-react";
-import { Track, MoodType, STUDY_TRACKS_BY_MOOD } from "./study-types";
+import { Track, MoodType, STUDY_TRACKS_BY_MOOD, StudyEmbedItem } from "./study-types";
 import { SoundMixerWidget } from "./SoundMixerWidget";
 
 interface StudyMusicPlayerProps {
@@ -22,6 +24,9 @@ interface StudyMusicPlayerProps {
   onToggleMixer?: () => void;
   onCloseMixer?: () => void;
   isExternalStreamActive?: boolean;
+  externalStreamItem?: StudyEmbedItem | null;
+  onExpandExternalStream?: () => void;
+  onStopExternalStream?: () => void;
 }
 
 export const StudyMusicPlayer = ({ 
@@ -29,7 +34,10 @@ export const StudyMusicPlayer = ({
   isMixerOpen: externalIsMixerOpen,
   onToggleMixer,
   onCloseMixer,
-  isExternalStreamActive = false
+  isExternalStreamActive = false,
+  externalStreamItem = null,
+  onExpandExternalStream,
+  onStopExternalStream
 }: StudyMusicPlayerProps) => {
   const [currentMood, setCurrentMood] = useState<MoodType>("lofi");
   const [tracks, setTracks] = useState<Track[]>(STUDY_TRACKS_BY_MOOD.lofi);
@@ -66,7 +74,9 @@ export const StudyMusicPlayer = ({
 
   // Real-time animation loop for sound wave frequencies (Multi-harmonic Beat Synthesizer)
   useEffect(() => {
-    if (!isPlaying) {
+    const isStreamOrAudioActive = isPlaying || isExternalStreamActive;
+
+    if (!isStreamOrAudioActive) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -75,18 +85,18 @@ export const StudyMusicPlayer = ({
     }
 
     const renderWave = () => {
-      const t = audioRef.current?.currentTime || 0;
-      // Multi-layer harmonic frequency simulation based on exact playback time & volume
+      const t = Date.now() / 1000;
+      // Multi-layer harmonic frequency simulation based on realtime clock
       const bars = Array.from({ length: 28 }, (_, i) => {
         // Bass region (low index), Mid (middle), Treble (high index)
-        const bassFactor = Math.sin(t * 5.2) * Math.cos(i * 0.3) * 35;
-        const midFactor = Math.sin(i * 0.8 + t * 6.8) * 30;
-        const trebleFactor = Math.sin(i * 1.5 + t * 9.4) * 15;
-        const noise = Math.sin(t * 15 + i * 4) * 8;
+        const bassFactor = Math.sin(t * 6.0) * Math.cos(i * 0.35) * 38;
+        const midFactor = Math.sin(i * 0.9 + t * 8.5) * 32;
+        const trebleFactor = Math.sin(i * 1.6 + t * 11.2) * 20;
+        const noise = Math.sin(t * 18 + i * 5) * 10;
 
-        const combined = 40 + bassFactor + midFactor + trebleFactor + noise;
-        const scaled = combined * (0.6 + effectiveVolume * 0.4);
-        return Math.max(16, Math.min(96, Math.round(scaled)));
+        const combined = 45 + bassFactor + midFactor + trebleFactor + noise;
+        const scaled = combined * 0.95;
+        return Math.max(20, Math.min(98, Math.round(scaled)));
       });
 
       setFrequencyData(bars);
@@ -100,7 +110,7 @@ export const StudyMusicPlayer = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, effectiveVolume]);
+  }, [isPlaying, isExternalStreamActive]);
 
   // Phục hồi cài đặt Nhạc từ LocalStorage khi vào lại trang
   useEffect(() => {
@@ -386,7 +396,7 @@ export const StudyMusicPlayer = ({
         preload="metadata"
       />
 
-      {/* Sound Mixer Modal Drawer */}
+      {/* Sound Mixer Drawer Widget */}
       <SoundMixerWidget
         isOpen={isMixerOpen}
         onClose={closeMixer}
@@ -419,204 +429,310 @@ export const StudyMusicPlayer = ({
         isGlobalMuted={isGlobalMuted}
       />
 
-      {/* Main Glassmorphic Bottom Bar Player */}
-      <div className="relative w-full max-w-4xl px-2 sm:px-4 group">
+      {/* Main Glassmorphic Bottom Bar Player (Dynamic Adaptive Capsule Width) */}
+      <div 
+        className={`relative w-full px-2 sm:px-4 group transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
+          isExternalStreamActive && externalStreamItem 
+            ? "max-w-md" 
+            : "max-w-4xl"
+        }`}
+      >
         {/* Dynamic Aura Ambient Glow */}
         <div 
           className={`absolute -inset-1 rounded-full blur-xl pointer-events-none transition-all duration-700 ${
-            isPlaying 
+            isExternalStreamActive && externalStreamItem
+              ? externalStreamItem.platform === "spotify"
+                ? "bg-gradient-to-r from-emerald-500/40 via-[#1DB954]/30 to-emerald-400/40 opacity-90 animate-pulse"
+                : "bg-gradient-to-r from-red-600/40 via-rose-500/30 to-red-500/40 opacity-90 animate-pulse"
+              : isPlaying 
               ? "bg-gradient-to-r from-emerald-500/25 via-sky-500/25 to-indigo-500/25 opacity-90 animate-pulse" 
               : "bg-gradient-to-r from-white/10 via-white/5 to-white/10 opacity-30"
           }`} 
         />
 
-        <div className="relative flex items-center justify-between gap-2.5 sm:gap-4 pl-3 pr-3 sm:pl-3.5 sm:pr-3.5 py-2 rounded-full bg-slate-950/85 hover:bg-slate-950/90 backdrop-blur-2xl border border-white/20 shadow-[0_15px_45px_rgba(0,0,0,0.6)] transition-all duration-300 text-white w-full">
-          {/* Track Vinyl Artwork & Info (Left) */}
-          <div 
-            onClick={toggleMixer}
-            className="flex items-center gap-2.5 sm:gap-3 min-w-0 max-w-[160px] sm:max-w-[220px] md:max-w-[260px] shrink-0 cursor-pointer group/art"
-            title="Mở Sound Mixer & Danh sách nhạc"
-          >
-            {/* Spinning Vinyl Record Disk */}
-            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2px] bg-gradient-to-tr from-white/30 via-slate-700 to-white/20 shadow-lg shadow-black/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+        <div className="relative flex items-center justify-between gap-3 sm:gap-4 pl-3 pr-3 sm:pl-3.5 sm:pr-3.5 py-2 rounded-full bg-slate-950/90 hover:bg-slate-950/95 backdrop-blur-2xl border border-white/20 shadow-[0_15px_45px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.06)_inset] transition-all duration-300 text-white w-full">
+          {isExternalStreamActive && externalStreamItem ? (
+            /* HYBRID EXTERNAL STREAM MODE (Compact Dynamic Capsule) */
+            <>
+              {/* Left: Artwork & Metadata */}
               <div 
-                className={`w-full h-full rounded-full overflow-hidden relative shadow-inner ${
-                  isPlaying ? "animate-[spin_10s_linear_infinite]" : ""
-                }`}
+                onClick={onExpandExternalStream}
+                className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 shrink-0 cursor-pointer group/art"
+                title="Mở rộng đài phát (E)"
               >
-                <img
-                  src={currentTrack?.cover || "https://assets.beeziee.com/thumbnails/coffee-shop.PNG"}
-                  alt={currentTrack?.title}
-                  className="w-full h-full object-cover"
-                />
-                {/* Vinyl Grooves & Center Spindle Ring */}
-                <div className="absolute inset-0 rounded-full border border-white/20 pointer-events-none" />
-                <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-slate-950 border border-white/50 shadow-sm z-10 flex items-center justify-center">
-                  <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                {/* Platform Geometric Shape (1:1 Spotify vs 16:9 YouTube) */}
+                {externalStreamItem.platform === "spotify" ? (
+                  <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-emerald-950/90 border border-emerald-500/40 shadow-md shadow-emerald-950/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+                    {externalStreamItem.thumbnail && (
+                      <img
+                        src={externalStreamItem.thumbnail}
+                        alt={externalStreamItem.title}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="relative w-13 h-9 sm:w-14 sm:h-10 rounded-lg overflow-hidden bg-red-950/90 border border-red-500/40 shadow-md shadow-red-950/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+                    {externalStreamItem.thumbnail && (
+                      <img
+                        src={externalStreamItem.thumbnail}
+                        alt={externalStreamItem.title}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-red-500" />
+                  </div>
+                )}
+
+                {/* Title & Live Status */}
+                <div className="min-w-0 flex-1 space-y-0.5 pr-2">
+                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-emerald-300 transition-colors">
+                    {externalStreamItem.title}
+                  </h4>
+                  <div className="flex items-center gap-1.5 text-[10px] sm:text-xs">
+                    {externalStreamItem.platform === "spotify" ? (
+                      <div className="flex items-end gap-0.5 h-2.5 px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                        <span className="w-0.5 h-1.5 bg-[#1DB954] rounded-full animate-pulse" />
+                        <span className="w-0.5 h-2.5 bg-emerald-300 rounded-full animate-pulse" style={{ animationDelay: "120ms" }} />
+                        <span className="w-0.5 h-2 bg-[#1DB954] rounded-full animate-pulse" style={{ animationDelay: "240ms" }} />
+                      </div>
+                    ) : externalStreamItem.isLive ? (
+                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/30">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                        </span>
+                        <span className="text-[9px] font-bold text-red-300 tracking-wider">LIVE</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/15 border border-red-500/25 text-red-300 text-[9px] font-bold tracking-wider">
+                        <span className="w-1 h-1 rounded-full bg-red-400" />
+                        <span>VIDEO</span>
+                      </div>
+                    )}
+                    <span className="text-slate-400 truncate text-[10px] sm:text-xs">
+                      {externalStreamItem.category || "Study Stream"}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Title, Artist */}
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-emerald-300 transition-colors">
-                {currentTrack?.title}
-              </h4>
+              {/* Right: Icon-only Controls [Expand] [Stop] */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {/* Expand to Modal Button */}
+                <button
+                  onClick={onExpandExternalStream}
+                  className={`p-2 rounded-full font-bold transition-all active:scale-95 cursor-pointer shadow-sm border ${
+                    externalStreamItem.platform === "spotify"
+                      ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-emerald-200 border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.3)]"
+                      : "bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                  }`}
+                  title="Mở rộng đài phát (E)"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
 
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-400 truncate">
-                <span className="truncate">{currentTrack?.artist}</span>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-white/10 text-emerald-300 font-bold border border-white/10 text-[10px]">
-                  {currentTrack?.genre}
+                {/* Stop Stream Button */}
+                <button
+                  onClick={onStopExternalStream}
+                  className="p-2 rounded-full bg-red-500/15 hover:bg-red-500/30 text-slate-300 hover:text-red-200 border border-red-500/30 transition-all active:scale-90 cursor-pointer shadow-sm"
+                  title="Dừng phát đài ngoài"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </>
+          ) : (
+            /* STANDARD INTERNAL MUSIC PLAYER MODE */
+            <>
+              {/* Track Vinyl Artwork & Info (Left) */}
+              <div 
+                onClick={toggleMixer}
+                className="flex items-center gap-2.5 sm:gap-3 min-w-0 max-w-[160px] sm:max-w-[220px] md:max-w-[260px] shrink-0 cursor-pointer group/art"
+                title="Mở Sound Mixer & Danh sách nhạc"
+              >
+                {/* Spinning Vinyl Record Disk */}
+                <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2px] bg-gradient-to-tr from-white/30 via-slate-700 to-white/20 shadow-lg shadow-black/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+                  <div 
+                    className={`w-full h-full rounded-full overflow-hidden relative shadow-inner ${
+                      isPlaying ? "animate-[spin_10s_linear_infinite]" : ""
+                    }`}
+                  >
+                    <img
+                      src={currentTrack?.cover || "https://assets.beeziee.com/thumbnails/coffee-shop.PNG"}
+                      alt={currentTrack?.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Vinyl Grooves & Center Spindle Ring */}
+                    <div className="absolute inset-0 rounded-full border border-white/20 pointer-events-none" />
+                    <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-slate-950 border border-white/50 shadow-sm z-10 flex items-center justify-center">
+                      <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Title, Artist */}
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-emerald-300 transition-colors">
+                    {currentTrack?.title}
+                  </h4>
+
+                  <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-400 truncate">
+                    <span className="truncate">{currentTrack?.artist}</span>
+                    <span>•</span>
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-white/10 text-emerald-300 font-bold border border-white/10 text-[10px]">
+                      {currentTrack?.genre}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Center Interactive Audio Waveform Progress Bar */}
+              <div className="hidden md:flex items-center gap-2.5 flex-1 min-w-[160px] px-2">
+                <span className="text-[11px] font-mono text-slate-400 w-8 text-right shrink-0">
+                  {formatTime(currentTime)}
+                </span>
+
+                {/* Waveform Visualization Container */}
+                <div className="relative w-full h-8 flex items-center justify-between gap-[2px] px-1 group/waveform cursor-pointer">
+                  {frequencyData.map((heightPercent, idx) => {
+                    const progressRatio = duration > 0 ? currentTime / duration : 0;
+                    const barRatio = idx / (frequencyData.length - 1);
+                    const isPlayed = barRatio <= progressRatio;
+
+                    return (
+                      <div
+                        key={`freq-${idx}`}
+                        className="flex-1 flex items-center justify-center h-full"
+                      >
+                        <span
+                          style={{
+                            height: isPlaying ? `${heightPercent}%` : "20%"
+                          }}
+                          className={`w-full max-w-[3.5px] rounded-full transition-all duration-75 ${
+                            isPlayed
+                              ? "bg-gradient-to-t from-emerald-500 to-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                              : "bg-white/20 group-hover/waveform:bg-white/35"
+                          }`}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  {/* Invisible native range input for smooth seeking */}
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration > 0 ? duration : 100}
+                    value={currentTime}
+                    onChange={(e) => handleSeek(parseFloat(e.target.value))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    title="Kéo hoặc bấm để tua bài hát"
+                  />
+                </div>
+
+                <span className="text-[11px] font-mono text-slate-400 w-8 shrink-0">
+                  {duration > 0 ? formatTime(duration) : "0:00"}
                 </span>
               </div>
-            </div>
-          </div>
 
-          {/* Center Interactive Audio Waveform Progress Bar (Phản ứng theo tần số nhạc thực tế) */}
-          <div className="hidden md:flex items-center gap-2.5 flex-1 min-w-[160px] px-2">
-            <span className="text-[11px] font-mono text-slate-400 w-8 text-right shrink-0">
-              {formatTime(currentTime)}
-            </span>
+              {/* Controls (Right) */}
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                {/* Shuffle */}
+                <button
+                  onClick={handleToggleShuffle}
+                  className={`p-1.5 rounded-full transition-all active:scale-90 cursor-pointer ${
+                    isShuffle 
+                      ? "text-emerald-400 bg-emerald-500/20 shadow-sm border border-emerald-400/30" 
+                      : "text-slate-400 hover:text-white hover:bg-white/10"
+                  }`}
+                  title="Xáo trộn bài hát"
+                >
+                  <Shuffle className="w-3.5 h-3.5" />
+                </button>
 
-            {/* Waveform Visualization Container */}
-            <div className="relative w-full h-8 flex items-center justify-between gap-[2px] px-1 group/waveform cursor-pointer">
-              {frequencyData.map((heightPercent, idx) => {
-                const progressRatio = duration > 0 ? currentTime / duration : 0;
-                const barRatio = idx / (frequencyData.length - 1);
-                const isPlayed = barRatio <= progressRatio;
+                {/* Previous */}
+                <button
+                  onClick={handlePrevTrack}
+                  className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
+                  title="Bài trước đó"
+                >
+                  <SkipBack className="w-4 h-4 fill-current" />
+                </button>
 
-                return (
-                  <div
-                    key={`freq-${idx}`}
-                    className="flex-1 flex items-center justify-center h-full"
+                {/* Play/Pause Main Glowing Pearl Button */}
+                <button
+                  onClick={togglePlay}
+                  className="relative p-2.5 sm:p-3 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-300 hover:from-emerald-400 hover:to-emerald-200 text-slate-950 font-black shadow-[0_0_20px_rgba(52,211,153,0.7)] hover:shadow-[0_0_28px_rgba(52,211,153,0.9)] transition-all active:scale-90 cursor-pointer shrink-0"
+                  title={isPlaying ? "Tạm dừng (Space)" : "Phát nhạc (Space)"}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950" />
+                  ) : (
+                    <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950 translate-x-0.5" />
+                  )}
+                </button>
+
+                {/* Next */}
+                <button
+                  onClick={handleNextTrack}
+                  className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
+                  title="Bài tiếp theo"
+                >
+                  <SkipForward className="w-4 h-4 fill-current" />
+                </button>
+
+                {/* Loop */}
+                <button
+                  onClick={handleToggleLoop}
+                  className={`p-1.5 rounded-full transition-all active:scale-90 cursor-pointer ${
+                    isLooping 
+                      ? "text-emerald-400 bg-emerald-500/20 shadow-sm border border-emerald-400/30" 
+                      : "text-slate-400 hover:text-white hover:bg-white/10"
+                  }`}
+                  title="Lặp lại danh sách"
+                >
+                  <Repeat className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Volume Control */}
+                <div className="hidden lg:flex items-center gap-1.5 pl-1.5 pr-1 border-l border-white/15">
+                  <button
+                    onClick={() => setIsLocalMuted(!isLocalMuted)}
+                    className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
                   >
-                    <span
-                      style={{
-                        height: isPlaying ? `${heightPercent}%` : "20%"
-                      }}
-                      className={`w-full max-w-[3.5px] rounded-full transition-all duration-75 ${
-                        isPlayed
-                          ? "bg-gradient-to-t from-emerald-500 to-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                          : "bg-white/20 group-hover/waveform:bg-white/35"
-                      }`}
-                    />
-                  </div>
-                );
-              })}
+                    {effectiveVolume === 0 ? (
+                      <VolumeX className="w-3.5 h-3.5 text-rose-400" />
+                    ) : (
+                      <Volume2 className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={effectiveVolume}
+                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                    className="w-12 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+                  />
+                </div>
 
-              {/* Invisible native range input for smooth seeking */}
-              <input
-                type="range"
-                min={0}
-                max={duration > 0 ? duration : 100}
-                value={currentTime}
-                onChange={(e) => handleSeek(parseFloat(e.target.value))}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                title="Kéo hoặc bấm để tua bài hát"
-              />
-            </div>
-
-            <span className="text-[11px] font-mono text-slate-400 w-8 shrink-0">
-              {duration > 0 ? formatTime(duration) : "0:00"}
-            </span>
-          </div>
-
-          {/* Controls (Right) */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            {/* Shuffle */}
-            <button
-              onClick={handleToggleShuffle}
-              className={`p-1.5 rounded-full transition-all active:scale-90 cursor-pointer ${
-                isShuffle 
-                  ? "text-emerald-400 bg-emerald-500/20 shadow-sm border border-emerald-400/30" 
-                  : "text-slate-400 hover:text-white hover:bg-white/10"
-              }`}
-              title="Xáo trộn bài hát"
-            >
-              <Shuffle className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Previous */}
-            <button
-              onClick={handlePrevTrack}
-              className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
-              title="Bài trước đó"
-            >
-              <SkipBack className="w-4 h-4 fill-current" />
-            </button>
-
-            {/* Play/Pause Main Glowing Pearl Button */}
-            <button
-              onClick={togglePlay}
-              className="relative p-2.5 sm:p-3 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-300 hover:from-emerald-400 hover:to-emerald-200 text-slate-950 font-black shadow-[0_0_20px_rgba(52,211,153,0.7)] hover:shadow-[0_0_28px_rgba(52,211,153,0.9)] transition-all active:scale-90 cursor-pointer shrink-0"
-              title={isPlaying ? "Tạm dừng (Space)" : "Phát nhạc (Space)"}
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950" />
-              ) : (
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950 translate-x-0.5" />
-              )}
-            </button>
-
-            {/* Next */}
-            <button
-              onClick={handleNextTrack}
-              className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
-              title="Bài tiếp theo"
-            >
-              <SkipForward className="w-4 h-4 fill-current" />
-            </button>
-
-            {/* Loop */}
-            <button
-              onClick={handleToggleLoop}
-              className={`p-1.5 rounded-full transition-all active:scale-90 cursor-pointer ${
-                isLooping 
-                  ? "text-emerald-400 bg-emerald-500/20 shadow-sm border border-emerald-400/30" 
-                  : "text-slate-400 hover:text-white hover:bg-white/10"
-              }`}
-              title="Lặp lại danh sách"
-            >
-              <Repeat className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Volume Control */}
-            <div className="hidden lg:flex items-center gap-1.5 pl-1.5 pr-1 border-l border-white/15">
-              <button
-                onClick={() => setIsLocalMuted(!isLocalMuted)}
-                className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
-              >
-                {effectiveVolume === 0 ? (
-                  <VolumeX className="w-3.5 h-3.5 text-rose-400" />
-                ) : (
-                  <Volume2 className="w-3.5 h-3.5" />
-                )}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={effectiveVolume}
-                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                className="w-12 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-emerald-400"
-              />
-            </div>
-
-            {/* Sound Mixer Open Button (Nằm gọn gàng hoàn hảo bên trong viền cong) */}
-            <button
-              onClick={toggleMixer}
-              className={`p-2 rounded-full transition-all active:scale-95 cursor-pointer border shrink-0 ${
-                isMixerOpen 
-                  ? "bg-emerald-500 text-slate-950 font-bold border-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.6)]" 
-                  : "bg-white/10 text-slate-200 hover:text-white hover:bg-white/20 border-white/15 shadow-sm"
-              }`}
-              title="Mở Sound Mixer (Lo-fi / Jazz / Relax & Âm thanh nền)"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-            </button>
-          </div>
+                {/* Sound Mixer Open Button */}
+                <button
+                  onClick={toggleMixer}
+                  className={`p-2 rounded-full transition-all active:scale-95 cursor-pointer border shrink-0 ${
+                    isMixerOpen 
+                      ? "bg-emerald-500 text-slate-950 font-bold border-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.6)]" 
+                      : "bg-white/10 text-slate-200 hover:text-white hover:bg-white/20 border-white/15 shadow-sm"
+                  }`}
+                  title="Mở Sound Mixer (Lo-fi / Jazz / Relax & Âm thanh nền)"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

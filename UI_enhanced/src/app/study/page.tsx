@@ -23,7 +23,7 @@ import {
   Radio
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Scene, STUDY_SCENES } from "@/components/study/study-types";
+import { Scene, STUDY_SCENES, StudyEmbedItem } from "@/components/study/study-types";
 import { PomodoroSoundType } from "@/components/study/study-sound";
 import { StudyMusicPlayer } from "@/components/study/StudyMusicPlayer";
 import { StudyPomodoroWidget, TimerTab } from "@/components/study/StudyPomodoroWidget";
@@ -67,6 +67,7 @@ export default function StudySpacePage() {
   const [isMixerOpen, setIsMixerOpen] = useState(false);
   const [isEmbedPlayerOpen, setIsEmbedPlayerOpen] = useState(false);
   const [isExternalStreamActive, setIsExternalStreamActive] = useState(false);
+  const [externalActiveItem, setExternalActiveItem] = useState<StudyEmbedItem | null>(null);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
 
   // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
@@ -694,6 +695,7 @@ export default function StudySpacePage() {
           setIsEmbedPlayerOpen(true);
         }}
         onStreamActiveChange={setIsExternalStreamActive}
+        onActiveItemChange={setExternalActiveItem}
         isZenMode={isZenMode}
       />
 
@@ -747,6 +749,19 @@ export default function StudySpacePage() {
             isGlobalMuted={isGlobalMuted} 
             isMixerOpen={isMixerOpen}
             isExternalStreamActive={isExternalStreamActive}
+            externalStreamItem={externalActiveItem}
+            onExpandExternalStream={() => {
+              handleCloseSettings();
+              setIsTasksOpen(false);
+              setIsNotesOpen(false);
+              setIsScenesOpen(false);
+              setIsMixerOpen(false);
+              setIsEmbedPlayerOpen(true);
+            }}
+            onStopExternalStream={() => {
+              setIsExternalStreamActive(false);
+              setExternalActiveItem(null);
+            }}
             onToggleMixer={() => {
               setIsMixerOpen((prev) => {
                 const next = !prev;

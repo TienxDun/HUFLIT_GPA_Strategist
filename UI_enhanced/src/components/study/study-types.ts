@@ -1115,7 +1115,7 @@ export const CURATED_EMBED_PRESETS: StudyEmbedItem[] = [
   }
 ];
 
-export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: EmbedPlatform; title?: string; thumbnail?: string } | null {
+export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: EmbedPlatform; title?: string; thumbnail?: string; isLive?: boolean } | null {
   if (!rawUrl || typeof rawUrl !== "string") return null;
   const trimmed = rawUrl.trim();
 
@@ -1126,7 +1126,8 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
     return {
       embedUrl: `https://www.youtube-nocookie.com/embed/videoseries?list=${ytPlaylistMatch[1]}&autoplay=1`,
       platform: "youtube",
-      title: "YouTube Playlist"
+      title: "YouTube Playlist",
+      isLive: false
     };
   }
 
@@ -1136,7 +1137,8 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
     return {
       embedUrl: `https://www.youtube-nocookie.com/embed/live_stream?channel=${ytChannelLive[1]}&autoplay=1`,
       platform: "youtube",
-      title: "YouTube Channel Live Stream"
+      title: "YouTube Live Stream",
+      isLive: true
     };
   }
 
@@ -1148,7 +1150,8 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
       embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`,
       platform: "youtube",
       title: "YouTube Live Stream",
-      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      isLive: true
     };
   }
 
@@ -1160,7 +1163,8 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
       embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`,
       platform: "youtube",
       title: "YouTube Video",
-      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      isLive: false
     };
   }
 
@@ -1172,7 +1176,8 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
     return {
       embedUrl: `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`,
       platform: "spotify",
-      title: `Spotify ${type.charAt(0).toUpperCase() + type.slice(1)}`
+      title: `Spotify ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      isLive: false
     };
   }
 
@@ -1183,7 +1188,8 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
     return {
       embedUrl: `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`,
       platform: "spotify",
-      title: `Spotify ${type.charAt(0).toUpperCase() + type.slice(1)}`
+      title: `Spotify ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      isLive: false
     };
   }
 
@@ -1192,7 +1198,8 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
     return {
       embedUrl: trimmed,
       platform: "custom",
-      title: "Custom Stream"
+      title: "Custom Stream",
+      isLive: false
     };
   }
 
