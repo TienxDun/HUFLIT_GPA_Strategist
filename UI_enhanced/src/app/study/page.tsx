@@ -19,7 +19,8 @@ import {
   Keyboard,
   X,
   Music2,
-  Sliders
+  Sliders,
+  Radio
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Scene, STUDY_SCENES } from "@/components/study/study-types";
@@ -44,6 +45,11 @@ const SceneSelectorWidget = dynamic(
   { ssr: false }
 );
 
+const StudyEmbedPlayerWidget = dynamic(
+  () => import("@/components/study/StudyEmbedPlayerWidget").then((mod) => mod.StudyEmbedPlayerWidget),
+  { ssr: false }
+);
+
 export default function StudySpacePage() {
   const [currentScene, setCurrentScene] = useState<Scene>(STUDY_SCENES[0]);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -59,6 +65,8 @@ export default function StudySpacePage() {
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isScenesOpen, setIsScenesOpen] = useState(false);
   const [isMixerOpen, setIsMixerOpen] = useState(false);
+  const [isEmbedPlayerOpen, setIsEmbedPlayerOpen] = useState(false);
+  const [isExternalStreamActive, setIsExternalStreamActive] = useState(false);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
 
   // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
@@ -125,6 +133,7 @@ export default function StudySpacePage() {
     setIsTasksOpen(false);
     setIsNotesOpen(false);
     setIsScenesOpen(false);
+    setIsEmbedPlayerOpen(false);
     setIsShortcutsHelpOpen(false);
   };
 
@@ -252,6 +261,7 @@ export default function StudySpacePage() {
         setIsNotesOpen(false);
         setIsScenesOpen(false);
         setIsMixerOpen(false);
+        setIsEmbedPlayerOpen(false);
         setIsShortcutsHelpOpen(false);
         setIsZenMode(false);
         return;
@@ -264,7 +274,18 @@ export default function StudySpacePage() {
         toggleFullscreen();
       } else if (e.key === "z" || e.key === "Z") {
         e.preventDefault();
-        setIsZenMode((prev) => !prev);
+        setIsZenMode((prev) => {
+          const next = !prev;
+          if (next) {
+            setIsTasksOpen(false);
+            setIsNotesOpen(false);
+            setIsScenesOpen(false);
+            setIsMixerOpen(false);
+            setIsEmbedPlayerOpen(false);
+            handleCloseSettings();
+          }
+          return next;
+        });
       } else if (e.key === "t" || e.key === "T") {
         e.preventDefault();
         setIsPomodoroVisible((prev) => {
@@ -284,6 +305,7 @@ export default function StudySpacePage() {
         setIsNotesOpen(false);
         setIsScenesOpen(false);
         setIsMixerOpen(false);
+        setIsEmbedPlayerOpen(false);
       } else if (e.key === "n" || e.key === "N") {
         e.preventDefault();
         setIsNotesOpen((prev) => {
@@ -294,6 +316,7 @@ export default function StudySpacePage() {
         setIsTasksOpen(false);
         setIsScenesOpen(false);
         setIsMixerOpen(false);
+        setIsEmbedPlayerOpen(false);
       } else if (e.key === "b" || e.key === "B") {
         e.preventDefault();
         setIsScenesOpen((prev) => {
@@ -303,6 +326,18 @@ export default function StudySpacePage() {
         });
         setIsTasksOpen(false);
         setIsNotesOpen(false);
+        setIsMixerOpen(false);
+        setIsEmbedPlayerOpen(false);
+      } else if (e.key === "e" || e.key === "E") {
+        e.preventDefault();
+        setIsEmbedPlayerOpen((prev) => {
+          const next = !prev;
+          if (next) handleCloseSettings();
+          return next;
+        });
+        setIsTasksOpen(false);
+        setIsNotesOpen(false);
+        setIsScenesOpen(false);
         setIsMixerOpen(false);
       } else if (e.key === "p" || e.key === "P") {
         e.preventDefault();
@@ -314,6 +349,7 @@ export default function StudySpacePage() {
         setIsTasksOpen(false);
         setIsNotesOpen(false);
         setIsScenesOpen(false);
+        setIsEmbedPlayerOpen(false);
       } else if (e.key === "?" || e.key === "h" || e.key === "H") {
         e.preventDefault();
         setIsShortcutsHelpOpen((prev) => {
@@ -322,6 +358,7 @@ export default function StudySpacePage() {
           return next;
         });
         setIsMixerOpen(false);
+        setIsEmbedPlayerOpen(false);
       }
     };
 
@@ -337,33 +374,42 @@ export default function StudySpacePage() {
 
   return (
     <div className="relative w-screen h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
-      {/* Dynamic Immersive Background Scene (Hỗ trợ cả Video 4K và Image sắc nét, có Fallback an toàn) */}
-      {currentScene.type === "VIDEO" && !hasVideoError ? (
-        <video
-          key={currentScene.id}
-          src={currentScene.bgUrl}
-          autoPlay
-          loop
-          muted
-          playsInline
-          onError={() => {
-            console.warn(`[StudySpace] Lỗi nạp video bối cảnh "${currentScene.name}", tự động chuyển sang ảnh thumbnail an toàn.`);
-            setHasVideoError(true);
-          }}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
-        />
-      ) : (
-        <motion.div 
-          key={currentScene.id}
-          initial={{ opacity: 0.8 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
-          style={{
-            backgroundImage: `url('${hasVideoError ? currentScene.thumbnailUrl : currentScene.bgUrl}')`,
-          }}
-        />
-      )}
+      {/* Dynamic Immersive Background Scene (Seamless Cinematic Crossfade for Video & Image) */}
+      <div className="absolute inset-0 bg-slate-950 overflow-hidden pointer-events-none">
+        <AnimatePresence mode="sync">
+          <motion.div
+            key={currentScene.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
+            className="absolute inset-0 w-full h-full"
+          >
+            {currentScene.type === "VIDEO" && !hasVideoError ? (
+              <video
+                src={currentScene.bgUrl}
+                poster={currentScene.thumbnailUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                onError={() => {
+                  console.warn(`[StudySpace] Lỗi nạp video bối cảnh "${currentScene.name}", tự động chuyển sang ảnh thumbnail an toàn.`);
+                  setHasVideoError(true);
+                }}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{
+                  backgroundImage: `url('${hasVideoError ? currentScene.thumbnailUrl : currentScene.bgUrl}')`,
+                }}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* Top Navigation Bar */}
       <AnimatePresence>
@@ -379,34 +425,45 @@ export default function StudySpacePage() {
             <div className="pointer-events-auto">
               <Link
                 href="/"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-900/70 hover:bg-slate-900/95 backdrop-blur-xl border border-white/15 text-white/90 hover:text-white shadow-xl transition-all active:scale-95 group cursor-pointer"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/70 hover:bg-slate-900/90 backdrop-blur-2xl border border-white/10 hover:border-white/20 text-slate-200 hover:text-white shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all active:scale-95 group cursor-pointer text-xs font-medium"
               >
-                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5 text-blue-400" />
-                <span className="text-xs font-semibold tracking-tight">GPA Calculator</span>
+                <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5 text-slate-400 group-hover:text-white" />
+                <span className="tracking-tight">GPA Calculator</span>
               </Link>
             </div>
 
-            {/* Brand Status Dynamic Island Capsule (Bấm vào để kích hoạt Đồng hồ & Ngày tháng ở giữa màn hình) */}
+            {/* Brand Status Capsule (Bấm vào để bật/tắt Đồng hồ & Ngày tháng) */}
             <button
               onClick={() => {
-                setIsPomodoroVisible(true);
-                setCenterTab("clock");
+                if (isPomodoroVisible && centerTab === "clock") {
+                  setIsPomodoroVisible(false);
+                } else {
+                  setIsPomodoroVisible(true);
+                  setCenterTab("clock");
+                }
               }}
-              className="hidden sm:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-2.5 px-4 py-1.5 rounded-full bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur-2xl border border-white/10 hover:border-white/20 pointer-events-auto shadow-lg hover:shadow-xl transition-all group select-none cursor-pointer active:scale-95"
-              title="Bấm để hiển thị Đồng hồ & Ngày tháng ở giữa màn hình"
+              className={`hidden sm:inline-flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-3 px-4 py-1.5 rounded-full backdrop-blur-2xl border pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200 group select-none cursor-pointer active:scale-95 ${
+                isPomodoroVisible && centerTab === "clock"
+                  ? "bg-slate-900/95 border-white/30 ring-1 ring-white/20 text-white"
+                  : "bg-slate-950/70 hover:bg-slate-900/90 border-white/10 hover:border-white/20"
+              }`}
+              title={isPomodoroVisible && centerTab === "clock" ? "Bấm để ẩn Đồng hồ" : "Bấm để hiển thị Đồng hồ"}
             >
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold tracking-tight text-white group-hover:text-sky-300 transition-colors">
+              {/* Clean Brand Typography */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="font-semibold tracking-wide text-white group-hover:text-white transition-colors">
                   HUFLIT
                 </span>
-                <span className="text-xs font-medium text-sky-400">
+                <span className="font-normal text-slate-300 group-hover:text-slate-100 transition-colors">
                   StudySpace
                 </span>
               </div>
 
-              <span className="text-xs text-white/20 font-bold">•</span>
+              {/* Elegant Hairline Divider */}
+              <span className="h-3 w-px bg-white/15" />
 
-              <span className="font-mono text-xs text-emerald-400 font-semibold tracking-wider group-hover:text-emerald-300 transition-colors">
+              {/* Live Clock */}
+              <span className="font-mono text-xs text-slate-300 font-medium tracking-wider tabular-nums group-hover:text-white transition-colors">
                 {currentTime || "00:00:00"}
               </span>
             </button>
@@ -423,17 +480,17 @@ export default function StudySpacePage() {
                   });
                   setIsMixerOpen(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/70 hover:bg-slate-900/95 backdrop-blur-xl border border-white/15 text-white/80 hover:text-white transition-all active:scale-95 text-xs font-medium cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/70 hover:bg-slate-900/90 backdrop-blur-2xl border border-white/10 hover:border-white/20 text-slate-200 hover:text-white shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all active:scale-95 text-xs font-medium cursor-pointer"
                 title="Bảng tra cứu phím tắt (?)"
               >
-                <span className="font-mono text-[10px] bg-white/15 px-1.5 py-0.5 rounded font-bold">?</span>
+                <span className="font-mono text-[10px] bg-white/10 px-1.5 py-0.5 rounded font-bold text-slate-300">?</span>
                 <span className="hidden md:inline">Phím tắt</span>
               </button>
 
               {/* Zen Mode Toggle */}
               <button
                 onClick={() => setIsZenMode(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/70 hover:bg-slate-900/95 backdrop-blur-xl border border-white/15 text-white/80 hover:text-white transition-all active:scale-95 text-xs font-medium cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/70 hover:bg-slate-900/90 backdrop-blur-2xl border border-white/10 hover:border-white/20 text-slate-200 hover:text-white shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all active:scale-95 text-xs font-medium cursor-pointer"
                 title="Ẩn thanh công cụ để tập trung (Zen Mode: Z)"
               >
                 <EyeOff className="w-3.5 h-3.5 text-slate-300" />
@@ -443,7 +500,7 @@ export default function StudySpacePage() {
               {/* Global Mute Toggle */}
               <button
                 onClick={toggleGlobalMute}
-                className="p-2 rounded-full bg-slate-900/70 hover:bg-slate-900/95 backdrop-blur-xl border border-white/15 text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
+                className="p-1.5 rounded-full bg-slate-950/70 hover:bg-slate-900/90 backdrop-blur-2xl border border-white/10 hover:border-white/20 text-slate-200 hover:text-white shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all active:scale-95 cursor-pointer"
                 title={isGlobalMuted ? "Bật âm thanh (M)" : "Tắt toàn bộ âm (M)"}
               >
                 {isGlobalMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
@@ -518,11 +575,11 @@ export default function StudySpacePage() {
               className={`p-2.5 rounded-2xl transition-all group relative cursor-pointer ${
                 isPomodoroVisible ? "bg-rose-500/25 text-rose-300 border border-rose-400/40 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/10"
               }`}
-              title={isPomodoroVisible ? "Ẩn đồng hồ Pomodoro" : "Hiện đồng hồ Pomodoro"}
+              title="Đồng hồ Pomodoro (T)"
             >
               <Timer className="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" />
               <span className="absolute left-full ml-3 px-2 py-1 rounded-md bg-slate-900/90 text-[10px] font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-white/10">
-                {isPomodoroVisible ? "Ẩn Pomodoro" : "Hiện Pomodoro"}
+                Pomodoro (T)
               </span>
             </button>
 
@@ -538,11 +595,11 @@ export default function StudySpacePage() {
               className={`p-2.5 rounded-2xl transition-all group relative cursor-pointer ${
                 isTasksOpen ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40" : "text-slate-300 hover:text-white hover:bg-white/10"
               }`}
-              title="Kế hoạch học tập (To-do List)"
+              title="Kế hoạch học tập (K)"
             >
               <CheckSquare className="w-5 h-5" />
               <span className="absolute left-full ml-3 px-2 py-1 rounded-md bg-slate-900/90 text-[10px] font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-white/10">
-                Nhiệm vụ
+                Nhiệm vụ (K)
               </span>
             </button>
 
@@ -558,11 +615,11 @@ export default function StudySpacePage() {
               className={`p-2.5 rounded-2xl transition-all group relative cursor-pointer ${
                 isNotesOpen ? "bg-amber-500/20 text-amber-300 border border-amber-400/40" : "text-slate-300 hover:text-white hover:bg-white/10"
               }`}
-              title="Ghi chép nhanh (Scratchpad)"
+              title="Ghi chép nhanh (N)"
             >
               <FileText className="w-5 h-5" />
               <span className="absolute left-full ml-3 px-2 py-1 rounded-md bg-slate-900/90 text-[10px] font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-white/10">
-                Ghi chú
+                Ghi chú (N)
               </span>
             </button>
 
@@ -574,15 +631,42 @@ export default function StudySpacePage() {
                 setIsTasksOpen(false);
                 setIsNotesOpen(false);
                 setIsMixerOpen(false);
+                setIsEmbedPlayerOpen(false);
               }}
               className={`p-2.5 rounded-2xl transition-all group relative cursor-pointer ${
                 isScenesOpen ? "bg-sky-500/20 text-sky-300 border border-sky-400/40" : "text-slate-300 hover:text-white hover:bg-white/10"
               }`}
-              title="Thay đổi hình nền & không gian"
+              title="Thay đổi hình nền & không gian (B)"
             >
               <ImageIcon className="w-5 h-5" />
               <span className="absolute left-full ml-3 px-2 py-1 rounded-md bg-slate-900/90 text-[10px] font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-white/10">
-                Không gian
+                Không gian (B)
+              </span>
+            </button>
+
+            {/* External Stream / Embed Player Trigger */}
+            <button
+              onClick={() => {
+                setIsEmbedPlayerOpen(!isEmbedPlayerOpen);
+                if (!isEmbedPlayerOpen) handleCloseSettings();
+                setIsTasksOpen(false);
+                setIsNotesOpen(false);
+                setIsScenesOpen(false);
+                setIsMixerOpen(false);
+              }}
+              className={`p-2.5 rounded-2xl transition-all group relative cursor-pointer ${
+                isEmbedPlayerOpen || isExternalStreamActive
+                  ? "bg-purple-500/20 text-purple-300 border border-purple-400/40 shadow-sm"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
+              title="Đài phát ngoài (YouTube & Spotify) (E)"
+            >
+              <Radio className="w-5 h-5 text-purple-300" />
+              {isExternalStreamActive && (
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              )}
+              <span className="absolute left-full ml-3 px-2 py-1 rounded-md bg-slate-900/90 text-[10px] font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-white/10">
+                Đài phát (E)
               </span>
             </button>
           </motion.div>
@@ -597,6 +681,20 @@ export default function StudySpacePage() {
         onClose={() => setIsScenesOpen(false)} 
         currentScene={currentScene}
         onSelectScene={handleSelectScene}
+      />
+      <StudyEmbedPlayerWidget 
+        isOpen={isEmbedPlayerOpen} 
+        onClose={() => setIsEmbedPlayerOpen(false)}
+        onOpen={() => {
+          handleCloseSettings();
+          setIsTasksOpen(false);
+          setIsNotesOpen(false);
+          setIsScenesOpen(false);
+          setIsMixerOpen(false);
+          setIsEmbedPlayerOpen(true);
+        }}
+        onStreamActiveChange={setIsExternalStreamActive}
+        isZenMode={isZenMode}
       />
 
       {/* Unified Study Settings Modal */}
@@ -648,6 +746,7 @@ export default function StudySpacePage() {
           <StudyMusicPlayer 
             isGlobalMuted={isGlobalMuted} 
             isMixerOpen={isMixerOpen}
+            isExternalStreamActive={isExternalStreamActive}
             onToggleMixer={() => {
               setIsMixerOpen((prev) => {
                 const next = !prev;
@@ -656,6 +755,7 @@ export default function StudySpacePage() {
                   setIsTasksOpen(false);
                   setIsNotesOpen(false);
                   setIsScenesOpen(false);
+                  setIsEmbedPlayerOpen(false);
                   setIsShortcutsHelpOpen(false);
                 }
                 return next;
@@ -776,6 +876,10 @@ export default function StudySpacePage() {
                     <div className="flex items-center justify-between">
                       <span className="text-slate-300">Đổi không gian hình nền</span>
                       <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">B</kbd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-300">Đài phát (YouTube/Spotify)</span>
+                      <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">E</kbd>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-300">Bảng phím tắt này</span>

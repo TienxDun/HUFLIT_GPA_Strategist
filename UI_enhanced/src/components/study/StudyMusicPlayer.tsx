@@ -21,13 +21,15 @@ interface StudyMusicPlayerProps {
   isMixerOpen?: boolean;
   onToggleMixer?: () => void;
   onCloseMixer?: () => void;
+  isExternalStreamActive?: boolean;
 }
 
 export const StudyMusicPlayer = ({ 
   isGlobalMuted = false,
   isMixerOpen: externalIsMixerOpen,
   onToggleMixer,
-  onCloseMixer
+  onCloseMixer,
+  isExternalStreamActive = false
 }: StudyMusicPlayerProps) => {
   const [currentMood, setCurrentMood] = useState<MoodType>("lofi");
   const [tracks, setTracks] = useState<Track[]>(STUDY_TRACKS_BY_MOOD.lofi);
@@ -40,6 +42,16 @@ export const StudyMusicPlayer = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [internalIsMixerOpen, setInternalIsMixerOpen] = useState(false);
+
+  // Auto-pause internal music when external stream (YouTube/Spotify embed) becomes active
+  useEffect(() => {
+    if (isExternalStreamActive && isPlaying) {
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    }
+  }, [isExternalStreamActive, isPlaying]);
 
   const isMixerOpen = externalIsMixerOpen !== undefined ? externalIsMixerOpen : internalIsMixerOpen;
   const toggleMixer = onToggleMixer || (() => setInternalIsMixerOpen(!internalIsMixerOpen));

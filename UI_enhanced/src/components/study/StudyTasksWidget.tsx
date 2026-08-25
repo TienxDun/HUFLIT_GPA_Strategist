@@ -29,7 +29,7 @@ import {
 import { KanbanBoard, KanbanCard, KanbanColumn, KanbanChecklistItem } from "./study-types";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { ConfirmDeleteModal } from "../ui/ConfirmDeleteModal";
 
 interface StudyTasksWidgetProps {
   isOpen: boolean;
@@ -53,6 +53,62 @@ const DEFAULT_BOARDS: KanbanBoard[] = [
   }
 ];
 
+export const getDeadlineStatus = (dueDate?: string) => {
+  if (!dueDate) return null;
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = String(today.getMonth() + 1).padStart(2, "0");
+  const todayDay = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${todayYear}-${todayMonth}-${todayDay}`;
+
+  const due = new Date(dueDate + "T00:00:00");
+  const now = new Date(todayStr + "T00:00:00");
+  const diffTime = due.getTime() - now.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  const [year, month, day] = dueDate.split("-");
+  const formattedShort = `${day}/${month}`;
+  const formattedFull = `${day}/${month}/${year}`;
+
+  if (diffDays < 0) {
+    const overdueDays = Math.abs(diffDays);
+    return {
+      status: "overdue" as const,
+      label: `Quá hạn ${overdueDays} ngày (${formattedShort})`,
+      shortLabel: `Quá hạn ${formattedShort}`,
+      badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/30 font-medium",
+      isOverdue: true,
+      formattedFull,
+    };
+  } else if (diffDays === 0) {
+    return {
+      status: "today" as const,
+      label: "Hạn hôm nay",
+      shortLabel: "Hôm nay",
+      badgeClass: "bg-white/15 text-white border-white/20 font-medium",
+      isToday: true,
+      formattedFull,
+    };
+  } else if (diffDays === 1) {
+    return {
+      status: "tomorrow" as const,
+      label: `Hạn ngày mai (${formattedShort})`,
+      shortLabel: `Mai (${formattedShort})`,
+      badgeClass: "bg-white/10 text-slate-200 border-white/15 font-medium",
+      isTomorrow: true,
+      formattedFull,
+    };
+  } else {
+    return {
+      status: "future" as const,
+      label: `Hạn: ${formattedShort}/${year}`,
+      shortLabel: formattedShort,
+      badgeClass: "bg-white/10 text-slate-300 border-white/10",
+      formattedFull,
+    };
+  }
+};
+
 export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => {
   const [boards, setBoards] = useState<KanbanBoard[]>(DEFAULT_BOARDS);
   const [activeBoardId, setActiveBoardId] = useState<string>("board-default");
@@ -70,6 +126,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
   const [newCardTitle, setNewCardTitle] = useState("");
   const [newCardDescription, setNewCardDescription] = useState("");
   const [newCardPriority, setNewCardPriority] = useState<"high" | "medium" | "low">("medium");
+  const [newCardDueDate, setNewCardDueDate] = useState<string>("");
 
   // Adding Column state
   const [isAddingColumn, setIsAddingColumn] = useState(false);
@@ -130,6 +187,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
       description: newCardDescription.trim() || undefined,
       checklist: [],
       priority: newCardPriority,
+      dueDate: newCardDueDate ? newCardDueDate : undefined,
       createdAt: Date.now(),
     };
 
@@ -141,6 +199,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     setNewCardTitle("");
     setNewCardDescription("");
     setNewCardPriority("medium");
+    setNewCardDueDate("");
     setAddingCardColId(null);
 
     if (openDetail) {
@@ -336,7 +395,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
       cards: board.cards.filter((c) => c.id !== cardId),
     }));
     if (selectedCard?.id === cardId) setSelectedCard(null);
-    toast.success(`Đã xóa thẻ "${cardToDelete.title}"`);
     setCardToDelete(null);
   };
 
@@ -373,7 +431,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
       columns: board.columns.filter((c) => c.id !== colId),
       cards: board.cards.filter((c) => c.columnId !== colId),
     }));
-    toast.success(`Đã xóa cột "${columnToDelete.title}"`);
     setColumnToDelete(null);
   };
 
@@ -416,6 +473,49 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     }
   };
 
+  // Quick Toggle Entire Card Complete directly from Card UI
+  const handleToggleCardComplete = (cardId: string) => {
+    const card = currentBoard.cards.find((c) => c.id === cardId);
+    if (!card) return;
+
+    // Find done column if exists (named "Đã xong", "Done", "Hoàn thành" or last column)
+    const doneCol =
+      currentBoard.columns.find((col) => /xong|done|hoàn thành/i.test(col.title)) ||
+      (currentBoard.columns.length > 1 ? currentBoard.columns[currentBoard.columns.length - 1] : null);
+
+    const isCurrentlyDone = Boolean(card.completed) || (doneCol ? card.columnId === doneCol.id : false);
+    const nextCompleted = !isCurrentlyDone;
+
+    const firstCol = currentBoard.columns[0];
+    const targetColId = nextCompleted && doneCol ? doneCol.id : (!nextCompleted && firstCol ? firstCol.id : card.columnId);
+
+    updateCurrentBoard((board) => ({
+      ...board,
+      cards: board.cards.map((c) => {
+        if (c.id !== cardId) return c;
+        return {
+          ...c,
+          completed: nextCompleted,
+          columnId: targetColId,
+          checklist: c.checklist.map((it) => ({ ...it, completed: nextCompleted })),
+        };
+      }),
+    }));
+
+    if (selectedCard && selectedCard.id === cardId) {
+      setSelectedCard((prev) =>
+        prev
+          ? {
+              ...prev,
+              completed: nextCompleted,
+              columnId: targetColId,
+              checklist: prev.checklist.map((it) => ({ ...it, completed: nextCompleted })),
+            }
+          : null
+      );
+    }
+  };
+
   // Add Checklist Item to Card
   const [newChecklistText, setNewChecklistText] = useState("");
   const handleAddChecklistItem = (cardId: string) => {
@@ -437,6 +537,41 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
       setSelectedCard((prev) => (prev ? { ...prev, checklist: [...prev.checklist, newItem] } : null));
     }
     setNewChecklistText("");
+  };
+
+  // Edit Checklist Item Inline
+  const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
+  const [editingChecklistText, setEditingChecklistText] = useState<string>("");
+
+  const handleUpdateChecklistItemText = (cardId: string, itemId: string, newText: string) => {
+    const trimmed = newText.trim();
+    if (!trimmed) return;
+    updateCurrentBoard((board) => ({
+      ...board,
+      cards: board.cards.map((c) =>
+        c.id === cardId
+          ? {
+              ...c,
+              checklist: c.checklist.map((it) =>
+                it.id === itemId ? { ...it, text: trimmed } : it
+              ),
+            }
+          : c
+      ),
+    }));
+
+    if (selectedCard && selectedCard.id === cardId) {
+      setSelectedCard((prev) =>
+        prev
+          ? {
+              ...prev,
+              checklist: prev.checklist.map((it) =>
+                it.id === itemId ? { ...it, text: trimmed } : it
+              ),
+            }
+          : null
+      );
+    }
   };
 
   // Delete Checklist Item
@@ -495,8 +630,17 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     const updated = boards.filter((b) => b.id !== boardId);
     saveBoards(updated);
     setActiveBoardId(updated[0].id);
-    toast.success(`Đã xóa bảng "${boardToDelete.title}"`);
     setBoardToDelete(null);
+  };
+
+  // Update Card Due Date (Deadline)
+  const handleUpdateCardDueDate = (newDueDate?: string) => {
+    if (!selectedCard) return;
+    setSelectedCard((prev) => (prev ? { ...prev, dueDate: newDueDate } : null));
+    updateCurrentBoard((b) => ({
+      ...b,
+      cards: b.cards.map((c) => (c.id === selectedCard.id ? { ...c, dueDate: newDueDate } : c)),
+    }));
   };
 
   // Filter cards by search
@@ -510,6 +654,119 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
         c.checklist.some((it) => it.text.toLowerCase().includes(q))
     );
   };
+
+  // Active dragging items lookup
+  const draggingCard = currentBoard.cards.find((c) => c.id === draggingCardId);
+  const draggingCol = currentBoard.columns.find((c) => c.id === draggingColId);
+
+  // Check if column move actually changes its order
+  const isMeaningfulColMove = (targetColId: string, position: "before" | "after"): boolean => {
+    if (!draggingColId || draggingColId === targetColId || currentBoard.columns.length <= 1) return false;
+    const sourceIdx = currentBoard.columns.findIndex((c) => c.id === draggingColId);
+    const targetIdx = currentBoard.columns.findIndex((c) => c.id === targetColId);
+    if (sourceIdx === -1 || targetIdx === -1) return false;
+
+    if (sourceIdx < targetIdx) {
+      if (position === "before" && targetIdx === sourceIdx + 1) return false;
+    }
+    if (sourceIdx > targetIdx) {
+      if (position === "after" && targetIdx === sourceIdx - 1) return false;
+    }
+    return true;
+  };
+
+  // Check if card move actually changes its position
+  const isMeaningfulCardMove = (targetCard: KanbanCard, position: "before" | "after", currentCards: KanbanCard[]): boolean => {
+    if (!draggingCard || draggingCard.id === targetCard.id) return false;
+    if (draggingCard.columnId !== targetCard.columnId) return true; // Cross-column is always meaningful
+
+    const sourceIdx = currentCards.findIndex((c) => c.id === draggingCard.id);
+    const targetIdx = currentCards.findIndex((c) => c.id === targetCard.id);
+    if (sourceIdx === -1 || targetIdx === -1) return false;
+
+    if (sourceIdx < targetIdx) {
+      if (position === "before" && targetIdx === sourceIdx + 1) return false;
+    }
+    if (sourceIdx > targetIdx) {
+      if (position === "after" && targetIdx === sourceIdx - 1) return false;
+    }
+    return true;
+  };
+
+  // Helper: Card Live Preview Placeholder
+  const renderCardPlaceholder = (targetColId: string, targetCardId?: string, overridePos?: "before" | "after") => (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCardDrop(e, targetColId, targetCardId, overridePos);
+      }}
+      className="p-3 rounded-2xl border-2 border-dashed border-emerald-400/60 bg-emerald-500/10 backdrop-blur-md space-y-2 select-none shadow-[0_0_15px_rgba(52,211,153,0.2)] animate-pulse cursor-pointer"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-xs font-bold text-emerald-200 line-clamp-2">
+          {draggingCard?.title || "Nhiệm vụ"}
+        </span>
+        {Boolean(draggingCard?.priority) && (
+          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+            draggingCard?.priority === "high" ? "bg-rose-500/30 text-rose-200 border border-rose-400/40" :
+            draggingCard?.priority === "medium" ? "bg-amber-500/30 text-amber-200 border border-amber-400/40" :
+            "bg-emerald-500/30 text-emerald-200 border border-emerald-400/40"
+          }`}>
+            {draggingCard?.priority === "high" ? "Cao" : draggingCard?.priority === "medium" ? "Vừa" : "Thấp"}
+          </span>
+        )}
+      </div>
+      <div className="text-[10px] text-emerald-300/70 font-semibold flex items-center gap-1">
+        <span>↓ Thả để đặt thẻ vào đây</span>
+      </div>
+    </div>
+  );
+
+  // Helper: Column Live Preview Placeholder
+  const renderColumnPlaceholder = (targetColId: string, overridePos: "before" | "after") => (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleColumnDrop(e, targetColId, overridePos);
+      }}
+      className="w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-3xl border-2 border-dashed border-emerald-400/60 bg-emerald-500/10 backdrop-blur-md p-3.5 min-h-[260px] shadow-[0_0_20px_rgba(52,211,153,0.2)] select-none animate-pulse cursor-pointer"
+    >
+      {/* Column Header Preview */}
+      <div className="flex items-center justify-between pb-3 px-1 border-b border-emerald-400/20">
+        <div className="flex items-center gap-1.5">
+          <GripVertical className="w-3.5 h-3.5 text-emerald-400" />
+          <h3 className="text-sm font-bold text-emerald-100 tracking-wide">
+            {draggingCol?.title || "Danh sách"}
+          </h3>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-[10px] font-extrabold text-emerald-300">
+            Vị trí mới
+          </span>
+        </div>
+      </div>
+
+      {/* Body placeholder */}
+      <div className="flex-1 flex flex-col items-center justify-center py-8 text-center space-y-2">
+        <div className="p-2.5 rounded-2xl bg-emerald-400/15 border border-emerald-400/30 text-emerald-300">
+          <GripVertical className="w-5 h-5" />
+        </div>
+        <p className="text-xs font-semibold text-emerald-200">
+          Thả để di chuyển danh sách đến đây
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -718,123 +975,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
           <div className="flex-1 overflow-x-auto overflow-y-auto p-6 pb-6 custom-study-scroll">
             {viewMode === "board" ? (
               <div className="flex items-start gap-5 min-w-max">
-                {/* Active dragging items lookup */}
-                {(() => {
-                  const draggingCard = currentBoard.cards.find((c) => c.id === draggingCardId);
-                  const draggingCol = currentBoard.columns.find((c) => c.id === draggingColId);
-
-                  // Check if column move actually changes its order
-                  const isMeaningfulColMove = (targetColId: string, position: "before" | "after"): boolean => {
-                    if (!draggingColId || draggingColId === targetColId || currentBoard.columns.length <= 1) return false;
-                    const sourceIdx = currentBoard.columns.findIndex((c) => c.id === draggingColId);
-                    const targetIdx = currentBoard.columns.findIndex((c) => c.id === targetColId);
-                    if (sourceIdx === -1 || targetIdx === -1) return false;
-
-                    if (sourceIdx < targetIdx) {
-                      if (position === "before" && targetIdx === sourceIdx + 1) return false;
-                    }
-                    if (sourceIdx > targetIdx) {
-                      if (position === "after" && targetIdx === sourceIdx - 1) return false;
-                    }
-                    return true;
-                  };
-
-                  // Check if card move actually changes its position
-                  const isMeaningfulCardMove = (targetCard: KanbanCard, position: "before" | "after", currentCards: KanbanCard[]): boolean => {
-                    if (!draggingCard || draggingCard.id === targetCard.id) return false;
-                    if (draggingCard.columnId !== targetCard.columnId) return true; // Cross-column is always meaningful
-
-                    const sourceIdx = currentCards.findIndex((c) => c.id === draggingCard.id);
-                    const targetIdx = currentCards.findIndex((c) => c.id === targetCard.id);
-                    if (sourceIdx === -1 || targetIdx === -1) return false;
-
-                    if (sourceIdx < targetIdx) {
-                      if (position === "before" && targetIdx === sourceIdx + 1) return false;
-                    }
-                    if (sourceIdx > targetIdx) {
-                      if (position === "after" && targetIdx === sourceIdx - 1) return false;
-                    }
-                    return true;
-                  };
-
-                  // Helper: Card Live Preview Placeholder
-                  const renderCardPlaceholder = (targetColId: string, targetCardId?: string, overridePos?: "before" | "after") => (
-                    <div
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.dataTransfer.dropEffect = "move";
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleCardDrop(e, targetColId, targetCardId, overridePos);
-                      }}
-                      className="p-3 rounded-2xl border-2 border-dashed border-sky-400/60 bg-sky-500/10 backdrop-blur-md space-y-2 select-none shadow-[0_0_15px_rgba(56,189,248,0.2)] animate-pulse cursor-pointer"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-bold text-sky-200 line-clamp-2">
-                          {draggingCard?.title || "Nhiệm vụ"}
-                        </span>
-                        {Boolean(draggingCard?.priority) && (
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                            draggingCard?.priority === "high" ? "bg-rose-500/30 text-rose-200 border border-rose-400/40" :
-                            draggingCard?.priority === "medium" ? "bg-amber-500/30 text-amber-200 border border-amber-400/40" :
-                            "bg-emerald-500/30 text-emerald-200 border border-emerald-400/40"
-                          }`}>
-                            {draggingCard?.priority === "high" ? "Cao" : draggingCard?.priority === "medium" ? "Vừa" : "Thấp"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-sky-300/70 font-semibold flex items-center gap-1">
-                        <span>↓ Thả để đặt thẻ vào đây</span>
-                      </div>
-                    </div>
-                  );
-
-                  // Helper: Column Live Preview Placeholder
-                  const renderColumnPlaceholder = (targetColId: string, overridePos: "before" | "after") => (
-                    <div
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.dataTransfer.dropEffect = "move";
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleColumnDrop(e, targetColId, overridePos);
-                      }}
-                      className="w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-3xl border-2 border-dashed border-sky-400/60 bg-sky-500/10 backdrop-blur-md p-3.5 min-h-[260px] shadow-[0_0_20px_rgba(56,189,248,0.2)] select-none animate-pulse cursor-pointer"
-                    >
-                      {/* Column Header Preview */}
-                      <div className="flex items-center justify-between pb-3 px-1 border-b border-sky-400/20">
-                        <div className="flex items-center gap-1.5">
-                          <GripVertical className="w-3.5 h-3.5 text-sky-400" />
-                          <h3 className="text-sm font-bold text-sky-100 tracking-wide">
-                            {draggingCol?.title || "Danh sách"}
-                          </h3>
-                          <span className="px-2 py-0.5 rounded-full bg-sky-400/20 text-[10px] font-extrabold text-sky-300">
-                            Vị trí mới
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Body placeholder */}
-                      <div className="flex-1 flex flex-col items-center justify-center py-8 text-center space-y-2">
-                        <div className="p-2.5 rounded-2xl bg-sky-400/15 border border-sky-400/30 text-sky-300">
-                          <GripVertical className="w-5 h-5" />
-                        </div>
-                        <p className="text-xs font-semibold text-sky-200">
-                          Thả để di chuyển danh sách đến đây
-                        </p>
-                      </div>
-                    </div>
-                  );
-
-                  return (
-                    <>
-                      {currentBoard.columns.map((column, colIdx) => {
+                {currentBoard.columns.map((column, colIdx) => {
                         const colCards = filterCards(currentBoard.cards.filter((c) => c.columnId === column.id));
                         const isColumnDragging = draggingColId === column.id;
                         const isColDragOverBefore = dragOverColTargetId === column.id && dragOverColPosition === "before" && isMeaningfulColMove(column.id, "before");
@@ -948,6 +1089,8 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                                   const doneCheck = card.checklist.filter((i) => i.completed).length;
                                   const progressPercent = totalCheck > 0 ? Math.round((doneCheck / totalCheck) * 100) : 0;
                                   const isFullyDone = totalCheck > 0 && doneCheck === totalCheck;
+                                  const isDoneColumn = /xong|done|hoàn thành/i.test(column.title) || (currentBoard.columns.length > 1 && column.id === currentBoard.columns[currentBoard.columns.length - 1].id);
+                                  const isCardCompleted = Boolean(card.completed) || isDoneColumn || isFullyDone;
                                   const isCardDragging = draggingCardId === card.id;
                                   const isDragOverBefore = dragOverCardId === card.id && dragOverCardPosition === "before" && isMeaningfulCardMove(card, "before", colCards);
                                   const isDragOverAfter = dragOverCardId === card.id && dragOverCardPosition === "after" && isMeaningfulCardMove(card, "after", colCards);
@@ -965,65 +1108,100 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                                         onDragOver={(e) => handleCardDragOverCard(e, card.id)}
                                         onDrop={(e) => handleCardDrop(e, column.id, card.id)}
                                         onClick={() => setSelectedCard(card)}
-                                        className={`group p-3 rounded-2xl backdrop-blur-md border shadow-sm transition-all cursor-grab active:cursor-grabbing space-y-2.5 relative select-none ${
+                                        className={`group p-3 rounded-2xl backdrop-blur-md border shadow-sm transition-all cursor-grab active:cursor-grabbing space-y-2 relative select-none ${
                                           isCardDragging
                                             ? "opacity-25 border-dashed border-white/20 bg-white/[0.02] shadow-none"
                                             : "bg-white/[0.08] hover:bg-white/[0.14] border-white/12 hover:border-white/25"
                                         }`}
                                       >
-                                        {/* Title & Grip */}
-                                        <div className="flex items-start justify-between gap-2">
-                                          <h4 className="text-xs font-semibold text-slate-100 line-clamp-3 leading-snug break-words [overflow-wrap:anywhere] group-hover:text-sky-200 transition-colors">
-                                            {card.title}
-                                          </h4>
+                                        {/* Title, Quick Checkbox, Priority Micro-Dot & Grip */}
+                                        <div className="flex items-center justify-between gap-2">
+                                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            {/* Quick Complete Checkbox */}
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleToggleCardComplete(card.id);
+                                              }}
+                                              className="p-0.5 rounded-md hover:bg-white/10 text-white/40 hover:text-emerald-400 transition-colors flex-shrink-0 cursor-pointer flex items-center justify-center"
+                                              title={isCardCompleted ? "Đánh dấu chưa hoàn thành" : "Hoàn thành nhiệm vụ"}
+                                            >
+                                              {isCardCompleted ? (
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                                              ) : (
+                                                <Circle className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors" />
+                                              )}
+                                            </button>
+
+                                            {/* Priority Glowing Micro-Dot */}
+                                            {card.priority === "high" && (
+                                              <span
+                                                className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)] shrink-0"
+                                                title="Mức độ ưu tiên: Cao"
+                                              />
+                                            )}
+                                            {card.priority === "medium" && (
+                                              <span
+                                                className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.7)] shrink-0"
+                                                title="Mức độ ưu tiên: Vừa"
+                                              />
+                                            )}
+                                            {card.priority === "low" && (
+                                              <span
+                                                className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 shrink-0"
+                                                title="Mức độ ưu tiên: Thấp"
+                                              />
+                                            )}
+
+                                            {/* Card Title */}
+                                            <h4 className={`text-xs font-semibold leading-normal break-words [overflow-wrap:anywhere] min-w-0 flex-1 transition-all ${
+                                              isCardCompleted ? "line-through text-slate-500" : "text-slate-100 group-hover:text-emerald-200"
+                                            }`}>
+                                              {card.title}
+                                            </h4>
+                                          </div>
+
                                           <GripVertical className="w-3.5 h-3.5 text-white/20 group-hover:text-white/60 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         </div>
 
                                         {/* Progress bar if checklist exists */}
                                         {totalCheck > 0 && (
-                                          <div className="space-y-1">
+                                          <div className="space-y-1 pt-0.5">
                                             <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                                              <span className="flex items-center gap-1">
+                                              <span className="flex items-center gap-1 text-slate-300">
                                                 <CheckSquare className="w-3 h-3 text-emerald-400" />
                                                 <span>{doneCheck}/{totalCheck}</span>
                                               </span>
-                                              <span>{progressPercent}%</span>
+                                              <span className="text-[10px] text-slate-400">{progressPercent}%</span>
                                             </div>
-                                            <div className="w-full h-1.5 rounded-full bg-black/40 overflow-hidden">
+                                            <div className="w-full h-1 rounded-full bg-black/40 border border-white/5 overflow-hidden">
                                               <div
-                                                className={`h-full rounded-full transition-all duration-300 ${
-                                                  isFullyDone
-                                                    ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                                                    : "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]"
-                                                }`}
+                                                className="h-full rounded-full bg-emerald-400/90 transition-all duration-300 shadow-[0_0_4px_rgba(52,211,153,0.4)]"
                                                 style={{ width: `${progressPercent}%` }}
                                               />
                                             </div>
                                           </div>
                                         )}
 
-                                        {/* Card Footer Quick Actions */}
-                                        <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-slate-400">
-                                          <div className="flex items-center gap-1.5">
-                                            {card.priority === "high" && (
-                                              <span className="px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-bold text-[9px] border border-rose-400/30">
-                                                Cao
-                                              </span>
-                                            )}
-                                            {card.priority === "medium" && (
-                                              <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[9px] border border-amber-400/30">
-                                                Vừa
-                                              </span>
-                                            )}
-                                            {card.priority === "low" && (
-                                              <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold text-[9px] border border-emerald-400/30">
-                                                Thấp
-                                              </span>
-                                            )}
+                                        {/* Card Footer: Deadline Badge (clean, no text priority tags) */}
+                                        <div className={`flex items-center justify-between text-[10px] text-slate-400 ${card.dueDate ? "pt-1.5 border-t border-white/5" : "pt-0"}`}>
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            {/* Deadline Badge */}
+                                            {card.dueDate && (() => {
+                                              const dStatus = getDeadlineStatus(card.dueDate);
+                                              if (!dStatus) return null;
+                                              return (
+                                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] border ${dStatus.badgeClass}`}>
+                                                  <Calendar className="w-2.5 h-2.5" />
+                                                  <span>{dStatus.shortLabel}</span>
+                                                </span>
+                                              );
+                                            })()}
                                           </div>
 
                                           {/* Quick Move Column Buttons */}
-                                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" onClick={(e) => e.stopPropagation()}>
                                             {colIdx > 0 && (
                                               <button
                                                 onClick={() => handleMoveCard(card.id, currentBoard.columns[colIdx - 1].id)}
@@ -1087,29 +1265,52 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                               className="w-full p-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30 resize-none"
                             />
 
-                            {/* Priority Selector */}
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mức độ ưu tiên:</span>
-                              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-xl bg-black/40 border border-white/10 text-[11px] font-bold">
-                                {[
-                                  { value: "high", label: "Cao", activeClass: "bg-rose-500 text-white font-extrabold shadow-sm", idleClass: "text-rose-400/80 hover:text-rose-300" },
-                                  { value: "medium", label: "Vừa", activeClass: "bg-amber-500 text-slate-950 font-extrabold shadow-sm", idleClass: "text-amber-400/80 hover:text-amber-300" },
-                                  { value: "low", label: "Thấp", activeClass: "bg-emerald-500 text-slate-950 font-extrabold shadow-sm", idleClass: "text-emerald-400/80 hover:text-emerald-300" },
-                                ].map((p) => {
-                                  const isSelected = newCardPriority === p.value;
-                                  return (
+                            {/* Priority & Deadline Row */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ưu tiên:</span>
+                                <div className="grid grid-cols-3 gap-1 p-0.5 rounded-xl bg-black/40 border border-white/10 text-[11px] font-bold">
+                                  {[
+                                    { value: "low", label: "Thấp", activeClass: "bg-emerald-500 text-slate-950 font-extrabold shadow-sm", idleClass: "text-emerald-400/80 hover:text-emerald-300" },
+                                    { value: "medium", label: "Vừa", activeClass: "bg-amber-500 text-slate-950 font-extrabold shadow-sm", idleClass: "text-amber-400/80 hover:text-amber-300" },
+                                    { value: "high", label: "Cao", activeClass: "bg-rose-500 text-white font-extrabold shadow-sm", idleClass: "text-rose-400/80 hover:text-rose-300" },
+                                  ].map((p) => {
+                                    const isSelected = newCardPriority === p.value;
+                                    return (
+                                      <button
+                                        key={p.value}
+                                        type="button"
+                                        onClick={() => setNewCardPriority(p.value as "high" | "medium" | "low")}
+                                        className={`py-1 rounded-lg text-center transition-all cursor-pointer ${
+                                          isSelected ? p.activeClass : `${p.idleClass} hover:bg-white/5`
+                                        }`}
+                                      >
+                                        {p.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                  <span>Hạn chót:</span>
+                                  {newCardDueDate && (
                                     <button
-                                      key={p.value}
                                       type="button"
-                                      onClick={() => setNewCardPriority(p.value as "high" | "medium" | "low")}
-                                      className={`py-1 rounded-lg text-center transition-all cursor-pointer ${
-                                        isSelected ? p.activeClass : `${p.idleClass} hover:bg-white/5`
-                                      }`}
+                                      onClick={() => setNewCardDueDate("")}
+                                      className="text-[9px] text-rose-400 hover:underline cursor-pointer"
                                     >
-                                      {p.label}
+                                      Xóa
                                     </button>
-                                  );
-                                })}
+                                  )}
+                                </div>
+                                <input
+                                  type="date"
+                                  value={newCardDueDate}
+                                  onChange={(e) => setNewCardDueDate(e.target.value)}
+                                  className="w-full h-8 px-2 rounded-xl bg-black/40 border border-white/10 text-[11px] font-bold text-white focus:outline-none focus:border-white/30 cursor-pointer [color-scheme:dark]"
+                                />
                               </div>
                             </div>
 
@@ -1122,6 +1323,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                                   setNewCardTitle("");
                                   setNewCardDescription("");
                                   setNewCardPriority("medium");
+                                  setNewCardDueDate("");
                                 }}
                                 className="px-2 py-1 text-xs text-white/60 hover:text-white transition-colors cursor-pointer"
                               >
@@ -1170,9 +1372,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                   </div>
                 );
               })}
-            </>
-          );
-        })()}
 
                 {/* + Thêm danh sách (Add Column Card) */}
                 <div className="w-72 sm:w-80 flex-shrink-0">
@@ -1217,12 +1416,28 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                 </div>
               </div>
             ) : (
-              /* LIST VIEW MODE */
+              /* LIST VIEW MODE WITH FULL DRAG & DROP */
               <div className="max-w-4xl mx-auto space-y-6">
                 {currentBoard.columns.map((col, colIdx) => {
                   const colCards = filterCards(currentBoard.cards.filter((c) => c.columnId === col.id));
+                  const isColCardDragOver = dragOverColId === col.id && draggingCardId !== null && draggingCard?.columnId !== col.id;
+
                   return (
-                    <div key={col.id || `col-list-${colIdx}`} className="p-4 rounded-3xl bg-black/30 backdrop-blur-md border border-white/10 space-y-3">
+                    <div
+                      key={col.id || `col-list-${colIdx}`}
+                      onDragOver={(e) => {
+                        if (draggingCardId) handleCardDragOverCol(e, col.id);
+                      }}
+                      onDrop={(e) => {
+                        if (draggingCardId) handleCardDrop(e, col.id);
+                      }}
+                      className={`p-4 rounded-3xl backdrop-blur-md border space-y-3 transition-all ${
+                        isColCardDragOver
+                          ? "border-emerald-400/40 bg-emerald-500/[0.04]"
+                          : "bg-black/30 border-white/10"
+                      }`}
+                    >
+                      {/* List Header */}
                       <div className="flex items-center justify-between pb-2 border-b border-white/10">
                         {editingColumnId === col.id ? (
                           <div className="flex items-center gap-2 max-w-xs flex-1">
@@ -1239,7 +1454,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                                 }
                               }}
                               onBlur={() => handleRenameColumn(col.id)}
-                              className="w-full px-2.5 py-1 rounded-xl bg-black/60 border border-sky-400/80 text-sm font-bold text-white focus:outline-none focus:ring-1 focus:ring-sky-400"
+                              className="w-full px-2.5 py-1 rounded-xl bg-black/60 border border-emerald-400/80 text-sm font-bold text-white focus:outline-none focus:ring-1 focus:ring-emerald-400"
                               autoFocus
                               onFocus={(e) => e.target.select()}
                               maxLength={50}
@@ -1251,54 +1466,150 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                               setEditingColumnId(col.id);
                               setEditingColumnTitle(col.title);
                             }}
-                            className="font-bold text-sm text-white flex items-center gap-2 hover:text-sky-200 cursor-text transition-colors"
+                            className="font-bold text-sm text-white flex items-center gap-2 hover:text-emerald-200 cursor-text transition-colors"
                             title="Nhấn để đổi tên danh sách"
                           >
                             <span>{col.title}</span>
-                            <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs text-slate-300">
+                            <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs text-slate-300 font-mono">
                               {colCards.length}
                             </span>
                           </h3>
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        {colCards.map((card, cardIdx) => (
-                          <div
-                            key={card.id || `card-list-${cardIdx}`}
-                            onClick={() => setSelectedCard(card)}
-                            className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between cursor-pointer transition-all gap-3"
-                          >
-                            <div className="space-y-1 min-w-0 flex-1">
-                              <h4 className="text-xs font-semibold text-white break-words [overflow-wrap:anywhere]">{card.title}</h4>
-                              {Boolean(card.description) && (
-                                <p className="text-[10px] text-slate-400 break-words [overflow-wrap:anywhere]">{card.description}</p>
-                              )}
+                      {/* List Cards Drag & Drop Container */}
+                      <div
+                        onDragOver={(e) => {
+                          if (draggingCardId) handleCardDragOverCol(e, col.id);
+                        }}
+                        onDrop={(e) => {
+                          if (draggingCardId) handleCardDrop(e, col.id);
+                        }}
+                        className="space-y-2 min-h-[48px]"
+                      >
+                        {colCards.map((card, cardIdx) => {
+                          const totalCheck = card.checklist.length;
+                          const doneCheck = card.checklist.filter((i) => i.completed).length;
+                          const isFullyDone = totalCheck > 0 && doneCheck === totalCheck;
+                          const isDoneColumn = /xong|done|hoàn thành/i.test(col.title) || (currentBoard.columns.length > 1 && col.id === currentBoard.columns[currentBoard.columns.length - 1].id);
+                          const isCardCompleted = Boolean(card.completed) || isDoneColumn || isFullyDone;
+                          const isCardDragging = draggingCardId === card.id;
+                          const isDragOverBefore = dragOverCardId === card.id && dragOverCardPosition === "before" && isMeaningfulCardMove(card, "before", colCards);
+                          const isDragOverAfter = dragOverCardId === card.id && dragOverCardPosition === "after" && isMeaningfulCardMove(card, "after", colCards);
+
+                          return (
+                            <div key={card.id || `card-list-${cardIdx}`} className="space-y-2">
+                              {/* Live Preview Card Placeholder (Before) */}
+                              {isDragOverBefore && renderCardPlaceholder(col.id, card.id, "before")}
+
+                              <div
+                                draggable
+                                onDragStart={(e) => handleCardDragStart(e, card.id, col.id)}
+                                onDragEnd={handleCardDragEnd}
+                                onDragOver={(e) => handleCardDragOverCard(e, card.id)}
+                                onDrop={(e) => handleCardDrop(e, col.id, card.id)}
+                                onClick={() => setSelectedCard(card)}
+                                className={`group p-3 rounded-2xl border transition-all cursor-grab active:cursor-grabbing select-none ${
+                                  Boolean(card.description) ? "space-y-1.5" : ""
+                                } ${
+                                  isCardDragging
+                                    ? "opacity-25 border-dashed border-white/20 bg-white/[0.02] shadow-none"
+                                    : "bg-white/[0.05] hover:bg-white/[0.09] border-white/10 hover:border-white/20 shadow-sm"
+                                }`}
+                              >
+                                {/* Primary Line: Checkbox + Priority Micro-Dot + Title + Description Snippet + Right Metadata */}
+                                <div className="flex items-center justify-between gap-3 min-w-0">
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    {/* Grip Indicator */}
+                                    <GripVertical className="w-3.5 h-3.5 text-white/20 group-hover:text-white/60 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                    {/* Quick Complete Checkbox Button */}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleCardComplete(card.id);
+                                      }}
+                                      className="p-0.5 rounded-md hover:bg-white/10 text-white/40 hover:text-emerald-400 transition-colors flex-shrink-0 cursor-pointer flex items-center justify-center"
+                                      title={isCardCompleted ? "Đánh dấu chưa hoàn thành" : "Hoàn thành nhiệm vụ"}
+                                    >
+                                      {isCardCompleted ? (
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                                      ) : (
+                                        <Circle className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors" />
+                                      )}
+                                    </button>
+
+                                    {/* Priority Glowing Micro-Dot */}
+                                    {card.priority === "high" && (
+                                      <span
+                                        className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)] shrink-0"
+                                        title="Mức độ ưu tiên: Cao"
+                                      />
+                                    )}
+                                    {card.priority === "medium" && (
+                                      <span
+                                        className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.7)] shrink-0"
+                                        title="Mức độ ưu tiên: Vừa"
+                                      />
+                                    )}
+                                    {card.priority === "low" && (
+                                      <span
+                                        className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 shrink-0"
+                                        title="Mức độ ưu tiên: Thấp"
+                                      />
+                                    )}
+
+                                    {/* Task Title & Inline Description Preview */}
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                      <h4 className={`text-xs font-semibold leading-normal truncate transition-colors ${
+                                        isCardCompleted ? "line-through text-slate-500" : "text-white group-hover:text-emerald-200"
+                                      }`}>
+                                        {card.title}
+                                      </h4>
+                                      {Boolean(card.description) && (
+                                        <span className="text-[11px] text-slate-400/70 font-normal truncate hidden md:inline max-w-xs lg:max-w-sm">
+                                          — {card.description}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Right side: Deadline Badge + Checklist counter */}
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {/* Deadline Badge in List View */}
+                                    {card.dueDate && (() => {
+                                      const dStatus = getDeadlineStatus(card.dueDate);
+                                      if (!dStatus) return null;
+                                      return (
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-medium border ${dStatus.badgeClass}`}>
+                                          <Calendar className="w-3 h-3" />
+                                          <span>{dStatus.label}</span>
+                                        </span>
+                                      );
+                                    })()}
+
+                                    {/* Checklist progress counter */}
+                                    {card.checklist.length > 0 && (
+                                      <span className="text-[10px] text-slate-300 bg-white/10 border border-white/10 px-2 py-0.5 rounded-lg font-mono flex items-center gap-1">
+                                        <CheckSquare className="w-3 h-3 text-emerald-400" />
+                                        <span>{card.checklist.filter((i) => i.completed).length}/{card.checklist.length}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Live Preview Card Placeholder (After) */}
+                              {isDragOverAfter && renderCardPlaceholder(col.id, card.id, "after")}
                             </div>
-                            <div className="flex items-center gap-2.5 flex-shrink-0">
-                              {card.priority === "high" && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-bold text-[9px] border border-rose-400/30">
-                                  Cao
-                                </span>
-                              )}
-                              {card.priority === "medium" && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[9px] border border-amber-400/30">
-                                  Vừa
-                                </span>
-                              )}
-                              {card.priority === "low" && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold text-[9px] border border-emerald-400/30">
-                                  Thấp
-                                </span>
-                              )}
-                              {card.checklist.length > 0 && (
-                                <span className="text-[10px] text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md font-mono">
-                                  {card.checklist.filter((i) => i.completed).length}/{card.checklist.length}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
+
+                        {/* Empty list placeholder when dragging over */}
+                        {colCards.length === 0 && isColCardDragOver && (
+                          renderCardPlaceholder(col.id)
+                        )}
                       </div>
                     </div>
                   );
@@ -1442,9 +1753,9 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                       </label>
                       <div className="h-10 grid grid-cols-3 gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] items-center">
                         {[
-                          { value: "high", label: "Cao", activeClass: "bg-rose-500 text-white font-extrabold shadow-[0_0_12px_rgba(244,63,94,0.45)] border-rose-400/40", idleClass: "text-rose-300/60 hover:text-rose-200 hover:bg-rose-500/10" },
-                          { value: "medium", label: "Vừa", activeClass: "bg-amber-400 text-slate-950 font-black shadow-[0_0_12px_rgba(251,191,36,0.45)] border-amber-300/40", idleClass: "text-amber-300/60 hover:text-amber-200 hover:bg-amber-500/10" },
-                          { value: "low", label: "Thấp", activeClass: "bg-emerald-400 text-slate-950 font-black shadow-[0_0_12px_rgba(52,211,153,0.45)] border-emerald-300/40", idleClass: "text-emerald-300/60 hover:text-emerald-200 hover:bg-emerald-500/10" },
+                          { value: "low", label: "Thấp", activeClass: "bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30", idleClass: "text-slate-400 hover:text-slate-200 hover:bg-white/5" },
+                          { value: "medium", label: "Vừa", activeClass: "bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30", idleClass: "text-slate-400 hover:text-slate-200 hover:bg-white/5" },
+                          { value: "high", label: "Cao", activeClass: "bg-rose-500/20 text-rose-300 font-bold border border-rose-400/30", idleClass: "text-slate-400 hover:text-rose-200 hover:bg-white/5" },
                         ].map((p) => {
                           const isSelected = selectedCard.priority === p.value;
                           return (
@@ -1471,7 +1782,86 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                     </div>
                   </div>
 
-                  {/* 2. Description Section */}
+                  {/* 2. Deadline & Quick Presets Row (Balanced 2-Column Grid Synchronized with Row 1) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Left Column: Date Picker Input */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Hạn chót (Deadline)</span>
+                        </label>
+                        {selectedCard.dueDate && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateCardDueDate(undefined)}
+                            className="text-[10px] text-slate-400 hover:text-slate-200 font-medium transition-colors cursor-pointer"
+                            title="Gỡ bỏ hạn chót"
+                          >
+                            Xóa hạn
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        type="date"
+                        value={selectedCard.dueDate || ""}
+                        onChange={(e) => handleUpdateCardDueDate(e.target.value || undefined)}
+                        className="w-full h-10 px-3.5 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] focus:bg-black/50 border border-white/[0.12] focus:border-white/30 text-xs font-bold text-white focus:outline-none cursor-pointer [color-scheme:dark] shadow-sm transition-all"
+                      />
+                    </div>
+
+                    {/* Right Column: Quick Presets (Matched Height & Style with Priority) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
+                          Chọn nhanh
+                        </label>
+                        {selectedCard.dueDate && (() => {
+                          const dStatus = getDeadlineStatus(selectedCard.dueDate);
+                          if (!dStatus) return null;
+                          return (
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[9px] font-bold border ${dStatus.badgeClass}`}>
+                              <span>{dStatus.shortLabel}</span>
+                            </span>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="h-10 grid grid-cols-3 gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] items-center">
+                        {[
+                          { label: "Hôm nay", days: 0 },
+                          { label: "Ngày mai", days: 1 },
+                          { label: "+3 Ngày", days: 3 },
+                        ].map((preset) => {
+                          const target = new Date();
+                          target.setDate(target.getDate() + preset.days);
+                          const y = target.getFullYear();
+                          const m = String(target.getMonth() + 1).padStart(2, "0");
+                          const d = String(target.getDate()).padStart(2, "0");
+                          const dateStr = `${y}-${m}-${d}`;
+                          const isSelected = selectedCard.dueDate === dateStr;
+
+                          return (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              onClick={() => handleUpdateCardDueDate(isSelected ? undefined : dateStr)}
+                              className={`h-full rounded-xl text-xs font-bold text-center transition-all cursor-pointer truncate px-1 flex items-center justify-center border border-transparent ${
+                                isSelected
+                                  ? "bg-white/20 text-white font-bold border border-white/30 shadow-sm"
+                                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Description Section */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block flex items-center gap-1.5">
                       <AlignLeft className="w-3.5 h-3.5 text-slate-400" />
@@ -1489,7 +1879,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                           cards: b.cards.map((c) => (c.id === selectedCard.id ? { ...c, description: updatedDesc } : c)),
                         }));
                       }}
-                      className="w-full p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.06] focus:bg-black/40 border border-white/[0.08] focus:border-sky-400/40 text-xs text-white placeholder-white/30 focus:outline-none resize-none h-20 transition-all font-normal leading-relaxed"
+                      className="w-full p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.06] focus:bg-black/40 border border-white/[0.08] focus:border-white/30 text-xs text-white placeholder-white/30 focus:outline-none resize-none h-20 transition-all font-normal leading-relaxed"
                     />
                   </div>
 
@@ -1505,11 +1895,11 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                         <>
                           <div className="flex items-center justify-between text-xs font-bold text-slate-300">
                             <span className="flex items-center gap-1.5">
-                              <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
+                              <CheckSquare className="w-3.5 h-3.5 text-slate-300" />
                               <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Danh sách công việc con</span>
                             </span>
                             {totalCheck > 0 && (
-                              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
+                              <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15 flex items-center gap-1">
                                 <span>{doneCheck}/{totalCheck}</span>
                                 <span className="text-white/40">({progressPercent}%)</span>
                               </span>
@@ -1520,11 +1910,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                           {totalCheck > 0 && (
                             <div className="w-full h-1.5 rounded-full bg-black/40 border border-white/5 overflow-hidden">
                               <div
-                                className={`h-full rounded-full transition-all duration-300 ${
-                                  isFullyDone
-                                    ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                                    : "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]"
-                                }`}
+                                className="h-full rounded-full bg-emerald-400/90 transition-all duration-300 shadow-[0_0_6px_rgba(52,211,153,0.4)]"
                                 style={{ width: `${progressPercent}%` }}
                               />
                             </div>
@@ -1533,36 +1919,83 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                           {/* Checklist Items */}
                           {totalCheck > 0 && (
                             <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 custom-study-scroll">
-                              {selectedCard.checklist.map((item, itemIdx) => (
-                                <div
-                                  key={item.id || `chk-${itemIdx}`}
-                                  className="flex items-center justify-between py-2 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] group transition-all"
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleChecklist(selectedCard.id, item.id)}
-                                    className="flex items-center gap-2.5 text-xs text-left min-w-0 flex-1 cursor-pointer mr-2"
+                              {selectedCard.checklist.map((item, itemIdx) => {
+                                const isEditing = editingChecklistId === item.id;
+                                return (
+                                  <div
+                                    key={item.id || `chk-${itemIdx}`}
+                                    className="flex items-center justify-between py-1.5 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] group transition-all gap-2"
                                   >
-                                    {item.completed ? (
-                                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                                    ) : (
-                                      <Circle className="w-4 h-4 text-white/40 group-hover:text-white/70 flex-shrink-0" />
-                                    )}
-                                    <span className={`break-words [overflow-wrap:anywhere] min-w-0 flex-1 leading-snug ${item.completed ? "line-through text-slate-500" : "text-slate-200"}`}>
-                                      {item.text}
-                                    </span>
-                                  </button>
+                                    {/* Checkbox Icon Button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleChecklist(selectedCard.id, item.id)}
+                                      className="p-0.5 text-white/40 hover:text-emerald-400 cursor-pointer flex-shrink-0 transition-colors"
+                                      title={item.completed ? "Đánh dấu chưa xong" : "Đánh dấu đã xong"}
+                                    >
+                                      {item.completed ? (
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                                      ) : (
+                                        <Circle className="w-4 h-4 text-white/40 group-hover:text-emerald-300 transition-colors" />
+                                      )}
+                                    </button>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteChecklistItem(selectedCard.id, item.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-400 transition-opacity cursor-pointer flex-shrink-0"
-                                    title="Xóa mục"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              ))}
+                                    {/* Inline Editable Text */}
+                                    {isEditing ? (
+                                      <input
+                                        type="text"
+                                        value={editingChecklistText}
+                                        onChange={(e) => setEditingChecklistText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleUpdateChecklistItemText(selectedCard.id, item.id, editingChecklistText);
+                                            setEditingChecklistId(null);
+                                          } else if (e.key === "Escape") {
+                                            setEditingChecklistId(null);
+                                          }
+                                        }}
+                                        onBlur={() => {
+                                          handleUpdateChecklistItemText(selectedCard.id, item.id, editingChecklistText);
+                                          setEditingChecklistId(null);
+                                        }}
+                                        className="flex-1 px-2.5 py-1 rounded-lg bg-black/70 border border-emerald-400/80 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-400 shadow-inner"
+                                        autoFocus
+                                        onFocus={(e) => e.target.select()}
+                                        maxLength={120}
+                                      />
+                                    ) : (
+                                      <div
+                                        onClick={() => {
+                                          setEditingChecklistId(item.id);
+                                          setEditingChecklistText(item.text);
+                                        }}
+                                        className="flex-1 min-w-0 flex items-center justify-between cursor-text py-0.5 px-2 -mx-1 rounded-lg hover:bg-white/5 transition-colors group/text"
+                                        title="Bấm vào nội dung để chỉnh sửa trực tiếp"
+                                      >
+                                        <span
+                                          className={`text-xs break-words [overflow-wrap:anywhere] min-w-0 flex-1 leading-snug ${
+                                            item.completed ? "line-through text-slate-500" : "text-slate-200 group-hover/text:text-white"
+                                          }`}
+                                        >
+                                          {item.text}
+                                        </span>
+                                        <Edit3 className="w-3 h-3 text-slate-500 group-hover/text:text-slate-300 opacity-0 group-hover/text:opacity-100 flex-shrink-0 ml-1.5 transition-opacity" />
+                                      </div>
+                                    )}
+
+                                    {/* Delete Button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteChecklistItem(selectedCard.id, item.id)}
+                                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-400 transition-opacity cursor-pointer flex-shrink-0"
+                                      title="Xóa mục"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </>
@@ -1570,7 +2003,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                     })()}
 
                     {/* Add Checklist Input Bar */}
-                    <div className="flex items-center gap-2 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] focus-within:border-sky-400/40 transition-all">
+                    <div className="flex items-center gap-2 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] focus-within:border-white/30 transition-all">
                       <input
                         type="text"
                         placeholder="Thêm mục việc cần làm..."

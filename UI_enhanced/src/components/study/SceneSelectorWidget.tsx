@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { 
   Image as ImageIcon, 
   X, 
@@ -26,6 +26,28 @@ interface SceneSelectorWidgetProps {
   onSelectScene: (scene: Scene) => void;
 }
 
+const SceneThumbnail: React.FC<{ scene: Scene }> = ({ scene }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div className="relative w-full h-full bg-slate-900 overflow-hidden">
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 animate-pulse" />
+      )}
+      <img
+        src={scene.thumbnailUrl}
+        alt={scene.name}
+        className={`w-full h-full object-cover group-hover:scale-108 transition-all duration-500 ${
+          isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        }`}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setIsLoaded(true)}
+      />
+    </div>
+  );
+};
+
 interface CategoryItem {
   key: string;
   label: string;
@@ -39,32 +61,42 @@ export const SceneSelectorWidget = ({
   currentScene,
   onSelectScene,
 }: SceneSelectorWidgetProps) => {
-  const [scenes] = useState<Scene[]>(STUDY_SCENES);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isModalReady, setIsModalReady] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  if (!isOpen) return null;
+  const scenes = STUDY_SCENES;
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => setIsModalReady(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setIsModalReady(false);
+    }
+  }, [isOpen]);
 
   const categories: CategoryItem[] = [
     { key: "all", label: "Tất cả", icon: Sparkles, color: "text-amber-400" },
-    { key: "video", label: "Video 4K Động", icon: Video, color: "text-rose-400" },
-    { key: "chill", label: "Chill & Thư giãn", icon: Coffee, color: "text-emerald-400" },
-    { key: "anime", label: "Anime & Lofi", icon: Tv, color: "text-purple-400" },
+    { key: "video", label: "Video 4K", icon: Video, color: "text-rose-400" },
+    { key: "chill", label: "Chill & Lofi", icon: Coffee, color: "text-amber-300" },
+    { key: "anime", label: "Anime", icon: Tv, color: "text-purple-400" },
     { key: "nature", label: "Thiên nhiên", icon: Trees, color: "text-teal-400" },
     { key: "urban", label: "Đô thị & Đêm", icon: Building2, color: "text-sky-400" },
     { key: "cute", label: "Đáng yêu", icon: Heart, color: "text-pink-400" },
   ];
 
-  // Tự động loại bỏ bất kỳ danh mục nào không có bối cảnh nào (count = 0)
-  const availableCategories = categories.filter((cat) => {
-    const count = scenes.filter((s) => {
-      if (cat.key === "all") return true;
-      if (cat.key === "video") return s.type === "VIDEO";
-      return s.category === cat.key;
-    }).length;
-    return count > 0;
-  });
+  const availableCategories = useMemo(() => {
+    return categories.filter((cat) => {
+      const count = scenes.filter((s) => {
+        if (cat.key === "all") return true;
+        if (cat.key === "video") return s.type === "VIDEO";
+        return s.category === cat.key;
+      }).length;
+      return count > 0;
+    });
+  }, [scenes]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -73,18 +105,21 @@ export const SceneSelectorWidget = ({
     }
   };
 
-  const filteredScenes = scenes.filter((s) => {
-    const matchCategory = 
-      selectedCategory === "all" ? true :
-      selectedCategory === "video" ? s.type === "VIDEO" :
-      s.category === selectedCategory;
+  const filteredScenes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return scenes.filter((s) => {
+      const matchCategory = 
+        selectedCategory === "all" ? true :
+        selectedCategory === "video" ? s.type === "VIDEO" :
+        s.category === selectedCategory;
 
-    const matchSearch = searchQuery.trim() === "" || 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.category.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSearch = !q || 
+        s.name.toLowerCase().includes(q) ||
+        s.category.toLowerCase().includes(q);
 
-    return matchCategory && matchSearch;
-  });
+      return matchCategory && matchSearch;
+    });
+  }, [scenes, selectedCategory, searchQuery]);
 
   return (
     <AnimatePresence>
@@ -255,12 +290,7 @@ export const SceneSelectorWidget = ({
                     >
                       {/* Thumbnail Image */}
                       <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-950 shrink-0">
-                        <img
-                          src={scene.thumbnailUrl}
-                          alt={scene.name}
-                          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                          loading="lazy"
-                        />
+                        <SceneThumbnail scene={scene} />
 
                         {/* Video 4K Badge */}
                         {isVideo && (

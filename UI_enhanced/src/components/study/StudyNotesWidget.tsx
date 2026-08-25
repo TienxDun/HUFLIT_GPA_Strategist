@@ -36,7 +36,6 @@ import {
   Moon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 
 export interface StudyNote {
@@ -162,11 +161,6 @@ export const StudyNotesWidget = ({ isOpen, onClose }: StudyNotesWidgetProps) => 
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
     localStorage.setItem(STORAGE_THEME_KEY, nextTheme);
-    toast.success(
-      nextTheme === "light"
-        ? "Đã chuyển sang giao diện Sáng (Light Theme)"
-        : "Đã chuyển sang giao diện Tối (Dark Theme)"
-    );
   };
 
   // Formatting active states
@@ -318,7 +312,6 @@ export const StudyNotesWidget = ({ isOpen, onClose }: StudyNotesWidgetProps) => 
     const updated = [newNote, ...notes];
     saveNotesToStorage(updated);
     setActiveNoteId(newNote.id);
-    toast.success("Đã tạo ghi chú mới");
   };
 
   const handleUpdateTitle = (newTitle: string) => {
@@ -350,7 +343,6 @@ export const StudyNotesWidget = ({ isOpen, onClose }: StudyNotesWidgetProps) => 
       n.id === noteId ? { ...n, category: newCat, updatedAt: Date.now() } : n
     );
     saveNotesToStorage(updated);
-    toast.success(`Đã chuyển sang danh mục: ${newCat}`);
   };
 
   const promptDeleteNote = (note: StudyNote, e: React.MouseEvent) => {
@@ -366,7 +358,6 @@ export const StudyNotesWidget = ({ isOpen, onClose }: StudyNotesWidgetProps) => 
     if (activeNoteId === idToDelete) {
       setActiveNoteId(updated.length > 0 ? updated[0].id : "");
     }
-    toast.success(`Đã xoá ghi chú "${noteToDelete.title}"`);
     setNoteToDelete(null);
   };
 
@@ -707,7 +698,6 @@ export const StudyNotesWidget = ({ isOpen, onClose }: StudyNotesWidgetProps) => 
 
     checkActiveFormats();
     handleEditorInput();
-    toast.success("Đã xóa định dạng");
   };
 
   // Interactive Checklist Checkbox Clicking
@@ -874,7 +864,6 @@ export const StudyNotesWidget = ({ isOpen, onClose }: StudyNotesWidgetProps) => 
     const text = getCleanExportText(editorRef.current);
     navigator.clipboard.writeText(text);
     setIsCopied(true);
-    toast.success("Đã sao chép nội dung văn bản");
     setTimeout(() => setIsCopied(false), 2000);
   };
 
@@ -889,7 +878,6 @@ export const StudyNotesWidget = ({ isOpen, onClose }: StudyNotesWidgetProps) => 
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    toast.success(`Đã tải xuống ${element.download}`);
   };
 
   return (

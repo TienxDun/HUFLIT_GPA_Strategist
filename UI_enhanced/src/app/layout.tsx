@@ -130,7 +130,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans overflow-x-hidden">
         <ServiceWorkerRegister basePath={basePath} />
         {children}
-        <Toaster richColors closeButton position="top-right" />
+        <Toaster
+          theme="dark"
+          position="top-right"
+          duration={3000}
+          offset={24}
+        />
         {process.env.NODE_ENV === "production" && (
           <Script
             data-goatcounter="https://tienxdun.goatcounter.com/count"
