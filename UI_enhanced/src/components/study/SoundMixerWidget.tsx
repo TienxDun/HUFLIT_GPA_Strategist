@@ -245,11 +245,11 @@ export const SoundMixerWidget = ({
           <motion.div
             key="sound-mixer-panel"
             ref={popupRef}
-            initial={{ opacity: 0, x: 40, scale: 0.95 }}
+            initial={{ opacity: 0, x: 20, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 40, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed top-16 bottom-3 sm:bottom-4 right-4 sm:right-6 z-50 w-[390px] sm:w-[420px] max-w-[calc(100vw-24px)] flex flex-col rounded-3xl bg-[#0b0f17]/95 backdrop-blur-3xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.7)] text-white overflow-hidden"
+            exit={{ opacity: 0, x: 16, scale: 0.97 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-16 bottom-3 sm:bottom-4 right-4 sm:right-6 z-50 w-[390px] sm:w-[420px] max-w-[calc(100vw-24px)] flex flex-col rounded-3xl bg-[#0b0f17]/95 backdrop-blur-xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.7)] text-white overflow-hidden transform-gpu will-change-transform"
           >
         {/* Header */}
         <div className="flex items-center justify-between p-4 pb-3 border-b border-white/10 shrink-0">
@@ -352,20 +352,11 @@ export const SoundMixerWidget = ({
                     )}
                   </div>
 
-                  {/* Title, Artist, & Mood Badge */}
+                  {/* Title & Artist */}
                   <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-sm font-bold text-white tracking-tight truncate leading-snug">
-                        {currentTrack.title}
-                      </h4>
-                      <span className="shrink-0 inline-flex items-center gap-1.5 text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-400/30 shadow-sm leading-none">
-                        <span className="relative flex h-1.5 w-1.5 shrink-0 items-center justify-center">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-                        </span>
-                        <span className="translate-y-[0.5px]">{currentTrack.genre}</span>
-                      </span>
-                    </div>
+                    <h4 className="text-sm font-bold text-white tracking-tight truncate leading-snug">
+                      {currentTrack.title}
+                    </h4>
                     <p className="text-xs text-slate-400 truncate font-medium">
                       {currentTrack.artist}
                     </p>

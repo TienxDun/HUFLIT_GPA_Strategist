@@ -102,11 +102,11 @@ export const SceneSelectorWidget = ({
 
           <motion.div
             key="scene-selector-panel"
-            initial={{ opacity: 0, x: -30, scale: 0.96 }}
+            initial={{ opacity: 0, x: -20, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -30, scale: 0.96 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[420px] sm:w-[460px] max-w-[calc(100vw-96px)] flex flex-col rounded-3xl bg-[#0d121f]/94 backdrop-blur-2xl border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.75)] text-white overflow-hidden"
+            exit={{ opacity: 0, x: -16, scale: 0.97 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[420px] sm:w-[460px] max-w-[calc(100vw-96px)] flex flex-col rounded-3xl bg-[#0d121f]/94 backdrop-blur-xl border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.75)] text-white overflow-hidden transform-gpu will-change-transform"
           >
             {/* Header with Search */}
             <div className="p-4 pb-2.5 border-b border-white/10 shrink-0 space-y-2.5">

@@ -515,25 +515,25 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     <>
     <AnimatePresence>
       {isOpen && (
-        <React.Fragment key="tasks-widget-modal-fragment">
+        <div className="fixed inset-x-0 top-16 bottom-24 z-40 flex items-center justify-center px-3 sm:px-6 pointer-events-none">
           {/* Backdrop to close Task Board when clicking outside */}
           <motion.div
             key="tasks-widget-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-30 cursor-pointer"
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs pointer-events-auto cursor-pointer"
             onClick={onClose}
           />
 
           <motion.div
             key="tasks-widget-panel"
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+            initial={{ opacity: 0, scale: 0.97, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-16 bottom-24 left-1/2 -translate-x-1/2 w-[94vw] sm:w-[80vw] z-40 rounded-3xl bg-black/35 hover:bg-black/40 backdrop-blur-md border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden text-white select-none"
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 w-[94vw] sm:w-[80vw] h-full rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden text-white select-none pointer-events-auto transform-gpu will-change-transform"
           >
           {/* TOP HEADER BAR (Sang trọng, tinh gọn, tích hợp bộ chọn bảng) */}
           <div className="flex items-center justify-between px-6 py-3.5 border-b border-white/10 z-20 bg-white/[0.02]">
@@ -1622,10 +1622,10 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
               </motion.div>
             )}
           </AnimatePresence>
-          </motion.div>
-        </React.Fragment>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     {/* Delete Confirmation Dialogs (outside AnimatePresence — each has its own internal AnimatePresence) */}
     <ConfirmDeleteModal

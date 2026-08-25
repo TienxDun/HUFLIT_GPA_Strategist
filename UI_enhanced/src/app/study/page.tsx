@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { 
   ArrowLeft, 
   Maximize2, 
@@ -22,12 +23,26 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Scene, STUDY_SCENES } from "@/components/study/study-types";
+import { PomodoroSoundType } from "@/components/study/study-sound";
 import { StudyMusicPlayer } from "@/components/study/StudyMusicPlayer";
-import { StudyTasksWidget } from "@/components/study/StudyTasksWidget";
-import { StudyNotesWidget } from "@/components/study/StudyNotesWidget";
-import { SceneSelectorWidget } from "@/components/study/SceneSelectorWidget";
 import { StudyPomodoroWidget, TimerTab } from "@/components/study/StudyPomodoroWidget";
 import { StudySettingsModal } from "@/components/study/StudySettingsModal";
+
+// Lazy Load heavy widgets with code-splitting to optimize First Contentful Paint & bundle size
+const StudyTasksWidget = dynamic(
+  () => import("@/components/study/StudyTasksWidget").then((mod) => mod.StudyTasksWidget),
+  { ssr: false }
+);
+
+const StudyNotesWidget = dynamic(
+  () => import("@/components/study/StudyNotesWidget").then((mod) => mod.StudyNotesWidget),
+  { ssr: false }
+);
+
+const SceneSelectorWidget = dynamic(
+  () => import("@/components/study/SceneSelectorWidget").then((mod) => mod.SceneSelectorWidget),
+  { ssr: false }
+);
 
 export default function StudySpacePage() {
   const [currentScene, setCurrentScene] = useState<Scene>(STUDY_SCENES[0]);
@@ -58,6 +73,7 @@ export default function StudySpacePage() {
     long_break: 15,
   });
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundType, setSoundType] = useState<PomodoroSoundType>("classic_clock");
 
   // Phục hồi Background Scene & Cài đặt cá nhân từ LocalStorage khi vào lại trang
   useEffect(() => {
@@ -91,12 +107,25 @@ export default function StudySpacePage() {
 
       const savedSound = localStorage.getItem("study_sound_enabled");
       if (savedSound !== null) setSoundEnabled(savedSound === "true");
+
+      const savedSoundType = localStorage.getItem("study_pomodoro_sound_type") as PomodoroSoundType;
+      const validSounds: PomodoroSoundType[] = ["classic_clock", "zen_bell", "birds", "digital"];
+      if (savedSoundType && validSounds.includes(savedSoundType)) {
+        setSoundType(savedSoundType);
+      } else {
+        setSoundType("classic_clock");
+      }
     } catch {}
   }, []);
 
   const handleOpenSettings = () => {
     setSavedTabBeforeSettings(centerTab);
     setIsSettingsOpen(true);
+    setIsMixerOpen(false);
+    setIsTasksOpen(false);
+    setIsNotesOpen(false);
+    setIsScenesOpen(false);
+    setIsShortcutsHelpOpen(false);
   };
 
   const handleCloseSettings = () => {
@@ -147,6 +176,11 @@ export default function StudySpacePage() {
       try { localStorage.setItem("study_sound_enabled", String(next)); } catch {}
       return next;
     });
+  };
+
+  const handleSelectSoundType = (type: PomodoroSoundType) => {
+    setSoundType(type);
+    try { localStorage.setItem("study_pomodoro_sound_type", type); } catch {}
   };
 
   const handleSelectScene = (scene: Scene) => {
@@ -242,31 +276,51 @@ export default function StudySpacePage() {
         });
       } else if (e.key === "k" || e.key === "K") {
         e.preventDefault();
-        setIsTasksOpen((prev) => !prev);
+        setIsTasksOpen((prev) => {
+          const next = !prev;
+          if (next) handleCloseSettings();
+          return next;
+        });
         setIsNotesOpen(false);
         setIsScenesOpen(false);
         setIsMixerOpen(false);
       } else if (e.key === "n" || e.key === "N") {
         e.preventDefault();
-        setIsNotesOpen((prev) => !prev);
+        setIsNotesOpen((prev) => {
+          const next = !prev;
+          if (next) handleCloseSettings();
+          return next;
+        });
         setIsTasksOpen(false);
         setIsScenesOpen(false);
         setIsMixerOpen(false);
       } else if (e.key === "b" || e.key === "B") {
         e.preventDefault();
-        setIsScenesOpen((prev) => !prev);
+        setIsScenesOpen((prev) => {
+          const next = !prev;
+          if (next) handleCloseSettings();
+          return next;
+        });
         setIsTasksOpen(false);
         setIsNotesOpen(false);
         setIsMixerOpen(false);
       } else if (e.key === "p" || e.key === "P") {
         e.preventDefault();
-        setIsMixerOpen((prev) => !prev);
+        setIsMixerOpen((prev) => {
+          const next = !prev;
+          if (next) handleCloseSettings();
+          return next;
+        });
         setIsTasksOpen(false);
         setIsNotesOpen(false);
         setIsScenesOpen(false);
       } else if (e.key === "?" || e.key === "h" || e.key === "H") {
         e.preventDefault();
-        setIsShortcutsHelpOpen((prev) => !prev);
+        setIsShortcutsHelpOpen((prev) => {
+          const next = !prev;
+          if (next) handleCloseSettings();
+          return next;
+        });
         setIsMixerOpen(false);
       }
     };
@@ -361,7 +415,14 @@ export default function StudySpacePage() {
             <div className="flex items-center gap-2 pointer-events-auto">
               {/* Keyboard Shortcuts Cheat Sheet Button */}
               <button
-                onClick={() => setIsShortcutsHelpOpen(true)}
+                onClick={() => {
+                  setIsShortcutsHelpOpen((prev) => {
+                    const next = !prev;
+                    if (next) handleCloseSettings();
+                    return next;
+                  });
+                  setIsMixerOpen(false);
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/70 hover:bg-slate-900/95 backdrop-blur-xl border border-white/15 text-white/80 hover:text-white transition-all active:scale-95 text-xs font-medium cursor-pointer"
                 title="Bảng tra cứu phím tắt (?)"
               >
@@ -469,6 +530,7 @@ export default function StudySpacePage() {
             <button
               onClick={() => {
                 setIsTasksOpen(!isTasksOpen);
+                if (!isTasksOpen) handleCloseSettings();
                 setIsNotesOpen(false);
                 setIsScenesOpen(false);
                 setIsMixerOpen(false);
@@ -488,6 +550,7 @@ export default function StudySpacePage() {
             <button
               onClick={() => {
                 setIsNotesOpen(!isNotesOpen);
+                if (!isNotesOpen) handleCloseSettings();
                 setIsTasksOpen(false);
                 setIsScenesOpen(false);
                 setIsMixerOpen(false);
@@ -507,6 +570,7 @@ export default function StudySpacePage() {
             <button
               onClick={() => {
                 setIsScenesOpen(!isScenesOpen);
+                if (!isScenesOpen) handleCloseSettings();
                 setIsTasksOpen(false);
                 setIsNotesOpen(false);
                 setIsMixerOpen(false);
@@ -548,6 +612,8 @@ export default function StudySpacePage() {
         onSaveDurations={handleSavePomodoroDurations}
         soundEnabled={soundEnabled}
         onToggleSound={handleToggleSound}
+        soundType={soundType}
+        onSelectSoundType={handleSelectSoundType}
         showStopwatchMilliseconds={showStopwatchMilliseconds}
         onToggleStopwatchMilliseconds={handleToggleStopwatchMilliseconds}
       />
@@ -564,6 +630,7 @@ export default function StudySpacePage() {
           showStopwatchMilliseconds={showStopwatchMilliseconds}
           durations={pomodoroDurations}
           soundEnabled={soundEnabled}
+          soundType={soundType}
         />
       </main>
 
@@ -581,7 +648,19 @@ export default function StudySpacePage() {
           <StudyMusicPlayer 
             isGlobalMuted={isGlobalMuted} 
             isMixerOpen={isMixerOpen}
-            onToggleMixer={() => setIsMixerOpen(!isMixerOpen)}
+            onToggleMixer={() => {
+              setIsMixerOpen((prev) => {
+                const next = !prev;
+                if (next) {
+                  handleCloseSettings();
+                  setIsTasksOpen(false);
+                  setIsNotesOpen(false);
+                  setIsScenesOpen(false);
+                  setIsShortcutsHelpOpen(false);
+                }
+                return next;
+              });
+            }}
             onCloseMixer={() => setIsMixerOpen(false)}
           />
         </div>

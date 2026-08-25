@@ -8,9 +8,18 @@ import {
   Flame, 
   Volume2, 
   VolumeX, 
-  Sliders
+  Sliders,
+  Sparkles,
+  SunMedium,
+  Check,
+  Play
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { 
+  PomodoroSoundType, 
+  POMODORO_SOUND_OPTIONS, 
+  playPomodoroSound 
+} from "./study-sound";
 
 export interface StudySettingsProps {
   isOpen: boolean;
@@ -27,6 +36,8 @@ export interface StudySettingsProps {
   onSaveDurations: (durations: { focus: number; short_break: number; long_break: number }) => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
+  soundType?: PomodoroSoundType;
+  onSelectSoundType?: (type: PomodoroSoundType) => void;
   // Stopwatch settings
   showStopwatchMilliseconds: boolean;
   onToggleStopwatchMilliseconds: () => void;
@@ -73,10 +84,13 @@ export const StudySettingsModal = ({
   onSaveDurations,
   soundEnabled,
   onToggleSound,
+  soundType = "classic_clock",
+  onSelectSoundType,
   showStopwatchMilliseconds,
   onToggleStopwatchMilliseconds,
 }: StudySettingsProps) => {
-  const [activeTab, setActiveTab] = useState<"all" | "clock" | "pomodoro" | "stopwatch">("all");
+  const [activeTab, setActiveTab] = useState<"clock" | "pomodoro" | "stopwatch">("clock");
+  const [previewingSoundId, setPreviewingSoundId] = useState<string | null>(null);
 
   // Global keydown listener for Escape key to close settings instantly
   useEffect(() => {
@@ -91,9 +105,9 @@ export const StudySettingsModal = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleSelectTab = (tab: "all" | "clock" | "pomodoro" | "stopwatch") => {
+  const handleSelectTab = (tab: "clock" | "pomodoro" | "stopwatch") => {
     setActiveTab(tab);
-    if (tab !== "all" && onActiveSectionChange) {
+    if (onActiveSectionChange) {
       onActiveSectionChange(tab);
     }
   };
@@ -118,6 +132,13 @@ export const StudySettingsModal = ({
     onToggleSound();
   };
 
+  const handlePreviewSound = (type: PomodoroSoundType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreviewingSoundId(type);
+    playPomodoroSound(type, true);
+    setTimeout(() => setPreviewingSoundId(null), 1200);
+  };
+
   const handleStopwatchMillisecondsToggle = () => {
     if (onActiveSectionChange) onActiveSectionChange("stopwatch");
     onToggleStopwatchMilliseconds();
@@ -137,11 +158,11 @@ export const StudySettingsModal = ({
           {/* Settings Floating Panel (Neo từ góc trên bên phải) */}
           <motion.div
             key="settings-panel"
-            initial={{ opacity: 0, scale: 0.94, y: -10, x: 10 }}
+            initial={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: -10, x: 10 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-14 right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] rounded-3xl bg-[#14161b]/98 backdrop-blur-2xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_1px_1px_rgba(255,255,255,0.08)] p-5 space-y-4 text-white select-none max-h-[calc(100vh-80px)] overflow-y-auto custom-study-scroll"
+            exit={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-14 right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] rounded-3xl bg-[#14161b]/98 backdrop-blur-xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-5 space-y-4 text-white select-none max-h-[calc(100vh-80px)] overflow-y-auto custom-study-scroll transform-gpu will-change-transform"
           >
             {/* Header (Đã xóa icon thừa, tinh gọn & thanh lịch) */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -161,20 +182,11 @@ export const StudySettingsModal = ({
             </div>
 
             {/* Quick Filter Tabs */}
-            <div className="grid grid-cols-4 gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-[11px] font-bold">
-              <button
-                type="button"
-                onClick={() => handleSelectTab("all")}
-                className={`py-1 rounded-xl transition-all cursor-pointer text-center ${
-                  activeTab === "all" ? "bg-white text-black shadow font-extrabold" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Tất cả
-              </button>
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-[11px] font-bold">
               <button
                 type="button"
                 onClick={() => handleSelectTab("clock")}
-                className={`py-1 rounded-xl transition-all cursor-pointer text-center ${
+                className={`py-1.5 rounded-xl transition-all cursor-pointer text-center ${
                   activeTab === "clock" ? "bg-white text-black shadow font-extrabold" : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -183,7 +195,7 @@ export const StudySettingsModal = ({
               <button
                 type="button"
                 onClick={() => handleSelectTab("pomodoro")}
-                className={`py-1 rounded-xl transition-all cursor-pointer text-center ${
+                className={`py-1.5 rounded-xl transition-all cursor-pointer text-center ${
                   activeTab === "pomodoro" ? "bg-white text-black shadow font-extrabold" : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -192,7 +204,7 @@ export const StudySettingsModal = ({
               <button
                 type="button"
                 onClick={() => handleSelectTab("stopwatch")}
-                className={`py-1 rounded-xl transition-all cursor-pointer text-center ${
+                className={`py-1.5 rounded-xl transition-all cursor-pointer text-center ${
                   activeTab === "stopwatch" ? "bg-white text-black shadow font-extrabold" : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -203,7 +215,7 @@ export const StudySettingsModal = ({
             {/* Settings Sections */}
             <div className="space-y-4">
               {/* SECTION 1: ĐỒNG HỒ */}
-              {(activeTab === "all" || activeTab === "clock") && (
+              {activeTab === "clock" && (
                 <div className="space-y-2.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
                     <Clock className="w-3.5 h-3.5 text-emerald-400" />
@@ -254,7 +266,7 @@ export const StudySettingsModal = ({
               )}
 
               {/* SECTION 2: POMODORO */}
-              {(activeTab === "all" || activeTab === "pomodoro") && (
+              {activeTab === "pomodoro" && (
                 <div className="space-y-2.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
                     <Flame className="w-3.5 h-3.5 text-emerald-400" />
@@ -314,22 +326,82 @@ export const StudySettingsModal = ({
                   </div>
 
                   {/* Âm thanh chuông */}
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06] mt-2">
-                    <div className="flex items-center gap-1.5">
-                      <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-xs font-bold text-slate-200">Chuông báo kết thúc</span>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                      <div className="flex items-center gap-1.5">
+                        <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-xs font-bold text-slate-200">Chuông báo hoàn thành</span>
+                      </div>
+                      <ToggleSwitch
+                        checked={soundEnabled}
+                        onChange={handleSoundToggle}
+                        activeColor="bg-emerald-500"
+                      />
                     </div>
-                    <ToggleSwitch
-                      checked={soundEnabled}
-                      onChange={handleSoundToggle}
-                      activeColor="bg-emerald-500"
-                    />
+
+                    {/* Danh sách các kiểu chuông báo */}
+                    {soundEnabled && (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider px-1">
+                          Tùy chọn kiểu chuông:
+                        </div>
+                        <div className="space-y-1">
+                          {POMODORO_SOUND_OPTIONS.map((opt) => {
+                            const isSelected = soundType === opt.id;
+                            const isPreviewing = previewingSoundId === opt.id;
+
+                            return (
+                              <div
+                                key={opt.id}
+                                onClick={() => {
+                                  if (onSelectSoundType) onSelectSoundType(opt.id);
+                                }}
+                                className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200 shadow-sm"
+                                    : "bg-white/[0.02] hover:bg-white/[0.06] border-white/[0.06] text-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div
+                                    className={`w-3 h-3 rounded-full border flex items-center justify-center shrink-0 ${
+                                      isSelected
+                                        ? "border-emerald-400 bg-emerald-400"
+                                        : "border-slate-500"
+                                    }`}
+                                  >
+                                    {isSelected && <div className="w-1 h-1 rounded-full bg-slate-950" />}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-bold truncate">{opt.name}</div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => handlePreviewSound(opt.id, e)}
+                                  className={`px-2 py-1 rounded-lg text-[10px] font-bold border flex items-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 ${
+                                    isPreviewing
+                                      ? "bg-emerald-500 text-slate-950 border-emerald-400 animate-pulse"
+                                      : "bg-white/10 hover:bg-white/20 border-white/10 text-slate-200"
+                                  }`}
+                                  title="Nghe thử âm thanh này"
+                                >
+                                  <Play className="w-2.5 h-2.5 fill-current" />
+                                  <span>{isPreviewing ? "Đang phát..." : "Nghe thử"}</span>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* SECTION 3: STOPWATCH */}
-              {(activeTab === "all" || activeTab === "stopwatch") && (
+              {activeTab === "stopwatch" && (
                 <div className="space-y-2.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
                     <Timer className="w-3.5 h-3.5 text-emerald-400" />

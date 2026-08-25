@@ -22,6 +22,7 @@ import {
   SunMedium
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PomodoroSoundType, playPomodoroSound } from "./study-sound";
 
 export type TimerTab = "clock" | "pomodoro" | "stopwatch";
 export type PomodoroMode = "focus" | "short_break" | "long_break";
@@ -43,6 +44,7 @@ interface StudyPomodoroWidgetProps {
   isClock12Hour?: boolean;
   durations?: { focus: number; short_break: number; long_break: number };
   soundEnabled?: boolean;
+  soundType?: PomodoroSoundType;
   showStopwatchMilliseconds?: boolean;
 }
 
@@ -56,6 +58,7 @@ export const StudyPomodoroWidget = ({
   isClock12Hour: external12Hour,
   durations: externalDurations,
   soundEnabled: externalSound,
+  soundType: externalSoundType,
   showStopwatchMilliseconds: externalShowMs,
 }: StudyPomodoroWidgetProps) => {
   const [internalTab, setInternalTab] = useState<TimerTab>("clock");
@@ -171,43 +174,12 @@ export const StudyPomodoroWidget = ({
     return "🌙 Không gian đêm thanh tịnh, hãy giữ gìn sức khỏe bạn nhé";
   };
 
-  // Sound chime synthesizer using Web Audio API (Thanh thoát, dịu êm)
+  const soundType = externalSoundType || "classic_clock";
+
+  // Sound chime synthesizer using Web Audio API
   const playChime = useCallback(() => {
-    if (!soundEnabled) return;
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      
-      const now = ctx.currentTime;
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc1.type = "sine";
-      osc2.type = "triangle";
-
-      // Melodic harmonious chime (C5 -> E5 -> G5)
-      osc1.frequency.setValueAtTime(523.25, now); // C5
-      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
-      
-      osc2.frequency.setValueAtTime(659.25, now); // E5
-      osc2.frequency.exponentialRampToValueAtTime(1046.5, now + 0.25); // C6
-
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.35, now + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 1.5);
-      osc2.stop(now + 1.5);
-    } catch {}
-  }, [soundEnabled]);
+    playPomodoroSound(soundType, soundEnabled);
+  }, [soundType, soundEnabled]);
 
   // Switch Pomodoro Mode
   const switchPomoMode = (mode: PomodoroMode) => {

@@ -445,21 +445,11 @@ export const StudyMusicPlayer = ({
               </div>
             </div>
 
-            {/* Title, Artist, Visualizer Wave */}
+            {/* Title, Artist */}
             <div className="min-w-0 flex-1 space-y-0.5">
-              <div className="flex items-center gap-1.5">
-                <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-emerald-300 transition-colors">
-                  {currentTrack?.title}
-                </h4>
-                {/* Live Equalizer Visualizer Waves */}
-                {isPlaying && (
-                  <div className="hidden sm:inline-flex items-end gap-[2px] h-3 px-1 py-0.5 rounded bg-emerald-500/15 border border-emerald-400/20 shrink-0">
-                    <span className="w-[2px] bg-emerald-400 rounded-full animate-[bounce_0.8s_infinite_100ms] h-full" />
-                    <span className="w-[2px] bg-emerald-300 rounded-full animate-[bounce_0.8s_infinite_300ms] h-2/3" />
-                    <span className="w-[2px] bg-sky-400 rounded-full animate-[bounce_0.8s_infinite_200ms] h-4/5" />
-                  </div>
-                )}
-              </div>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-emerald-300 transition-colors">
+                {currentTrack?.title}
+              </h4>
 
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-400 truncate">
                 <span className="truncate">{currentTrack?.artist}</span>

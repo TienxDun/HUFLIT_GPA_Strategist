@@ -68,4 +68,28 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
     expect(getNextBreakType(4)).toBe("long_break");
     expect(getNextBreakType(8)).toBe("long_break");
   });
+
+  it("should have all registered Pomodoro sound options configured with classic_clock as default on top", async () => {
+    const { POMODORO_SOUND_OPTIONS, playPomodoroSound } = await import("../../../components/study/study-sound");
+    expect(POMODORO_SOUND_OPTIONS.length).toBe(4);
+    expect(POMODORO_SOUND_OPTIONS[0].id).toBe("classic_clock");
+
+    const soundIds = POMODORO_SOUND_OPTIONS.map((s) => s.id);
+    expect(soundIds).not.toContain("melodic");
+    expect(soundIds).toContain("classic_clock");
+    expect(soundIds).toContain("zen_bell");
+    expect(soundIds).toContain("birds");
+    expect(soundIds).toContain("digital");
+
+    POMODORO_SOUND_OPTIONS.forEach((s) => {
+      expect(s.name.length).toBeGreaterThan(0);
+    });
+
+    // Should run safely without crashing when AudioContext is missing in Node environment
+    expect(() => playPomodoroSound("classic_clock", true)).not.toThrow();
+    expect(() => playPomodoroSound("zen_bell", true)).not.toThrow();
+    expect(() => playPomodoroSound("birds", true)).not.toThrow();
+    expect(() => playPomodoroSound("digital", true)).not.toThrow();
+    expect(() => playPomodoroSound("classic_clock", false)).not.toThrow();
+  });
 });
