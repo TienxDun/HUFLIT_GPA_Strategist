@@ -41,6 +41,7 @@ const GraduationGoalCard = memo(({
   const [targetGPA, setTargetGPA] = useState<number>(3.2);
   const [isExpanded, setIsExpanded] = useState<boolean>(() => result.totalCredits > 0 || semesters.length > 0);
   const [hasUserChosenTarget, setHasUserChosenTarget] = useState<boolean>(false);
+  const [hasUserChosenCredits, setHasUserChosenCredits] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [customCreditsInput, setCustomCreditsInput] = useState<string>(DEFAULT_HUFLIT_CREDITS.toString());
   
@@ -69,10 +70,19 @@ const GraduationGoalCard = memo(({
         if (!isNaN(parsed) && parsed > 0) {
           setTotalGradCredits(parsed);
           setCustomCreditsInput(parsed.toString());
+          setHasUserChosenCredits(true);
         }
       }
     } catch { }
   }, []);
+
+  // Auto-adjust default graduation credit standard to 140 TC for students with >=140 credits (e.g. IT/Engineering) if not manually customized
+  useEffect(() => {
+    if (!hasUserChosenCredits && result.totalCredits >= 140 && totalGradCredits === DEFAULT_HUFLIT_CREDITS) {
+      setTotalGradCredits(140);
+      setCustomCreditsInput("140");
+    }
+  }, [result.totalCredits, hasUserChosenCredits, totalGradCredits]);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -108,6 +118,7 @@ const GraduationGoalCard = memo(({
   const handleSelectCredits = (creds: number) => {
     setTotalGradCredits(creds);
     setCustomCreditsInput(creds.toString());
+    setHasUserChosenCredits(true);
     setIsDropdownOpen(false);
     try {
       localStorage.setItem(STORAGE_TOTAL_CREDITS_KEY, creds.toString());
@@ -196,52 +207,77 @@ const GraduationGoalCard = memo(({
 
       {isExpanded && (
         <CardContent className="p-4 space-y-3.5">
-          {/* Row 1: Credit Progress Info with Click-to-Edit Denominator */}
-          <div className="space-y-2 pb-0.5" ref={dropdownRef}>
-            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
-              <div className="flex items-center gap-1">
-                <span>Đã học:</span>
-                <b className="text-slate-800 font-bold">
-                  <AnimatedNumber value={analysis.completedCredits} precision={0} />
-                </b>
-                <span className="text-slate-400">/</span>
+          {/* Row 1: Credit Progress Info & Major CTĐT Standard (Clean, Non-wrapping Layout) */}
+          <div className="bg-slate-50/80 rounded-2xl p-3 border border-slate-200/80 space-y-2.5" ref={dropdownRef}>
+            {/* Dòng 1: Chọn Khung CTĐT (Dropdown Pill) */}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-medium text-slate-500 whitespace-nowrap">Khung CTĐT:</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(prev => !prev);
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-700 font-bold text-[11px] border border-slate-200 hover:border-blue-300 transition-all cursor-pointer shadow-2xs group max-w-[200px]"
+                title="Nhấn để đổi khung ngành hoặc số tín chỉ tốt nghiệp"
+              >
+                <span className="truncate">
+                  {totalGradCredits === 130 ? "Ngôn ngữ / Luật" : totalGradCredits === 135 ? "Kinh tế / QTKD" : totalGradCredits === 140 ? "CNTT / Kỹ thuật" : `Tự nhập (${totalGradCredits} TC)`}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 shrink-0 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-blue-600" : ""}`} />
+              </button>
+            </div>
 
-                {/* Trigger Button on Total Credits */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDropdownOpen(prev => !prev);
-                  }}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold border border-blue-200 transition-all cursor-pointer shadow-xs active:scale-95 group"
-                  title="Bấm để đổi số tín chỉ tốt nghiệp theo ngành của bạn"
-                >
-                  <span className="border-b border-dashed border-blue-400 group-hover:border-blue-600">
-                    <AnimatedNumber value={analysis.totalCredits} precision={0} /> TC
+            {/* Dòng 2: Số liệu tích lũy & Badge trạng thái (No-wrap & Rộng rãi) */}
+            <div className="flex items-center justify-between gap-2 pt-0.5">
+              <div className="flex items-baseline gap-1 text-slate-600 whitespace-nowrap min-w-0">
+                <span className="text-[11px] font-medium text-slate-500">Tích lũy:</span>
+                <span className="text-sm font-black text-slate-900 tracking-tight">
+                  <AnimatedNumber value={analysis.completedCredits} precision={0} />
+                </span>
+                <span className="text-[11px] font-bold text-slate-400">
+                  / {analysis.totalCredits} TC
+                </span>
+                {analysis.completedCredits > analysis.totalCredits && (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200/80">
+                    +{analysis.completedCredits - analysis.totalCredits}
                   </span>
-                  <ChevronDown className={`h-3 w-3 text-blue-500 group-hover:text-blue-700 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
+                )}
               </div>
 
-              <div className="font-bold text-blue-600">
-                <AnimatedNumber value={analysis.progressPercent} precision={0} suffix="%" />
+              {/* Badge Trạng thái */}
+              <div className="shrink-0">
+                {analysis.completedCredits >= analysis.totalCredits ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] border border-emerald-300/80 shadow-2xs whitespace-nowrap">
+                    <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                    Đã đủ chuẩn
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-extrabold text-[10px] border border-blue-200 shadow-2xs whitespace-nowrap">
+                    Thiếu {analysis.remainingCredits} TC ({analysis.progressPercent}%)
+                  </span>
+                )}
               </div>
             </div>
             
-            {/* Progress Bar */}
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/80">
+            {/* Dòng 3: Sleek Gradient Progress Bar */}
+            <div className="h-2 w-full bg-slate-200/70 rounded-full overflow-hidden p-0.5 border border-slate-300/40 shadow-2xs">
               <div 
-                className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-500"
-                style={{ width: `${analysis.progressPercent}%` }}
+                className={`h-full rounded-full transition-all duration-500 ${
+                  analysis.completedCredits >= analysis.totalCredits
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                    : "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500"
+                }`}
+                style={{ width: `${Math.min(100, analysis.progressPercent)}%` }}
               />
             </div>
 
             {/* In-flow Expandable Selector: 100% inside parent card with comfortable legible sizing */}
             {isDropdownOpen && (
-              <div className="p-2.5 bg-slate-50/90 border border-slate-200 rounded-2xl space-y-2 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                    Chọn chuẩn tín chỉ ra trường
+              <div className="pt-2.5 border-t border-slate-200/90 space-y-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="flex items-center justify-between px-0.5">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                    Chọn khung chương trình đào tạo
                   </span>
                   <button
                     type="button"
@@ -254,9 +290,9 @@ const GraduationGoalCard = memo(({
 
                 <div className="space-y-1.5">
                   {[
-                    { value: 130, title: "130 TC", badge: null, desc: "Khối Ngôn ngữ, Du lịch, Luật" },
-                    { value: 135, title: "135 TC", badge: null, desc: "Khối Kinh tế, QTKD" },
-                    { value: 140, title: "140 TC", badge: null, desc: "Khối CNTT, Kỹ thuật" },
+                    { value: 130, title: "130 TC", badge: "Khối Ngôn ngữ", desc: "Ngôn ngữ, Du lịch, Luật..." },
+                    { value: 135, title: "135 TC", badge: "Khối Kinh tế", desc: "Kinh tế, QTKD, Marketing..." },
+                    { value: 140, title: "140 TC", badge: "Khối Kỹ thuật", desc: "CNTT, Kỹ thuật phần mềm..." },
                   ].map((p) => {
                     const isSelected = totalGradCredits === p.value;
                     return (
@@ -267,7 +303,7 @@ const GraduationGoalCard = memo(({
                         className={`w-full text-left py-2 px-2.5 rounded-xl text-xs flex items-center justify-between border transition-all cursor-pointer ${
                           isSelected
                             ? "bg-white border-blue-500 text-blue-900 shadow-xs ring-1 ring-blue-500/20"
-                            : "bg-white/80 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300"
+                            : "bg-white/90 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300"
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -281,11 +317,9 @@ const GraduationGoalCard = memo(({
                           <div className="flex flex-col min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="font-extrabold text-slate-800 text-xs whitespace-nowrap">{p.title}</span>
-                              {p.badge && (
-                                <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 whitespace-nowrap leading-none">
-                                  {p.badge}
-                                </span>
-                              )}
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 whitespace-nowrap">
+                                {p.badge}
+                              </span>
                             </div>
                             <span className="text-[10px] text-slate-400 font-medium leading-tight whitespace-nowrap mt-0.5">
                               {p.desc}
@@ -302,10 +336,10 @@ const GraduationGoalCard = memo(({
                 </div>
 
                 {/* Custom Input Card */}
-                <div className={`p-2 rounded-xl border transition-all ${
+                <div className={`p-2.5 rounded-xl border transition-all ${
                   !HUFLIT_CREDIT_PRESETS.includes(totalGradCredits as any)
                     ? "bg-white border-blue-500 ring-1 ring-blue-500/20 shadow-xs"
-                    : "bg-white/80 border-slate-200"
+                    : "bg-white/90 border-slate-200"
                 }`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -314,7 +348,7 @@ const GraduationGoalCard = memo(({
                       }`}>
                         {!HUFLIT_CREDIT_PRESETS.includes(totalGradCredits as any) && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                       </div>
-                      <span className="text-xs font-bold text-slate-700 whitespace-nowrap">Tự nhập:</span>
+                      <span className="text-xs font-bold text-slate-700 whitespace-nowrap">Tự nhập số TC:</span>
                     </div>
 
                     <div className="flex items-center gap-1.5">
@@ -323,7 +357,7 @@ const GraduationGoalCard = memo(({
                         value={customCreditsInput}
                         onChange={(e) => setCustomCreditsInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSaveCustomCredits()}
-                        placeholder="135"
+                        placeholder="140"
                         className="w-16 h-7 px-2 text-center bg-white text-slate-900 font-black rounded-lg border border-slate-300 focus:outline-none focus:border-blue-500 text-xs shadow-2xs"
                       />
                       <button
@@ -410,7 +444,11 @@ const GraduationGoalCard = memo(({
                   <span className="text-[11px] font-semibold text-slate-400">TC</span>
                 </div>
                 <div className="text-[10px] font-bold text-slate-600">
-                  Ước tính: ~<AnimatedNumber value={analysis.approxCoursesRemaining} precision={0} /> môn
+                  {analysis.remainingCredits === 0 ? (
+                    <span className="text-emerald-600 font-bold">Đã đủ tín chỉ</span>
+                  ) : (
+                    <>Ước tính: ~<AnimatedNumber value={analysis.approxCoursesRemaining} precision={0} /> môn</>
+                  )}
                 </div>
               </div>
             </div>

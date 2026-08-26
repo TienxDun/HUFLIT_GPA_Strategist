@@ -73,7 +73,7 @@ export function calculateGraduationAnalysis(
   semesters: Semester[] = []
 ): GraduationAnalysis {
   const totalCreds = Math.max(1, totalGraduationCredits || DEFAULT_HUFLIT_CREDITS);
-  const completedCreds = Math.min(totalCreds, Math.max(0, currentCredits || 0));
+  const completedCreds = Math.max(0, currentCredits || 0);
   const remainingCreds = Math.max(0, totalCreds - completedCreds);
   const progressPercent = Math.min(100, Math.round((completedCreds / totalCreds) * 100));
   const approxCoursesRemaining = Math.ceil(remainingCreds / 3);
