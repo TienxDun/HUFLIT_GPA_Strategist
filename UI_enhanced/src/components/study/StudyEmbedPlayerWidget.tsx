@@ -28,6 +28,7 @@ interface StudyEmbedPlayerWidgetProps {
   isOpen: boolean;
   onClose: () => void;
   onOpen?: () => void;
+  activeItem?: StudyEmbedItem | null;
   onStreamActiveChange?: (isActive: boolean) => void;
   onActiveItemChange?: (item: StudyEmbedItem | null) => void;
   isZenMode?: boolean;
@@ -41,12 +42,29 @@ export const StudyEmbedPlayerWidget = ({
   isOpen,
   onClose,
   onOpen,
+  activeItem = null,
   onStreamActiveChange,
   onActiveItemChange,
   isZenMode = false,
 }: StudyEmbedPlayerWidgetProps) => {
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [activeItem, setActiveItem] = useState<StudyEmbedItem | null>(null);
+
+  const changeActiveItem = React.useCallback((item: StudyEmbedItem | null) => {
+    if (onActiveItemChange) {
+      onActiveItemChange(item);
+    }
+    if (onStreamActiveChange) {
+      onStreamActiveChange(item !== null);
+    }
+    try {
+      if (item) {
+        localStorage.setItem(STORAGE_ACTIVE_EMBED_KEY, JSON.stringify(item));
+      } else {
+        localStorage.removeItem(STORAGE_ACTIVE_EMBED_KEY);
+      }
+    } catch {}
+  }, [onActiveItemChange, onStreamActiveChange]);
+
   const [isCinemaFocus, setIsCinemaFocus] = useState(false);
   const [isPipMode, setIsPipMode] = useState(false);
   const pipDragControls = useDragControls();
@@ -77,14 +95,15 @@ export const StudyEmbedPlayerWidget = ({
       if (lastActive) {
         const parsed = JSON.parse(lastActive);
         const matchedPreset = CURATED_EMBED_PRESETS.find((p) => p.id === parsed.id);
-        setActiveItem(matchedPreset || parsed);
+        const target = matchedPreset || parsed;
+        changeActiveItem(target);
       }
       const savedView = localStorage.getItem(STORAGE_VIEW_MODE_KEY);
       if (savedView === "grid" || savedView === "list") {
         setViewMode(savedView);
       }
     } catch {}
-  }, []);
+  }, [changeActiveItem]);
 
   // Real-time URL parse detection
   const detectedEmbed = useMemo(() => {
@@ -158,12 +177,12 @@ export const StudyEmbedPlayerWidget = ({
           if (res.ok) {
             const data = await res.json();
             if (data && data.title && isMounted) {
-              setActiveItem((prev) => prev ? {
-                ...prev,
+              changeActiveItem({
+                ...activeItem,
                 title: data.title,
-                category: data.author_name || prev.category || "YouTube",
-                thumbnail: data.thumbnail_url || prev.thumbnail
-              } : null);
+                category: data.author_name || activeItem.category || "YouTube",
+                thumbnail: data.thumbnail_url || activeItem.thumbnail
+              });
             }
           }
         } else if (activeItem.platform === "spotify") {
@@ -171,11 +190,11 @@ export const StudyEmbedPlayerWidget = ({
           if (res.ok) {
             const data = await res.json();
             if (data && data.title && isMounted) {
-              setActiveItem((prev) => prev ? {
-                ...prev,
+              changeActiveItem({
+                ...activeItem,
                 title: data.title,
-                thumbnail: data.thumbnail_url || prev.thumbnail
-              } : null);
+                thumbnail: data.thumbnail_url || activeItem.thumbnail
+              });
             }
           }
         }
@@ -184,28 +203,11 @@ export const StudyEmbedPlayerWidget = ({
 
     resolveTitle();
     return () => { isMounted = false; };
-  }, [activeItem?.id, activeItem?.url]);
-
-  // Sync active item state to parent (auto-pause internal music & update hybrid player)
-  useEffect(() => {
-    if (onStreamActiveChange) {
-      onStreamActiveChange(activeItem !== null);
-    }
-    if (onActiveItemChange) {
-      onActiveItemChange(activeItem);
-    }
-    try {
-      if (activeItem) {
-        localStorage.setItem(STORAGE_ACTIVE_EMBED_KEY, JSON.stringify(activeItem));
-      } else {
-        localStorage.removeItem(STORAGE_ACTIVE_EMBED_KEY);
-      }
-    } catch {}
-  }, [activeItem, onStreamActiveChange, onActiveItemChange]);
+  }, [activeItem, changeActiveItem]);
 
   const handlePlayItem = (item: StudyEmbedItem) => {
     setIsIframeLoading(true);
-    setActiveItem(item);
+    changeActiveItem(item);
     setIsPipMode(false);
     if (onOpen) onOpen();
     toast.success(item.title, {
@@ -218,11 +220,8 @@ export const StudyEmbedPlayerWidget = ({
 
   const handleStopStream = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    setActiveItem(null);
+    changeActiveItem(null);
     setIsPipMode(false);
-    if (onStreamActiveChange) {
-      onStreamActiveChange(false);
-    }
     toast.info("Đã dừng phát luồng ngoài");
   };
 

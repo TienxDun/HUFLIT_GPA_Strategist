@@ -685,7 +685,7 @@ export default function StudySpacePage() {
       />
       <StudyEmbedPlayerWidget 
         isOpen={isEmbedPlayerOpen} 
-        onClose={() => setIsEmbedPlayerOpen(false)}
+        onClose={() => setIsEmbedPlayerOpen(false)} 
         onOpen={() => {
           handleCloseSettings();
           setIsTasksOpen(false);
@@ -694,6 +694,7 @@ export default function StudySpacePage() {
           setIsMixerOpen(false);
           setIsEmbedPlayerOpen(true);
         }}
+        activeItem={externalActiveItem}
         onStreamActiveChange={setIsExternalStreamActive}
         onActiveItemChange={setExternalActiveItem}
         isZenMode={isZenMode}
