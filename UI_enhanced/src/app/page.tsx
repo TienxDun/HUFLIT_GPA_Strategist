@@ -4,6 +4,7 @@ import { useCallback, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { SpotifyPromoBanner } from "@/components/layout/SpotifyPromoBanner";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PWAInstallGuide } from "@/components/layout/PWAInstallGuide";
 import { AppFooter } from "@/components/layout/AppFooter";
@@ -161,6 +162,8 @@ export default function Home() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full relative z-10 flex-1 flex flex-col">
+        {/* Spotify Promo Banner cho sinh viên (mọi tab trên trang GPA) */}
+        <SpotifyPromoBanner />
         
         {/* Header - Refactored to separate component */}
         <AppHeader activeTab={activeTab} onTabChange={handleTabChange} />
