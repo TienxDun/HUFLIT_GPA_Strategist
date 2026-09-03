@@ -149,6 +149,7 @@ export const NewsTab = memo(() => {
         fanpages={fanpageItems}
         onEdit={form.openFanpageEdit}
         onDelete={removeFanpageItem}
+        onAdd={() => form.openCreate("fanpage")}
         isSubmitting={isSubmitting}
       />
 
