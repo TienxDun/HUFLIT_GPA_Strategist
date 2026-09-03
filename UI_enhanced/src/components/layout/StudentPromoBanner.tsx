@@ -1,13 +1,12 @@
 "use client";
 
 import { memo, useState, useEffect, useCallback, useRef } from "react";
-import { ExternalLink, X, Sparkles } from "lucide-react";
+import { ExternalLink, X, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PromoItem {
   id: "google-ai" | "spotify";
   badgeText: string;
-  badgeShort: string;
   title: string;
   highlightText: string;
   desktopDescription: string;
@@ -32,7 +31,7 @@ interface PromoItem {
     progressBar: string;
     focusRing: string;
   };
-  renderIcon: (isMobile?: boolean) => React.ReactNode;
+  renderIcon: () => React.ReactNode;
 }
 
 const GOOGLE_AI_URL = "https://goo.gle/ai-student-university-vn";
@@ -43,7 +42,6 @@ const PROMO_ITEMS: PromoItem[] = [
   {
     id: "google-ai",
     badgeText: "Google AI x Sinh viên VN",
-    badgeShort: "Gemini Free",
     title: "Google AI Plus (Gemini)",
     highlightText: "Miễn phí 1 năm",
     desktopDescription: "— Trợ lý AI học tập & đồ án cho sinh viên!",
@@ -68,14 +66,11 @@ const PROMO_ITEMS: PromoItem[] = [
       progressBar: "bg-gradient-to-r from-sky-400 to-indigo-400",
       focusRing: "focus:ring-sky-400",
     },
-    renderIcon: (isMobile = false) => (
+    renderIcon: () => (
       <div
-        className={`${
-          isMobile ? "w-6 h-6" : "w-6 sm:w-7 h-6 sm:h-7"
-        } rounded-full bg-gradient-to-br from-sky-400 via-blue-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/40 p-1`}
+        className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-gradient-to-br from-sky-400 via-blue-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/40 p-1"
         aria-hidden="true"
       >
-        {/* Gemini Star SVG */}
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -90,7 +85,6 @@ const PROMO_ITEMS: PromoItem[] = [
   {
     id: "spotify",
     badgeText: "Đặc quyền sinh viên",
-    badgeShort: "Spotify Edu",
     title: "Spotify Premium 3 tháng",
     highlightText: "Chỉ 33.000 ₫",
     desktopDescription: "— Nghe nhạc không quảng cáo khi học tập!",
@@ -115,11 +109,9 @@ const PROMO_ITEMS: PromoItem[] = [
       progressBar: "bg-[#1DB954]",
       focusRing: "focus:ring-emerald-400",
     },
-    renderIcon: (isMobile = false) => (
+    renderIcon: () => (
       <div
-        className={`${
-          isMobile ? "w-6 h-6" : "w-6 sm:w-7 h-6 sm:h-7"
-        } rounded-full bg-[#1DB954] flex items-center justify-center shrink-0 shadow-sm shadow-[#1DB954]/40`}
+        className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-[#1DB954] flex items-center justify-center shrink-0 shadow-sm shadow-[#1DB954]/40"
         aria-hidden="true"
       >
         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-black" viewBox="0 0 24 24" aria-hidden="true">
@@ -138,6 +130,13 @@ export const StudentPromoBanner = memo(() => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
+
+  // Touch gesture tracking for mobile horizontal swipe
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
 
   useEffect(() => {
     // Kiểm tra nếu người dùng chưa đóng banner trong phiên
@@ -148,17 +147,18 @@ export const StudentPromoBanner = memo(() => {
   }, []);
 
   const handleNext = useCallback(() => {
+    setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % PROMO_ITEMS.length);
     setProgressKey((prev) => prev + 1);
   }, []);
 
-  const handleSelectIndex = (idx: number) => {
-    if (idx === currentIndex) return;
-    setCurrentIndex(idx);
+  const handlePrev = useCallback(() => {
+    setDirection(-1);
+    setCurrentIndex((prev) => (prev - 1 + PROMO_ITEMS.length) % PROMO_ITEMS.length);
     setProgressKey((prev) => prev + 1);
-  };
+  }, []);
 
-  // Tự động chuyển ưu đãi khi không hover
+  // Tự động chuyển ưu đãi khi không hover/touch
   useEffect(() => {
     if (!isOpen || isPaused || PROMO_ITEMS.length <= 1) return;
 
@@ -168,6 +168,39 @@ export const StudentPromoBanner = memo(() => {
 
     return () => clearInterval(timer);
   }, [isOpen, isPaused, handleNext]);
+
+  // Mobile horizontal swipe detection
+  const minSwipeDistance = 35; // px
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    touchEndX.current = null;
+    touchEndY.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchStartY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    setIsPaused(false);
+    if (touchStartX.current === null || touchEndX.current === null) return;
+
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = (touchStartY.current ?? 0) - (touchEndY.current ?? 0);
+
+    // Chuyển banner khi vuốt ngang rõ rệt hơn vuốt dọc
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
+      if (diffX > 0) {
+        handleNext(); // Vuốt sang trái -> xem tiếp theo
+      } else {
+        handlePrev(); // Vuốt sang phải -> xem trước đó
+      }
+    }
+  };
 
   const handleDismiss = () => {
     setIsOpen(false);
@@ -184,10 +217,13 @@ export const StudentPromoBanner = memo(() => {
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.35, ease: "easeInOut" }}
-          className={`relative z-40 w-full overflow-hidden ${currentItem.theme.bgGradient} ${currentItem.theme.borderBottom} shadow-[0_2px_12px_rgba(0,0,0,0.18)] text-white transition-colors duration-500 select-none`}
+          className={`relative z-40 w-full overflow-hidden ${currentItem.theme.bgGradient} ${currentItem.theme.borderBottom} shadow-[0_2px_12px_rgba(0,0,0,0.18)] text-white transition-colors duration-500 select-none touch-pan-y group`}
           aria-label="Thông báo ưu đãi đặc quyền cho sinh viên"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           {/* Subtle Ambient Glows */}
           <div
@@ -204,9 +240,9 @@ export const StudentPromoBanner = memo(() => {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentItem.id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
+                  initial={{ opacity: 0, x: direction * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -direction * 16 }}
                   transition={{ duration: 0.22, ease: "easeOut" }}
                   className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1"
                 >
@@ -247,31 +283,29 @@ export const StudentPromoBanner = memo(() => {
               </AnimatePresence>
             </div>
 
-            {/* Right Controls Area: Switcher Dots + CTA + Dismiss Button */}
+            {/* Right Controls Area: Desktop Chevrons + CTA + Dismiss Button */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Minimalist Segmented Indicator Dots */}
+              {/* Mini Chevron Nav (Desktop Only, subtle & pops on hover) */}
               {PROMO_ITEMS.length > 1 && (
-                <div
-                  className="flex items-center gap-1 px-1.5 py-1 rounded-full bg-white/5 border border-white/10"
-                  title="Chuyển đổi ưu đãi"
-                  aria-label="Chuyển đổi ưu đãi"
-                >
-                  {PROMO_ITEMS.map((item, idx) => {
-                    const isActive = idx === currentIndex;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => handleSelectIndex(idx)}
-                        className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                          isActive
-                            ? "w-4 bg-white shadow-sm"
-                            : "w-1.5 bg-white/30 hover:bg-white/60"
-                        }`}
-                        aria-label={`Xem ưu đãi ${item.title}`}
-                      />
-                    );
-                  })}
+                <div className="hidden sm:flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity mr-0.5">
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    className="p-1 text-slate-300 hover:text-white rounded-full hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
+                    aria-label="Ưu đãi trước"
+                    title="Ưu đãi trước"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="p-1 text-slate-300 hover:text-white rounded-full hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
+                    aria-label="Ưu đãi tiếp theo"
+                    title="Ưu đãi tiếp theo"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
 
