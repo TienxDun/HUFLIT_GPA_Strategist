@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { GraduationCap, Plus, Trash2 } from "lucide-react";
+import { GraduationCap, HelpCircle, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -89,11 +89,17 @@ const SemesterCard = memo(({
               <TableHeader className="bg-slate-50/50 border-b border-slate-200">
                 <TableRow className="hover:bg-transparent border-none">
                   <TableHead className="text-[10px] font-semibold uppercase text-slate-500 tracking-wider ps-2 sm:ps-6 py-2">Môn học</TableHead>
-                  <TableHead className="w-[15%] sm:w-[15%] text-[10px] font-semibold uppercase text-slate-500 tracking-wider text-center py-2 px-1">Tín</TableHead>
+                  <TableHead className="w-[14%] sm:w-[15%] text-[10px] font-semibold uppercase text-slate-500 tracking-wider text-center py-2 px-1">Tín</TableHead>
                   <TableHead className="w-[18%] text-[10px] font-semibold uppercase text-slate-500 tracking-wider text-center py-2 px-1">Điểm</TableHead>
-                  <TableHead className="w-[15%] text-[10px] font-semibold uppercase text-slate-500 tracking-wider text-center py-2 px-1">
-                    <span className="hidden sm:inline">Học Lại</span>
-                    <span className="sm:hidden">HL</span>
+                  <TableHead className="w-[16%] sm:w-[16%] text-[10px] font-semibold uppercase text-slate-500 tracking-wider text-center py-2 px-1">
+                    <div 
+                      className="inline-flex items-center justify-center gap-1 cursor-help"
+                      title="Chỉ áp dụng cho môn có điểm từ C+ trở xuống. Chọn điểm cũ ở đây và điền điểm mới kỳ vọng ở cột Điểm."
+                    >
+                      <span className="hidden sm:inline">Học Lại</span>
+                      <span className="sm:hidden">HL</span>
+                      <HelpCircle className="w-3 h-3 text-slate-400 hover:text-blue-500 transition-colors hidden sm:inline" />
+                    </div>
                   </TableHead>
                   <TableHead className="w-[8%] text-right pe-2 sm:pe-5 py-2"></TableHead>
                 </TableRow>

@@ -71,8 +71,8 @@ const CourseRow = memo(({
                 ? "bg-amber-50 border-amber-400 text-amber-600 font-black ring-2 ring-amber-400/25 hover:bg-amber-100/70 hover:border-amber-500"
                 : "bg-white border-slate-300 text-blue-600 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             }`}
-            aria-label="Chọn điểm chữ"
-            title={hasNoGrade ? "Chưa có điểm môn này" : `Điểm: ${course.grade}`}
+            aria-label={course.isRetake ? "Chọn điểm mới sau khi học lại" : "Chọn điểm chữ"}
+            title={course.isRetake ? "Điểm dự kiến đạt được sau khi học lại" : (hasNoGrade ? "Chưa có điểm môn này" : `Điểm: ${course.grade}`)}
           >
             <SelectValue placeholder="-" />
           </SelectTrigger>
@@ -92,22 +92,28 @@ const CourseRow = memo(({
             aria-label="Đánh dấu học lại"
           />
           {course.isRetake && (
-            <Select
-              value={course.oldGrade || ""}
-              onValueChange={(val) => onUpdate(sIdx, cIdx, "oldGrade", val)}
-            >
-              <SelectTrigger 
-                className="h-6 w-12 sm:h-7 sm:w-16 text-[9px] sm:text-[10px] font-bold bg-slate-50 border-slate-200 cursor-pointer px-1"
-                aria-label="Chọn điểm cũ"
+            <div className="flex flex-col items-center">
+              <span className="text-[8px] sm:text-[9px] font-medium text-slate-500 mb-0.5 leading-none whitespace-nowrap">
+                Điểm cũ
+              </span>
+              <Select
+                value={course.oldGrade || ""}
+                onValueChange={(val) => onUpdate(sIdx, cIdx, "oldGrade", val)}
               >
-                <SelectValue placeholder="Cũ" />
-              </SelectTrigger>
-              <SelectContent>
-                {GRADE_SCALE.filter(g => g.gpa < 3.0).map(g => (
-                  <SelectItem key={g.grade} value={g.grade} className="text-[10px] font-bold">{g.grade}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger 
+                  className="h-6 w-14 sm:h-7 sm:w-16 text-[9px] sm:text-[10px] font-bold bg-slate-50 border-slate-200 cursor-pointer px-1"
+                  aria-label="Chọn điểm cũ đã có"
+                  title="Điểm thực tế đã đạt từ C+ trở xuống"
+                >
+                  <SelectValue placeholder="Điểm cũ" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRADE_SCALE.filter(g => g.gpa < 3.0).map(g => (
+                    <SelectItem key={g.grade} value={g.grade} className="text-[10px] font-bold">{g.grade}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
       </TableCell>
