@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { GradeScaleTable } from "./scale/GradeScaleTable";
 import { RankTable } from "./scale/RankTable";
 import { ScheduleTable } from "./scale/ScheduleTable";
+import { RoomCodeTable } from "./scale/RoomCodeTable";
 
 export const ScaleTab = memo(() => {
   return (
@@ -47,14 +48,15 @@ export const ScaleTab = memo(() => {
         />
       </motion.div>
 
-      {/* Cột phải: Thời gian biểu */}
+      {/* Cột phải: Thời gian biểu & Ký hiệu phòng học */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="lg:col-span-8 space-y-2"
+        className="lg:col-span-8 space-y-3"
       >
         <ScheduleTable />
+        <RoomCodeTable />
       </motion.div>
 
     </div>

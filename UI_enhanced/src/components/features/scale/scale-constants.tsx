@@ -62,3 +62,92 @@ export const SCHEDULE = [
     ]
   }
 ];
+
+export interface RoomCodeItem {
+  code: string;
+  campus: string;
+  district: string;
+  address: string;
+  note?: string;
+  mapUrl: string;
+  colorScheme: {
+    bg: string;
+    text: string;
+    border: string;
+    badgeBg: string;
+    badgeText: string;
+    badgeBorder: string;
+    indicator: string;
+  };
+}
+
+export const ROOM_CODES: RoomCodeItem[] = [
+  {
+    code: "A - B - PM",
+    campus: "CS Sư Vạn Hạnh",
+    district: "Quận 10",
+    address: "828 Sư Vạn Hạnh, P.12, Q.10",
+    note: "Khu A, B & Phòng máy",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=HUFLIT+828+S%C6%B0+V%E1%BA%A1n+H%E1%BA%A1nh+Qu%E1%BA%ADn+10",
+    colorScheme: {
+      bg: "bg-blue-50/30 hover:bg-blue-50/60",
+      text: "text-blue-900",
+      border: "border-blue-100",
+      badgeBg: "bg-blue-100/90",
+      badgeText: "text-blue-800",
+      badgeBorder: "border-blue-200/80",
+      indicator: "bg-blue-500"
+    }
+  },
+  {
+    code: "HA - HB",
+    campus: "CS Hóc Môn",
+    district: "Hóc Môn",
+    address: "Tân Hiệp, Huyện Hóc Môn",
+    note: "Khu Hóc Môn A & B",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=HUFLIT+C%C6%A1+s%E1%BB%9F+H%C3%B3c+M%C3%B4n",
+    colorScheme: {
+      bg: "bg-emerald-50/30 hover:bg-emerald-50/60",
+      text: "text-emerald-900",
+      border: "border-emerald-100",
+      badgeBg: "bg-emerald-100/90",
+      badgeText: "text-emerald-800",
+      badgeBorder: "border-emerald-200/80",
+      indicator: "bg-emerald-500"
+    }
+  },
+  {
+    code: "K",
+    campus: "CS Trường Sơn",
+    district: "Tân Bình",
+    address: "140/30 Trường Sơn, P.2, Q. Tân Bình",
+    note: "Khu giảng đường K",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=HUFLIT+140%2F30+Tr%C6%B0%E1%BB%9Dng+S%C6%A1n+T%C3%A2n+B%C3%ACnh",
+    colorScheme: {
+      bg: "bg-amber-50/30 hover:bg-amber-50/60",
+      text: "text-amber-900",
+      border: "border-amber-100",
+      badgeBg: "bg-amber-100/90",
+      badgeText: "text-amber-800",
+      badgeBorder: "border-amber-200/80",
+      indicator: "bg-amber-500"
+    }
+  },
+  {
+    code: "G",
+    campus: "CS Ba Gia",
+    district: "Tân Bình",
+    address: "Đường Ba Gia, P.7, Q. Tân Bình",
+    note: "Khu giảng đường G",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=HUFLIT+Ba+Gia+T%C3%A2n+B%C3%ACnh",
+    colorScheme: {
+      bg: "bg-purple-50/30 hover:bg-purple-50/60",
+      text: "text-purple-900",
+      border: "border-purple-100",
+      badgeBg: "bg-purple-100/90",
+      badgeText: "text-purple-800",
+      badgeBorder: "border-purple-200/80",
+      indicator: "bg-purple-500"
+    }
+  }
+];

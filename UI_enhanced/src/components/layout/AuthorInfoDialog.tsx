@@ -9,17 +9,22 @@ import {
   History,
   Lightbulb,
   MessageCircle,
-  Check
+  Check,
+  Sparkles
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { memo, useState } from "react";
 import { FeedbackDialog } from "../features/community/FeedbackDialog";
+import { ChangelogDialog } from "./ChangelogDialog";
+import { getLatestVersion } from "@/constants/changelog";
 
 export const AuthorInfoDialog = memo(({ children }: { children: React.ReactElement }) => {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const avatarSrc = `${basePath}/ava.jpg`;
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const latest = getLatestVersion();
 
   return (
     <>
@@ -76,6 +81,15 @@ export const AuthorInfoDialog = memo(({ children }: { children: React.ReactEleme
 
               <Button
                 variant="outline"
+                onClick={() => setIsChangelogOpen(true)}
+                className="w-full h-12 rounded-full border-indigo-500/30 text-indigo-600 font-bold text-sm hover:bg-indigo-50 hover:border-indigo-500 transition-all gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                Nhật ký cập nhật ({latest.version})
+              </Button>
+
+              <Button
+                variant="outline"
                 onClick={() => setIsFeedbackOpen(true)}
                 className="w-full h-12 rounded-full border-emerald-500/30 text-emerald-600 font-bold text-sm hover:bg-emerald-50 hover:border-emerald-500 transition-all gap-2"
               >
@@ -101,6 +115,11 @@ export const AuthorInfoDialog = memo(({ children }: { children: React.ReactEleme
       <FeedbackDialog
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}
+      />
+
+      <ChangelogDialog
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
       />
     </>
   );
