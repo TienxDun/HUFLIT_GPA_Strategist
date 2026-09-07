@@ -53,7 +53,7 @@ const InitialStatsCard = memo(({
               <RotateCcw className="h-3.5 w-3.5" />
             </Button>
           } />
-          <DialogContent className="max-w-[340px] rounded-3xl p-6 border-slate-200 bg-white/95 backdrop-blur-xl shadow-2xl">
+          <DialogContent className="w-[92vw] sm:w-[95vw] max-w-[340px] rounded-3xl p-6 border-slate-200 bg-white/95 backdrop-blur-xl shadow-2xl">
             <DialogHeader className="space-y-3">
               <div className="h-12 w-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 mx-auto mb-2">
                 <RotateCcw className="h-6 w-6" />

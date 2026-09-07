@@ -42,7 +42,7 @@ export const AlgorithmDialog = memo(({
           </Button>
         } />
 
-        <DialogContent className="sm:max-w-xl w-[92vw] max-h-[90vh] rounded-[2rem] border border-slate-100 shadow-2xl p-6 sm:p-8 overflow-y-auto bg-white flex flex-col gap-6">
+        <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] rounded-[2rem] border border-slate-100 shadow-2xl p-6 sm:p-8 overflow-y-auto bg-white flex flex-col gap-6">
           <DialogHeader />
 
           <div className="space-y-6">

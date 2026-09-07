@@ -62,7 +62,7 @@ export function GradeSuggestionDialog({ courses, retakes, onToggle }: GradeSugge
         </Button>
       } />
 
-      <DialogContent className="sm:max-w-2xl w-[92vw] h-[85vh] rounded-[2rem] border border-slate-100 shadow-2xl p-0 overflow-hidden bg-white flex flex-col">
+      <DialogContent className="w-[95vw] sm:max-w-2xl h-[85vh] rounded-[2rem] border border-slate-100 shadow-2xl p-0 overflow-hidden bg-white flex flex-col">
         <div className="p-6 sm:p-8 space-y-6 shrink-0 border-b border-slate-50">
           <div className="space-y-2">
             <div className="flex items-center gap-2 opacity-60">

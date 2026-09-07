@@ -25,7 +25,7 @@ export function NewsFormModal({
 
   return (
     <Dialog open={form.isOpen} onOpenChange={(open) => !open && form.close()}>
-      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-2xl border-slate-100 bg-white p-4 sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:p-5 lg:max-w-3xl">
+      <DialogContent className="w-[95vw] max-h-[calc(100dvh-2rem)] max-w-2xl lg:max-w-3xl overflow-y-auto rounded-[24px] border-slate-100 bg-white p-4 sm:p-6">
         <DialogHeader className="gap-1 pb-1">
           <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-800 sm:text-lg">
             {isEditing ? <Edit2 className="h-5 w-5 text-blue-600" /> : <Plus className="h-5 w-5 text-blue-600" />}

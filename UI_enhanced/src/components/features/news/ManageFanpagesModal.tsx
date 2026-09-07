@@ -150,7 +150,7 @@ export function ManageFanpagesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100vw-1rem)] overflow-hidden rounded-3xl border-slate-100 bg-white p-4 sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:p-6 flex flex-col shadow-2xl">
+      <DialogContent className="w-[95vw] max-h-[calc(100dvh-2rem)] max-w-2xl overflow-hidden rounded-3xl border-slate-100 bg-white p-4 sm:p-6 flex flex-col shadow-2xl">
         
         {/* Header Section: Thoáng đãng, không bị chèn ép với nút Đóng (X) */}
         <DialogHeader className="pb-3 border-b border-slate-100 flex flex-col gap-1 pr-8">

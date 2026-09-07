@@ -277,7 +277,7 @@ export function PWAInstallGuide() {
       </AnimatePresence>
 
       <Dialog open={guideOpen} onOpenChange={setGuideOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-5 sm:p-6">
+        <DialogContent className="w-[95vw] max-w-md rounded-[24px] p-5 sm:p-6">
           <DialogHeader className="pr-8">
             <DialogTitle className="text-lg font-black text-slate-900">
               Cài GPA Strategist trên thiết bị

@@ -10,10 +10,10 @@ import {
   Lightbulb,
   MessageCircle,
   Check,
-  Sparkles
+  Sparkles,
+  ChevronRight
 } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { memo, useState } from "react";
 import { FeedbackDialog } from "../features/community/FeedbackDialog";
 import { ChangelogDialog } from "./ChangelogDialog";
@@ -30,13 +30,13 @@ export const AuthorInfoDialog = memo(({ children }: { children: React.ReactEleme
     <>
       <Dialog>
         <DialogTrigger render={children} />
-        <DialogContent className="max-w-[400px] p-0 overflow-hidden border-none bg-white rounded-[32px] shadow-2xl">
+        <DialogContent className="w-[92vw] sm:w-[95vw] max-w-[400px] p-0 overflow-hidden border-none bg-white rounded-[32px] shadow-2xl">
           {/* Header Background */}
           <div className="relative h-32 bg-gradient-to-b from-blue-100 to-white flex items-start justify-between p-4">
           </div>
 
           {/* Profile Content */}
-          <div className="relative px-6 pb-8 text-center -mt-16">
+          <div className="relative px-6 pb-7 text-center -mt-16">
             {/* Avatar Container */}
             <div className="relative w-32 h-32 mx-auto mb-4 group">
               <div className="absolute inset-0 rounded-full bg-white p-1.5 shadow-xl transition-transform group-hover:scale-105 duration-500">
@@ -61,53 +61,76 @@ export const AuthorInfoDialog = memo(({ children }: { children: React.ReactEleme
               K29 IT - HUFLIT
             </div>
 
-
-            <p className="text-slate-500 text-[13px] leading-relaxed mb-8 px-4 font-medium">
+            <p className="text-slate-500 text-[13px] leading-relaxed mb-6 px-3 font-medium">
               &ldquo;Mình hy vọng công cụ này sẽ giúp ích được cho mọi người trong hành trình chinh phục tấm bằng đại học tại HUFLIT.&rdquo;
             </p>
 
-            <div className="flex flex-col gap-3">
-              <Button
-                variant="outline"
-                nativeButton={false}
-                render={
-                  <a href={`${basePath}/legacy/index.html`}>
-                    <History className="h-4 w-4" />
-                    Mở trang tính điểm GPA cũ
-                  </a>
-                }
-                className="w-full h-12 rounded-full border-blue-500/30 text-blue-600 font-bold text-sm hover:bg-blue-50 hover:border-blue-500 transition-all gap-2"
-              />
-
-              <Button
-                variant="outline"
+            {/* Inset Grouped List (iOS / Apple Style) */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/60 shadow-xs divide-y divide-slate-100">
+              {/* Item 1: Nhật ký cập nhật (Ưu tiên số 1) */}
+              <button
+                type="button"
                 onClick={() => setIsChangelogOpen(true)}
-                className="w-full h-12 rounded-full border-indigo-500/30 text-indigo-600 font-bold text-sm hover:bg-indigo-50 hover:border-indigo-500 transition-all gap-2"
+                className="group flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-white active:bg-slate-100/70 cursor-pointer"
               >
-                <Sparkles className="h-4 w-4" />
-                Nhật ký cập nhật ({latest.version})
-              </Button>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100/70 transition-transform group-hover:scale-105">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div className="flex flex-1 items-center justify-between gap-2 min-w-0 pr-0.5">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                    Nhật ký cập nhật
+                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-100/80 text-indigo-700 border border-indigo-200/60 shrink-0">
+                    {latest.version}
+                  </span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
+              </button>
 
-              <Button
-                variant="outline"
+              {/* Item 2: Góp ý tính năng */}
+              <button
+                type="button"
                 onClick={() => setIsFeedbackOpen(true)}
-                className="w-full h-12 rounded-full border-emerald-500/30 text-emerald-600 font-bold text-sm hover:bg-emerald-50 hover:border-emerald-500 transition-all gap-2"
+                className="group flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-white active:bg-slate-100/70 cursor-pointer"
               >
-                <Lightbulb className="h-4 w-4" />
-                Góp ý tính năng
-              </Button>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100/70 transition-transform group-hover:scale-105">
+                  <Lightbulb className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors">
+                    Góp ý tính năng
+                  </span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
+              </button>
 
-              <Button
-                nativeButton={false}
-                render={
-                  <a href="https://www.facebook.com/tienxdun/" target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="h-4 w-4 fill-white/20" />
-                    Nhắn tin qua Facebook
-                  </a>
-                }
-                className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-200 transition-all gap-2"
-              />
+              {/* Item 3: Mở trang tính điểm GPA cũ (Công cụ cũ) */}
+              <a
+                href={`${basePath}/legacy/index.html`}
+                className="group flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-white active:bg-slate-100/70 cursor-pointer"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100/70 transition-transform group-hover:scale-105">
+                  <History className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-blue-600 transition-colors">
+                    Mở trang tính điểm GPA cũ
+                  </span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+              </a>
             </div>
+
+            {/* Primary CTA: Nhắn tin qua Facebook (Nổi bật độc lập) */}
+            <a
+              href="https://www.facebook.com/tienxdun/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3.5 flex h-11 sm:h-12 w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/25 active:scale-[0.98] transition-all"
+            >
+              <MessageCircle className="h-4 w-4 fill-white/20" />
+              <span>Nhắn tin qua Facebook</span>
+            </a>
           </div>
         </DialogContent>
       </Dialog>

@@ -42,7 +42,7 @@ const PortalImportDialog = ({ onImport, triggerVariant = "default" }: PortalImpo
           <CloudUpload className="h-4 w-4" /> Nhập dữ liệu từ Portal
         </DialogTrigger>
 
-        <DialogContent className="max-w-3xl bg-white border-slate-200 shadow-2xl p-0 overflow-hidden rounded-3xl">
+        <DialogContent className="w-[95vw] max-w-3xl bg-white border-slate-200 shadow-2xl p-0 overflow-hidden rounded-3xl">
           <DialogHeader className="p-6 pb-2 border-b border-slate-50">
             <div className="flex items-center gap-4">
               <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/15">

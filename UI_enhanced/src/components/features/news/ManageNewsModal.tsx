@@ -69,7 +69,7 @@ export function ManageNewsModal({
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl border-slate-100 bg-white p-4 sm:max-h-[calc(100dvh-2rem)] sm:max-w-xl sm:p-5 flex flex-col">
+      <DialogContent className="w-[95vw] max-h-[calc(100dvh-2rem)] max-w-xl overflow-hidden rounded-[24px] border-slate-100 bg-white p-4 sm:p-6 flex flex-col">
         <DialogHeader className="pb-2.5 border-b border-slate-100/80">
           <DialogTitle className="text-base font-bold text-slate-800 sm:text-lg">
             Quản lý Bản tin & Thông báo
