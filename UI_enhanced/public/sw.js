@@ -1,4 +1,4 @@
-const CACHE_NAME = "huflit-gpa-cache-v1";
+const CACHE_NAME = "huflit-gpa-cache-v2";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -46,6 +46,9 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   // Only handle GET requests
   if (event.request.method !== "GET") return;
+
+  // Ignore cross-origin third-party requests (e.g. analytics, CDN, external APIs)
+  if (!event.request.url.startsWith(self.location.origin)) return;
 
   event.respondWith(
     fetch(event.request)

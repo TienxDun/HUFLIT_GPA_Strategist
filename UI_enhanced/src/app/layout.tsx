@@ -140,8 +140,8 @@ export default function RootLayout({
           <Script
             data-goatcounter="https://tienxdun.goatcounter.com/count"
             async
-            src="//gc.zgo.at/count.js"
-            strategy="afterInteractive"
+            src="https://gc.zgo.at/count.js"
+            strategy="lazyOnload"
           />
         )}
       </body>

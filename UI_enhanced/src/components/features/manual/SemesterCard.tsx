@@ -158,9 +158,9 @@ const SemesterCard = memo(({
                     <AnimatedNumber value={semStats.cumulativeCredits} precision={0} />
                   </span>
                 </div>
-                <div className="flex flex-col items-center justify-center py-0.5 bg-blue-600 rounded-xl shadow-md shadow-blue-500/20 col-span-2 lg:col-span-1">
-                  <span className="text-[10px] font-semibold text-blue-100/80 uppercase tracking-wider">GPA Tích lũy</span>
-                  <span className="text-sm font-black text-white">
+                <div className="flex flex-col items-center justify-center py-1 bg-white rounded-xl border border-blue-200/80 shadow-sm shadow-blue-500/5 col-span-2 lg:col-span-1">
+                  <span className="text-[10px] font-semibold text-blue-600/80 uppercase tracking-wider mb-0.5">GPA Tích lũy</span>
+                  <span className="text-sm font-black text-blue-700 tracking-tight">
                     <AnimatedNumber value={semStats.cumulativeGPA} precision={2} />
                   </span>
                 </div>
