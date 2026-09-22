@@ -37,8 +37,9 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: withBasePath("/favicon.ico"), sizes: "any" },
-      { url: withBasePath("/icon.svg"), type: "image/svg+xml" }
+      { url: withBasePath("/icon.svg"), type: "image/svg+xml" },
     ],
+    apple: withBasePath("/ava.jpg"),
   },
   manifest: withBasePath("/manifest.webmanifest"),
   openGraph: {
@@ -73,10 +74,6 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
-  },
-  icons: {
-    icon: withBasePath("/icon.svg"),
-    apple: withBasePath("/ava.jpg"),
   },
   appleWebApp: {
     capable: true,
