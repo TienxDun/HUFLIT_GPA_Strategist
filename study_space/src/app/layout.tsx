@@ -35,6 +35,12 @@ export const metadata: Metadata = {
       "Tập trung học tập hiệu quả với bối cảnh 4K, nhạc Lo-fi/Jazz và 20 âm thanh môi trường thư giãn.",
     type: "website",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" }
+    ],
+  },
 };
 
 export default function RootLayout({

@@ -34,6 +34,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: basePath ? `${basePath}/` : "/",
   },
+  icons: {
+    icon: [
+      { url: withBasePath("/favicon.ico"), sizes: "any" },
+      { url: withBasePath("/icon.svg"), type: "image/svg+xml" }
+    ],
+  },
   manifest: withBasePath("/manifest.webmanifest"),
   openGraph: {
     title: "HUFLIT GPA Strategist - Tính toán & Lập kế hoạch điểm số",

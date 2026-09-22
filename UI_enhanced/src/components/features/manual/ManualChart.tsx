@@ -86,7 +86,7 @@ const ManualChart = memo(({ semesterStats }: ManualChartProps) => {
 
       <CardContent className="h-[155px] pt-3 pb-2 px-1">
         {isMounted ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={140}>
             <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -22, bottom: 0 }}>
               <defs>
                 <linearGradient id="gpaGradient" x1="0" y1="0" x2="0" y2="1">
