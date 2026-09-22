@@ -149,6 +149,7 @@ export function RoadmapTab({ initialData, onSwitchTab }: RoadmapTabProps) {
           maxPossibleGPA={maxPossibleGPA}
           targetGPA={state.targetGPA}
           currentCredits={state.currentCredits}
+          hasRetakes={state.retakes.length > 0}
           onShare={handleShare}
         />
         <AlgorithmDialog

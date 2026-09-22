@@ -16,10 +16,34 @@ export interface ReleaseVersion {
 
 export const CHANGELOG_DATA: ReleaseVersion[] = [
   {
+    version: "v2.5.0",
+    date: "22/09/2026",
+    title: "Chuẩn hóa Quy chế Tốt nghiệp & Nâng cấp Trải nghiệm Nhập liệu Lộ trình",
+    isLatest: true,
+    highlight: "Sửa thuật toán GPA dự kiến chuẩn quy chế tín chỉ và tối ưu hóa thao tác nhập liệu không còn lỗi giật số.",
+    changes: [
+      {
+        type: "fix",
+        description: "Chuẩn hóa thuật toán GPA dự kiến khi đạt mục tiêu: tín chỉ mới bắt buộc tính mức tối thiểu qua môn D (1.0) để đảm bảo đủ điều kiện tích lũy tốt nghiệp."
+      },
+      {
+        type: "improve",
+        description: "Nâng cấp giao diện hiển thị Lộ trình: hiển thị nhãn 'GPA Tối thiểu khi tốt nghiệp' và trạng thái 'Chỉ cần qua môn (≥ 1.0) để tốt nghiệp' rõ ràng, trực quan."
+      },
+      {
+        type: "improve",
+        description: "Tối ưu hóa các ô nhập liệu (GPA hiện tại, Tín chỉ tích lũy, GPA mục tiêu, Chuẩn toàn khóa): hỗ trợ tự động bôi đen khi nhấp chuột (Select on Focus)."
+      },
+      {
+        type: "fix",
+        description: "Khắc phục triệt để lỗi xóa trắng (Delete all) và nhập số mới: cơ chế Focus Isolation ngăn chặn giật state và xung đột số thập phân trên trình duyệt."
+      }
+    ]
+  },
+  {
     version: "v2.4.0",
     date: "07/09/2026",
     title: "Tối ưu hóa Thang điểm & Tích hợp Bản đồ chỉ đường",
-    isLatest: true,
     highlight: "Nâng cấp giao diện dạng danh sách cân xứng và hỗ trợ mở Google Maps 4 cơ sở HUFLIT.",
     changes: [
       {
@@ -120,8 +144,8 @@ export const CHANGELOG_DATA: ReleaseVersion[] = [
 
 export const getLatestVersion = () => {
   return CHANGELOG_DATA[0] || {
-    version: "v2.4.0",
-    date: "07/09/2026",
+    version: "v2.5.0",
+    date: "22/09/2026",
     title: "Phiên bản hiện tại"
   };
 };

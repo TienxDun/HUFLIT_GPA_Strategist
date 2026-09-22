@@ -507,6 +507,20 @@ describe('calculateTargetResult', () => {
   it('should handle case when target is already met', () => {
     const result = calculateTargetResult(3.5, 60, 3.0, 0);
     expect(result.requiredGPA).toBe(0);
+    expect(result.projectedGPA).toBe(3.5);
+  });
+
+  it('should calculate projectedGPA with minimum passing grade (D = 1.0) for remaining new credits', () => {
+    // Current: 3.71 GPA, 138 credits (points = 511.98)
+    // Target: 3.6 GPA, 3 new credits
+    // According to credit-based education system regulations:
+    // To graduate with 141 credits, the 3 new credits must achieve at least D (1.0).
+    // Min graduation points = 511.98 + (3 * 1.0) = 514.98
+    // Min graduation GPA = 514.98 / 141 = 3.65 (not 3.63, because F grade doesn't count towards graduation credits!)
+    const result = calculateTargetResult(3.71, 138, 3.6, 3);
+    expect(result.requiredGPA).toBeLessThanOrEqual(0);
+    expect(result.totalFutureCredits).toBe(141);
+    expect(result.projectedGPA).toBe(3.65);
   });
 });
 

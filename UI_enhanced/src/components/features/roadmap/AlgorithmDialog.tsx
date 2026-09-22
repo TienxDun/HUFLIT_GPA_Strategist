@@ -80,7 +80,17 @@ export const AlgorithmDialog = memo(({
               rows={[
                 { label: "Nỗ lực cần (Z):", value: result.requiredPoints.toFixed(2), op: "" },
                 { label: "TC nỗ lực:", value: result.totalEffortCredits, op: "/" },
-                { label: "GPA CẦN ĐẠT:", value: result.requiredGPA === Infinity ? "KHÔNG THỂ" : result.requiredGPA.toFixed(2), op: "=", bold: true, highlight: true },
+                { 
+                  label: "GPA CẦN ĐẠT:", 
+                  value: result.requiredGPA === Infinity 
+                    ? "KHÔNG THỂ" 
+                    : result.requiredGPA <= 0 
+                      ? (remainingCredits > 0 ? "≥ 1.00 (Qua môn D)" : "0.00 (Đã đạt)") 
+                      : result.requiredGPA.toFixed(2), 
+                  op: "=", 
+                  bold: true, 
+                  highlight: true 
+                },
               ]}
             />
           </div>

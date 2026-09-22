@@ -20,10 +20,11 @@ interface ResultHeroCardProps {
   maxPossibleGPA: number;
   targetGPA: number;
   currentCredits: number;
+  hasRetakes?: boolean;
   onShare?: () => void;
 }
 
-export const ResultHeroCard = memo(({ result, status, maxPossibleGPA, targetGPA, currentCredits, onShare }: ResultHeroCardProps) => {
+export const ResultHeroCard = memo(({ result, status, maxPossibleGPA, targetGPA, currentCredits, hasRetakes = false, onShare }: ResultHeroCardProps) => {
   const textColor = getStatusTextColor(status);
   const borderColor = getStatusBorderColor(status);
   const isNegative = isStatusNegative(status);
@@ -46,14 +47,17 @@ export const ResultHeroCard = memo(({ result, status, maxPossibleGPA, targetGPA,
         status={status} 
         requiredGPA={result.requiredGPA} 
         projectedGPA={result.projectedGPA}
-        textColor={textColor} 
+        textColor={textColor}
+        hasRetakes={hasRetakes}
+        newCredits={result.newCredits}
       />
       <StatusBadge 
         status={status} 
         maxPossibleGPA={maxPossibleGPA} 
         targetGPA={targetGPA}
         textColor={textColor} 
-        isNegative={isNegative} 
+        isNegative={isNegative}
+        newCredits={result.newCredits}
       />
       <StatsRow 
         result={result} 
@@ -73,17 +77,26 @@ interface GPADisplayProps {
   requiredGPA: number;
   projectedGPA?: number;
   textColor: string;
+  hasRetakes: boolean;
+  newCredits: number;
 }
 
-const GPADisplay = memo(({ status, requiredGPA, projectedGPA, textColor }: GPADisplayProps) => {
+const GPADisplay = memo(({ status, requiredGPA, projectedGPA, textColor, hasRetakes, newCredits }: GPADisplayProps) => {
   const isAchieved = status === "achieved";
   const displayVal = getDisplayGPA(status, requiredGPA);
   const isNumeric = isAchieved || !isNaN(Number(displayVal));
 
+  const getAchievedLabel = () => {
+    if (hasRetakes && newCredits > 0) return "GPA Dự kiến tốt nghiệp";
+    if (hasRetakes) return "GPA Dự kiến sau cải thiện";
+    if (newCredits > 0) return "GPA Tối thiểu khi tốt nghiệp";
+    return "GPA Dự kiến";
+  };
+
   return (
     <div className="space-y-1">
       <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">
-        {isAchieved ? "GPA Dự kiến sau cải thiện" : getDisplayLabel(status)}
+        {isAchieved ? getAchievedLabel() : getDisplayLabel(status)}
       </div>
       <div className={`${isNumeric ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl"} font-black tracking-tighter py-0.5 ${textColor}`}>
         {isAchieved ? (
@@ -111,11 +124,14 @@ interface StatusBadgeProps {
   targetGPA: number;
   textColor: string;
   isNegative: boolean;
+  newCredits: number;
 }
 
-const StatusBadge = memo(({ status, maxPossibleGPA, targetGPA, textColor, isNegative }: StatusBadgeProps) => {
+const StatusBadge = memo(({ status, maxPossibleGPA, targetGPA, textColor, isNegative, newCredits }: StatusBadgeProps) => {
   const label = status === "achieved"
-    ? `Đã đạt mục tiêu đề ra • Chuẩn ra trường ≥ ${targetGPA.toFixed(2)}`
+    ? (newCredits > 0 
+        ? `Đã đạt mục tiêu đề ra • Chỉ cần qua môn (≥ 1.0) để tốt nghiệp` 
+        : `Đã đạt mục tiêu đề ra • Chuẩn ra trường ≥ ${targetGPA.toFixed(2)}`)
     : getStatusLabel(status, maxPossibleGPA);
   const parts = label.split(' • ');
 

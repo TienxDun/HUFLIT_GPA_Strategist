@@ -135,14 +135,76 @@ interface StartingPointStepProps {
 const StartingPointStep = memo(({ currentGPA, currentCredits, onGPAChange, onCreditsChange, onSync, isExpanded, onToggle }: StartingPointStepProps) => {
   const [gpaStr, setGpaStr] = useState(currentGPA === 0 ? "" : currentGPA.toString());
   const [creditsStr, setCreditsStr] = useState(currentCredits === 0 ? "" : currentCredits.toString());
+  const [isGpaFocused, setIsGpaFocused] = useState(false);
+  const [isCreditsFocused, setIsCreditsFocused] = useState(false);
 
   useEffect(() => {
-    if (parseFloat(gpaStr) !== currentGPA) setGpaStr(currentGPA === 0 ? "" : currentGPA.toString());
-  }, [currentGPA, gpaStr]);
+    if (!isGpaFocused) {
+      setGpaStr(currentGPA === 0 ? "" : currentGPA.toString());
+    }
+  }, [currentGPA, isGpaFocused]);
 
   useEffect(() => {
-    if (parseInt(creditsStr) !== currentCredits) setCreditsStr(currentCredits === 0 ? "" : currentCredits.toString());
-  }, [currentCredits, creditsStr]);
+    if (!isCreditsFocused) {
+      setCreditsStr(currentCredits === 0 ? "" : currentCredits.toString());
+    }
+  }, [currentCredits, isCreditsFocused]);
+
+  const handleGpaChange = (raw: string) => {
+    let sanitized = raw.replace(/[^0-9.]/g, '');
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+      sanitized = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setGpaStr(sanitized);
+
+    if (sanitized === "" || sanitized === ".") {
+      return;
+    }
+
+    const val = parseFloat(sanitized);
+    if (!isNaN(val) && val >= 0 && val <= 4.0) {
+      onGPAChange(val);
+    }
+  };
+
+  const handleGpaBlur = () => {
+    setIsGpaFocused(false);
+    if (gpaStr === "" || isNaN(parseFloat(gpaStr))) {
+      setGpaStr(currentGPA === 0 ? "" : currentGPA.toString());
+    } else {
+      const val = parseFloat(gpaStr);
+      const clamped = Math.min(4.0, Math.max(0, val));
+      setGpaStr(clamped.toString());
+      onGPAChange(clamped);
+    }
+  };
+
+  const handleCreditsChange = (raw: string) => {
+    const sanitized = raw.replace(/[^0-9]/g, '');
+    setCreditsStr(sanitized);
+
+    if (sanitized === "") {
+      return;
+    }
+
+    const val = parseInt(sanitized, 10);
+    if (!isNaN(val) && val >= 0 && val <= 300) {
+      onCreditsChange(val);
+    }
+  };
+
+  const handleCreditsBlur = () => {
+    setIsCreditsFocused(false);
+    if (creditsStr === "" || isNaN(parseInt(creditsStr, 10))) {
+      setCreditsStr(currentCredits === 0 ? "" : currentCredits.toString());
+    } else {
+      const val = parseInt(creditsStr, 10);
+      const clamped = Math.min(300, Math.max(0, val));
+      setCreditsStr(clamped.toString());
+      onCreditsChange(clamped);
+    }
+  };
 
   return (
     <div className={`bg-white border border-slate-100 rounded-[1.5rem] shadow-sm relative z-10 transition-all duration-300 overflow-hidden ${isExpanded ? "p-2.5" : "p-2.5"}`}>
@@ -207,17 +269,15 @@ const StartingPointStep = memo(({ currentGPA, currentCredits, onGPAChange, onCre
             <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100/50">
               <div className="space-y-1.5">
                 <Input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  max={4.0}
+                  type="text"
+                  inputMode="decimal"
                   value={gpaStr}
-                  onChange={e => {
-                    const s = e.target.value;
-                    setGpaStr(s);
-                    const val = s === "" ? 0 : parseFloat(s);
-                    if (!isNaN(val)) onGPAChange(Math.min(4.0, Math.max(0, val)));
+                  onFocus={e => {
+                    setIsGpaFocused(true);
+                    e.target.select();
                   }}
+                  onBlur={handleGpaBlur}
+                  onChange={e => handleGpaChange(e.target.value)}
                   placeholder="0.00"
                   className="h-9 text-[13px] font-black text-blue-600 bg-white border-slate-200 rounded-xl focus:ring-blue-500/20 text-center"
                 />
@@ -225,16 +285,15 @@ const StartingPointStep = memo(({ currentGPA, currentCredits, onGPAChange, onCre
               </div>
               <div className="space-y-1.5">
                 <Input
-                  type="number"
-                  min={0}
-                  max={300}
+                  type="text"
+                  inputMode="numeric"
                   value={creditsStr}
-                  onChange={e => {
-                    const s = e.target.value;
-                    setCreditsStr(s);
-                    const val = s === "" ? 0 : parseInt(s);
-                    if (!isNaN(val)) onCreditsChange(Math.min(300, Math.max(0, val)));
+                  onFocus={e => {
+                    setIsCreditsFocused(true);
+                    e.target.select();
                   }}
+                  onBlur={handleCreditsBlur}
+                  onChange={e => handleCreditsChange(e.target.value)}
                   placeholder="0"
                   className="h-9 text-[13px] font-black text-blue-600 bg-white border-slate-200 rounded-xl focus:ring-blue-500/20 text-center"
                 />
@@ -257,16 +316,42 @@ interface TargetGPAStepProps {
 
 const TargetGPAStep = memo(({ targetGPA, onSelect, isExpanded, onToggle }: TargetGPAStepProps) => {
   const [valStr, setValStr] = useState(targetGPA === 0 ? "" : targetGPA.toString());
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    if (parseFloat(valStr) !== targetGPA) setValStr(targetGPA === 0 ? "" : targetGPA.toString());
-  }, [targetGPA, valStr]);
+    if (!isFocused) {
+      setValStr(targetGPA === 0 ? "" : targetGPA.toString());
+    }
+  }, [targetGPA, isFocused]);
 
   const handleInputChange = (raw: string) => {
-    setValStr(raw);
-    const val = parseFloat(raw);
-    if (isNaN(val)) return onSelect(0);
-    onSelect(Math.min(4.0, Math.max(0, val)));
+    let sanitized = raw.replace(/[^0-9.]/g, '');
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+      sanitized = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setValStr(sanitized);
+
+    if (sanitized === "" || sanitized === ".") {
+      return;
+    }
+
+    const val = parseFloat(sanitized);
+    if (!isNaN(val) && val >= 0 && val <= 4.0) {
+      onSelect(val);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (valStr === "" || isNaN(parseFloat(valStr))) {
+      setValStr(targetGPA === 0 ? "" : targetGPA.toString());
+    } else {
+      const val = parseFloat(valStr);
+      const clamped = Math.min(4.0, Math.max(0, val));
+      setValStr(clamped.toString());
+      onSelect(clamped);
+    }
   };
 
   return (
@@ -309,11 +394,14 @@ const TargetGPAStep = memo(({ targetGPA, onSelect, isExpanded, onToggle }: Targe
             <div className="bg-white/60 p-2 pt-3.5 rounded-2xl border border-blue-100/30 space-y-3">
               <div className="relative group">
                 <Input
-                  type="number"
-                  step="0.05"
-                  min={0}
-                  max={4.0}
+                  type="text"
+                  inputMode="decimal"
                   value={valStr}
+                  onFocus={e => {
+                    setIsFocused(true);
+                    e.target.select();
+                  }}
+                  onBlur={handleBlur}
                   onChange={e => handleInputChange(e.target.value)}
                   placeholder="GPA mục tiêu"
                   className="text-center text-lg font-black text-blue-700 bg-white border-2 border-blue-100 focus:ring-blue-500/20 rounded-xl h-10 shadow-sm transition-all group-hover:border-blue-200"
@@ -389,11 +477,11 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
   };
 
   const handleCustomChange = (valStr: string) => {
-    setCustomInputStr(valStr);
-    const parsed = parseInt(valStr, 10);
-    if (isNaN(parsed) || parsed < 0) {
-      onRemainingChange(0);
-    } else {
+    const sanitized = valStr.replace(/[^0-9]/g, '');
+    setCustomInputStr(sanitized);
+    if (sanitized === "") return;
+    const parsed = parseInt(sanitized, 10);
+    if (!isNaN(parsed) && parsed >= 0) {
       onRemainingChange(Math.min(250, parsed));
     }
   };
@@ -468,11 +556,13 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
                   {/* Ô số trung tâm */}
                   <div className="relative group">
                     <Input
-                      type="number"
-                      min={currentCredits}
-                      max={300}
+                      type="text"
+                      inputMode="numeric"
                       value={totalCustomStr}
-                      onFocus={() => setIsTotalCustomFocused(true)}
+                      onFocus={(e) => {
+                        setIsTotalCustomFocused(true);
+                        e.target.select();
+                      }}
                       onBlur={() => {
                         setIsTotalCustomFocused(false);
                         const parsed = parseInt(totalCustomStr, 10);
@@ -483,8 +573,9 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
                         }
                       }}
                       onChange={(e) => {
-                        const s = e.target.value;
+                        const s = e.target.value.replace(/[^0-9]/g, '');
                         setTotalCustomStr(s);
+                        if (s === "") return;
                         const val = parseInt(s, 10);
                         if (!isNaN(val) && val >= currentCredits) {
                           onTotalChange(val);
@@ -535,11 +626,13 @@ const EffortPlanStep = memo(({ currentCredits, remainingCredits, onTotalChange, 
                 <div className="space-y-2 pt-1">
                   <div className="relative group">
                     <Input
-                      type="number"
-                      min={0}
-                      max={200}
+                      type="text"
+                      inputMode="numeric"
                       value={customInputStr}
-                      onFocus={() => setIsFocused(true)}
+                      onFocus={(e) => {
+                        setIsFocused(true);
+                        e.target.select();
+                      }}
                       onBlur={() => {
                         setIsFocused(false);
                         const parsed = parseInt(customInputStr, 10);

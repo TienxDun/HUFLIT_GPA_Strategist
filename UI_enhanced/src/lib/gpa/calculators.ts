@@ -175,9 +175,19 @@ export function calculateTargetResult(
     ? requiredPoints / totalEffortCredits 
     : (requiredPoints > 0.001 ? Infinity : 0);
 
-  // Projected GPA after improvements (especially when no more new credits needed)
+  // Môn học mới hoặc môn học lại từ F bắt buộc phải đạt tối thiểu 1.0 (điểm D)
+  // để được tính vào tín chỉ tích lũy khi tốt nghiệp theo quy chế đào tạo tín chỉ
+  const unlockedFCredits = retakes
+    .filter(r => r.oldGrade === 0 && (r.targetGrade === undefined || isNaN(r.targetGrade)))
+    .reduce((acc, r) => acc + r.credits, 0);
+  const minPassAdditionalCredits = newCredits + unlockedFCredits;
+
+  // Projected GPA khi hoàn thành đủ điều kiện tốt nghiệp:
+  // - Nếu còn tín chỉ mới hoặc môn F học lại: tính theo mức tối thiểu qua môn (D = 1.0) để được tích lũy
+  // - Nếu không có tín chỉ mới: tính theo điểm sau khi cải thiện môn cũ
+  const projectedPoints = effectiveCurrentPoints + (minPassAdditionalCredits * 1.0);
   const projectedGPA = totalFutureCredits > 0
-    ? roundGPA(effectiveCurrentPoints / totalFutureCredits)
+    ? roundGPA(projectedPoints / totalFutureCredits)
     : 0;
 
   return {
